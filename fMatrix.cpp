@@ -42,7 +42,7 @@ int fMatrix::getSizeN()
 
 
 
-bool fMatrix::printMatrix()
+bool fMatrix::print()
 {
 	for(int i = 0; i<m_m; i++)
 	{
@@ -57,7 +57,7 @@ bool fMatrix::printMatrix()
 }
 
 
-bool fMatrix::fillMatrix()
+bool fMatrix::fill()
 {
 	double count(0);
 	for(int i = 0; i<m_m; i++)
@@ -83,13 +83,83 @@ bool fMatrix::getIsSquare()
 
 
 
+// ---- Operator overloading ----
+
+// access by indices 
+double const & fMatrix::operator()(std::size_t x, std::size_t y) const
+{
+    return m_mat[x][y];
+}
+double& fMatrix::operator()(std::size_t x, std::size_t y)
+{
+    return m_mat[x][y];
+}
+
+// multiplication 
 
 
+fMatrix operator*(fMatrix const& leftM, fMatrix const& rightM)
+// ca, ca marche pas : fMatrix fMatrix::operator*(fMatrix const & leftM, fMatrix const & rightM)
+{
+	double sum(0);
+    fMatrix res(leftM.m_m, rightM.m_n);
+	
+	assert(leftM.m_n==rightM.m_m);
+    
+	for (int i = 0 ; i < res.m_m; i++)
+	{
+		for(int j = 0; j < res.m_n; j++)
+		{
+			sum = 0;
+			for(int k = 0; k < leftM.m_n; k++)
+			{
+				sum+= leftM(i,k)*rightM(k,j);
+			}
+			res(i,j)=sum;
+		}
+	}
+	//for (int i = 0 ; i < copie.m_n; ++i)
+    //{
+    //    auto const ligne_courante { leftM.ligne(i).m_matrice };
+    //    for (std::size_t j { 0 }; j < copie.m_n; ++j)
+    //    {
+    //        auto const colonne_courante { rightM.colonne(j).m_matrice };
+    //        const int valeur { std::inner_product(std::begin(ligne_courante), std::end(ligne_courante), std::begin(colonne_courante), 0) };
+    //        copie(i, j) = valeur;
+    //    }
+    //}
 
+    return res;
+}
 
+fMatrix operator*(double const& scal, fMatrix const& rightM)
+{
+    fMatrix res(rightM.m_m, rightM.m_n);
+	
+	for (int i = 0 ; i < res.m_m; i++)
+	{
+		for(int j = 0; j < res.m_n; j++)
+		{
+			res(i,j)=scal*rightM(i,j);
+		}
+	}
 
+    return res;
+}
 
+fMatrix operator+(fMatrix const& leftM, fMatrix const& rightM)
+{
+    fMatrix res(leftM.m_m, rightM.m_n);
+	
+	assert(leftM.m_n==rightM.m_m);
+    
+	for (int i = 0 ; i < res.m_m; i++)
+	{
+		for(int j = 0; j < res.m_n; j++)
+		{
+			res(i,j)=leftM(i,j)+rightM(i,j);
+		}
+	}
 
-
-
-
+    return res;
+}

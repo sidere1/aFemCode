@@ -15,12 +15,14 @@ int main(void)
 	srand (time(NULL));
 	cout << "Hello !" << endl ; 
 
-	int N(10);
+	int N(3);
 	fLinSys a(N, 1);
 	//a.buildLU();	
-	//a.solve();
-	//a.printLU();	
-	cout << endl << endl ; 
+	a.solve();
+	a.printMatrix();	
+	a.printLU();
+	cout << endl << endl ;
+
 	
 	cout << "done initializing" << endl; 
 

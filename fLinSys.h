@@ -2,7 +2,7 @@
 #define DEF_FLINSYS
 
 #include <vector>
-
+#include "fMatrix.h"
 using namespace std;
 
 
@@ -23,11 +23,16 @@ private:
 	int const m_nRhs;
 	double const m_eps;
 	bool m_luDone;
-	vector<vector<double>> m_mat;
-	vector<vector<double>> m_l;
-	vector<vector<double>> m_u;
-	vector<vector<double>> m_rhs;
-	vector<vector<double>> m_solution;
+	fMatrix m_mat;
+	fMatrix m_l;
+	fMatrix m_u;
+	fMatrix m_rhs;
+	fMatrix m_solution;
+	//vector<vector<double>> m_mat;
+	//vector<vector<double>> m_l;
+	//vector<vector<double>> m_u;
+	//vector<vector<double>> m_rhs;
+	//vector<vector<double>> m_solution;
 };
 
 #endif
