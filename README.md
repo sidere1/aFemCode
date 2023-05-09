@@ -6,8 +6,11 @@ built initially only to learn cpp, and eventually to use for FSBC development
 on construit un objet
 * FemCase
 	attributs : 
-	* mesh 
-		* nodes
+	* mesh // une liste de maillages plutot ? 
+		* Node
+			* id
+			* [x y z] 
+			* groupId 
 		* elements 
 		* renumbering() pour séparer les groupes en vue de la suite ? 
 	* fLinSys
@@ -25,6 +28,7 @@ le programme principal devrait ressembler à ça :
 
 * fc.s.read();
 * fc.m.read();
+* fc.m.prepare(); // pour renuméroter, calculer les volumes, les aspect ratios, les jacobiens, tout ce qui peut etre prepare en amont 
 * fc.assemble();
 * fc.s.solve();
 * fc.export();
@@ -43,3 +47,8 @@ pour un FSBC :
 
 remarques : 
 * pour désigner la source, une locationInMesh et recherche du noeud le plus proche plutot qu'un node id
+* les noeuds sont forcément donnés avec 3 coordonnées, même pour un cas en 2D 
+* uniformiser et généraliser les writeInfos et les writeError, mais ou ? femCase ? 
+* un gestion des sources dirac qui facilite l'aéro : une liste de points source avec spectres associés. Comme ça, une source, plusieurs sources, ou des sources partout, c'est la même chose. 
+* la fonction Element::computeAspectRatio n'est pas écrite, il faut la remplir et mettre un warning si l'élément n'est pas supporté.
+

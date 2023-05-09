@@ -7,7 +7,7 @@ CPPFLAGS := -Wall -Wextra -pedantic -g
 CXXFLAGS := 
 
 all: prog
-	time ./prog	
+	time ./prog ~/Documents/femCases/stupidCircle/setup/main	
 
 prog: $(OBJ_FILES)
 	g++ $(LDFLAGS) -o $@ $^
