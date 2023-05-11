@@ -31,3 +31,8 @@
 *.out
 *.app
 prog
+
+
+# mon ptit bordel 
+log.info 
+log.warning

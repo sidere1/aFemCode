@@ -56,10 +56,18 @@ private:
 	std::vector<Setup> m_setup; 
 	std::vector<int> m_couplingType; // 1 : harmonic acoustics, 2 : time acoustics, ... 
 	std::string m_path;
-	fMatrix K;
-	fMatrix M;
-	fMatrix F;
-	fMatrix B;
+	fMatrix m_Kvol;
+	fMatrix m_Ksurf;
+	fMatrix m_Klin;
+	fMatrix m_Mvol;
+	fMatrix m_Msurf;
+	fMatrix m_Mlin;
+	fMatrix m_Fvol;
+	fMatrix m_Fsurf;
+	fMatrix m_Flin;
+	fMatrix m_Bvol;
+	fMatrix m_Bsurf;
+	fMatrix m_Blin;
 	fMatrix currentSys;
 };
 

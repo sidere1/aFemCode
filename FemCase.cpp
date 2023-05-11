@@ -338,6 +338,7 @@ bool FemCase::prepareComputation()
 		m_mesh[i] = m;
 		// computing stuff once and for all
 		m_mesh[i]->computeAspectRatio();
+		m_mesh[i]->calculateVolume();
 	}
 
 	return true; 
@@ -393,4 +394,22 @@ bool FemCase::performResolution()
 		
 	}
 	return true;
+}
+
+
+bool FemCase::buildK()
+{
+	return true; 
+}
+bool FemCase::buildM()
+{
+	return true; 
+}
+bool FemCase::buildB()
+{
+	return true; 
+}
+bool FemCase::buildF()
+{
+	return true; 
 }

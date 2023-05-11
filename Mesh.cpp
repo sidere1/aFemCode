@@ -199,10 +199,10 @@ int Mesh::import2412(string unvFileToRead, int position)
                 if (feDTemp <=24) 
                 {// beams are not supported yet
 					getline(importFile, line);
-                    //cout << "ERROR, l " << __LINE__ << " Beams are not supported." << endl;
+					//cout << line << endl;
                 }
-                else 
-                {                    
+                //else 
+                //{                    
                     // cout << "type : " << typeTemp << endl;
                     for(int j = 0; j < nbOfNodesTemp; j++)
                     {
@@ -232,12 +232,12 @@ int Mesh::import2412(string unvFileToRead, int position)
                         }
                         // WHEREAMI
                     }
-
+					
                     if (!addElement(indexTemp, nodesTemp, feDTemp, physPTemp, matPTemp, colorTemp, nbOfNodesTemp)) 
                     {
                         WHEREAMI
                     }
-                }                    
+                //} c'etait un escape si on croisait un element segment                     
             }
             else 
             {
@@ -357,33 +357,52 @@ bool Mesh::isBeginEnd(string line)
     
 }
 
-double Mesh::calculateVolume() const 
+bool Mesh::calculateVolume() 
 {
-    double volume(0);
+    double vol(0);
+    double surf(0);
+    double dist(0);
     for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
     {
-        volume = volume + m_elements[elem].calculateVolume();
+		// il faudrait faire un tri entre éléments de surface / longueur / volume ! 
+		if (m_elements[elem].is1D())
+		{
+			dist = dist + m_elements[elem].getVolume();
+		}
+		else if (m_elements[elem].is2D())
+		{ 
+			surf = surf + m_elements[elem].getVolume();
+		}
+		else if (m_elements[elem].is2D())
+		{ 
+			vol = vol + m_elements[elem].getVolume();
+		}
+        //volume = volume + m_elements[elem].getVolume();
     }
-    return volume;
+	m_vol = vol; 
+	m_surf = surf; 
+	m_dist = dist;
+	cout << "Distance : " << dist << endl << "Surface : " << surf << endl << "Volume : " << vol << endl; 
+    return true;
 }
 
-double Mesh::calculateArea() const 
-{
-    double area(0);
-    int count(0) ; 
-    double plus;
-    for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
-    {
-        plus = m_elements[elem].calculateArea();
-        area = area + plus;
-        if (plus != 0) 
-        {
-            count++;
-        }
-    }
-    // cout << count << " elements taken into account for the surface" << endl;
-    return area;   
-}
+//double Mesh::calculateArea() const 
+//{
+//    double area(0);
+//    int count(0) ; 
+//    double plus;
+//    for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
+//    {
+//        plus = m_elements[elem].calculateArea();
+//        area = area + plus;
+//        if (plus != 0) 
+//        {
+//            count++;
+//        }
+//    }
+//    // cout << count << " elements taken into account for the surface" << endl;
+//    return area;   
+//}
 
 
 int Mesh::getElementNumber() const
@@ -471,6 +490,10 @@ bool Mesh::computeAspectRatio()
 			//message = "Aspect Ratio for Element type " + m_elements[i].getFeDescriptor() + " not supported. Development needed;
 			cout << "Aspect ratio computation for Element type " << m_elements[i].getFeDescriptor() << " not supported. Development needed" << endl; 
 			//writeError(message);
+		}
+		if (!m_elements[i].calculateVolume())
+		{
+			cout << "Volume computation for Element type " << m_elements[i].getFeDescriptor() << " not supported. Development needed" << endl; 
 		}
 	}
 	return true;

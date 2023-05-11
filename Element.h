@@ -14,16 +14,17 @@ public:
     Element(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
     // Element(int type, int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
     ~Element();
+    bool is1D() const ;
     bool is2D() const ;
     bool is3D() const ;
-    double calculateVolume() const ;
-    double calculateArea() const ;
+    bool calculateVolume();
     bool checkElem() const ;
     bool getDisplay() const ; 
     int getIndex() const;
     int getFeDescriptor() const;
 	bool computeAspectRatio();
 	int getAspectRatio() const;
+	float getVolume() const;
 
 
 private:
@@ -35,7 +36,11 @@ private:
     int m_materialProperty;
     int m_color ;
     int m_numberOfNodes; 
-    int m_aspectRatio; 
+    int m_aspectRatio;
+  	float m_vol;
+	bool m_1D;
+	bool m_2D; 
+	bool m_3D; 	
 };
 
 #endif

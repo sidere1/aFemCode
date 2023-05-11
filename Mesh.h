@@ -25,8 +25,8 @@ public:
     bool getCoordinates() const;
     int typeAssign(int nbOfNodes);
     bool isBeginEnd(std::string line);
-    double calculateVolume() const;
-    double calculateArea() const;
+    bool calculateVolume() ;
+    //double calculateArea() const; // included in calculateVolume
     int getElementNumber() const;
     int getNodesNumber() const;
 
@@ -48,6 +48,9 @@ private:
     std::string m_error;
 	int m_nN;
 	int m_nE;
+	double m_dist;
+	double m_surf; 
+	double m_vol;
 };
 
 #endif
