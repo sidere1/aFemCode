@@ -52,3 +52,18 @@ remarques :
 * un gestion des sources dirac qui facilite l'aéro : une liste de points source avec spectres associés. Comme ça, une source, plusieurs sources, ou des sources partout, c'est la même chose. 
 * la fonction Element::computeAspectRatio n'est pas écrite, il faut la remplir et mettre un warning si l'élément n'est pas supporté.
 
+
+
+
+----------------------
+**A FAIRE**
+
+* friends, l'amitié...
+* continuer / finir le second mooc 
+* passer fMatrix en template <typename T> !! Pour pouvoir mettre des complexes et des entiers  
+* dans fLinSys, mettre des pointeurs sur les matrices plutot... 
+* remplacer tous les assert par une meilleure gestion des erreurs pour faciliter le debugage 
+* coder l'overload << pour fMatrix ;) 
+
+
+

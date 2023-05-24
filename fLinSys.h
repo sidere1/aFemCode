@@ -11,6 +11,7 @@ class fLinSys
 public: 	
 	fLinSys();
 	fLinSys(int size, int nRhs);
+	fLinSys(fMatrix mat, fMatrix rhs);
 	~fLinSys();
 	bool fillMatrix();
 	bool printMatrix();
@@ -18,11 +19,16 @@ public:
 	bool printLU();
 	bool solve();
 	int getSize();
+	fMatrix getL();
+	fMatrix getU();
+	fMatrix getSolution();
+
 private: 
-	int const m_size;
-	int const m_nRhs;
 	double const m_eps;
+	int m_size;
+	int m_nRhs;
 	bool m_luDone;
+	bool m_solved;
 	fMatrix m_mat;
 	fMatrix m_l;
 	fMatrix m_u;

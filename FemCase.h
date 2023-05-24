@@ -34,16 +34,23 @@ public:
 	
 	bool prepareComputation(); // read meshn, renumber, compute volumes, aspect ratios, jacobs, etc. 
 	bool buildFLinSys(); // assemblage
-	bool buildK(); 
-	bool buildM();
-	bool buildB();
+	bool buildKM(); 
 	bool buildF();
 	bool performCoupling(); // pour la projection - construction du systeme couple 
 	bool performResolution(); // solve 
 	bool exportResults();
 
-    //bool writeResults();
-    //bool performAcoustic3DNodalResolution() const;
+	// Assembly functions 
+	fMatrix *getGauss(int element, int order);
+	fMatrix* getN(int element, fMatrix gp);
+	fMatrix* getB(int element, fMatrix gp);
+	fMatrix computeFemB(fMatrix Jac, fMatrix Bref) const; 
+
+
+
+
+	// crade sa mere la race de sa grand mere 
+	vector<int> swapLines(vector<int> v, vector<int> perm) const;
 
 private:
     std::string m_info;
@@ -56,19 +63,19 @@ private:
 	std::vector<Setup> m_setup; 
 	std::vector<int> m_couplingType; // 1 : harmonic acoustics, 2 : time acoustics, ... 
 	std::string m_path;
-	fMatrix m_Kvol;
-	fMatrix m_Ksurf;
-	fMatrix m_Klin;
-	fMatrix m_Mvol;
-	fMatrix m_Msurf;
-	fMatrix m_Mlin;
-	fMatrix m_Fvol;
-	fMatrix m_Fsurf;
-	fMatrix m_Flin;
-	fMatrix m_Bvol;
-	fMatrix m_Bsurf;
-	fMatrix m_Blin;
-	fMatrix currentSys;
+	// tout ça dans une Class storedResults ?
+	// pour plusieurs couplings : un vecteur de storedResults ?  
+	fMatrix *m_Kvol;
+	fMatrix *m_Ksurf;
+	fMatrix *m_Kseg;
+	fMatrix *m_Mvol;
+	fMatrix *m_Msurf;
+	fMatrix *m_Mseg;
+	fMatrix *m_Fvol;
+	fMatrix *m_Fsurf;
+	fMatrix *m_Fseg;
+
+	fMatrix *currentSys;
 };
 
 #endif

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include"Node.h"
+#include "fMatrix.h"
 
 class Element
 {
@@ -25,8 +26,9 @@ public:
 	bool computeAspectRatio();
 	int getAspectRatio() const;
 	float getVolume() const;
-
-
+	int getnN() const;
+	std::vector<int> getNodesIds() const;
+	fMatrix getCoordinates() const;
 private:
     // int m_type;
     int m_index;

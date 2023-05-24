@@ -19,7 +19,7 @@ Mesh::Mesh()
 
 }
 
-Mesh::Mesh(string info, string error) :m_info(info), m_error(error)
+Mesh::Mesh(string info, string error) :m_info(info), m_error(error), m_1D(false), m_2D(false), m_3D(false)
 {
 
 }
@@ -368,21 +368,25 @@ bool Mesh::calculateVolume()
 		if (m_elements[elem].is1D())
 		{
 			dist = dist + m_elements[elem].getVolume();
+			m_1D = true;
 		}
 		else if (m_elements[elem].is2D())
 		{ 
 			surf = surf + m_elements[elem].getVolume();
+			m_2D = true;
 		}
 		else if (m_elements[elem].is2D())
 		{ 
 			vol = vol + m_elements[elem].getVolume();
+			m_3D = true;
 		}
         //volume = volume + m_elements[elem].getVolume();
     }
 	m_vol = vol; 
 	m_surf = surf; 
 	m_dist = dist;
-	cout << "Distance : " << dist << endl << "Surface : " << surf << endl << "Volume : " << vol << endl; 
+	cout << "Distance : " << dist << endl << "Surface : " << surf << endl << "Volume : " << vol << endl;
+   	//cout << m_1D << m_2D << m_3D << endl;	
     return true;
 }
 
@@ -500,3 +504,23 @@ bool Mesh::computeAspectRatio()
 }
 
 
+bool Mesh::contains1D() const
+{return m_1D;}
+bool Mesh::contains2D() const
+{return m_2D;}
+bool Mesh::contains3D() const
+{return m_3D;}
+
+
+Element Mesh::getElement(int index) const
+{
+	string message("");
+	if (index > m_nE)
+	{
+		message = "bad request. The element index you asked does not exist";
+		cout << message; 
+		cout << endl << "index : " << index << endl;
+		writeError(message);
+	}
+	return m_elements[index];
+}

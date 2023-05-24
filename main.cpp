@@ -28,17 +28,40 @@ int main(int argc, char** argv)
 	FemCase fc(setupFile);
 	fc.displayInfo();	
 	fc.prepareComputation();	
+	fc.buildKM(); // un assembly plutot ? pour ajouter le terme source en plus ? 	
 	srand (time(NULL));
 
 	int N(3);
-	fLinSys a(N, 1);
+	//fLinSys a(N, 1);
 	//a.buildLU();	
 	//a.solve();
 	//a.printMatrix();	
 	//a.printLU();
 
-
-	
+	cout << endl;	
+	fMatrix a(N,N);
+	//fMatrix b(3,5);
+	//a.setId();
+	a.fill();
+	a.print();
+	a.inv().print();
+	fMatrix b(a*a.inv());
+	b.print();
+	//a.spyPrint();
+	//fMatrix b = a.submat(0,0,0,2);
+	//b.print();
+	//cout << a.det() << endl; 	
+	//fMatrix b(N, N);
+	//b.fill();
+	//b.print();
+	//fMatrix c(b*2);
+	//fMatrix d(2*b*b);
+	//c.print();
+	//d.print();
+	//c.setOne();
+	//d.setId();
+	//c.print();
+	//d.print();	
 	//cout << "Reading Mesh" << endl;
 	//Mesh m1("log.info", "log.warning");
 	//Mesh m2("log.info", "log.warning");

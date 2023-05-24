@@ -8,48 +8,42 @@ using namespace std;
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 
-fLinSys::fLinSys() : m_size(0), m_nRhs(0), m_eps(1e-12), m_mat(0,0)
+fLinSys::fLinSys() : m_eps(1e-12), m_size(0), m_nRhs(0), m_mat(0,0)
 {
 
 }
 
 fLinSys::fLinSys(int size, int nRhs)
-	: m_size(size),
+	: m_eps(1e-12),
+	m_size(size),
 	m_nRhs(nRhs),
-	m_eps(1e-12),
 	m_mat(size, size),
 	m_l(size, size),
 	m_u(size, size),
 	m_rhs(size, nRhs),
 	m_solution(size, nRhs)
-	
 {
-	cout << "Building a system of size " << m_size << " and " << m_nRhs << " right hand sides" << endl;
-	m_mat.fill();
-	//m_mat.resize(m_size);
-	//for(int i = 0; i < m_size ; i++)
-	//{
-	//	m_mat[i].resize(m_size);
-	//}
-
-	m_rhs.fill();
-	//m_rhs.resize(m_size);
-	//for(int i = 0; i < m_size ; i++)
-	//{
-	//	m_rhs[i].resize(m_nRhs);
-	//}
-	
-	//m_solution.resize(m_size);
-	//for(int i = 0; i < m_size ; i++)
-	//{
-	//	m_solution[i].resize(m_nRhs);
-	//}
-	
-	
+	m_mat.setZero();
+	m_rhs.setZero();
 	m_luDone = false; 
+}
 
-	//fLinSys::fillMatrix();
-	//fLinSys::printMatrix();
+fLinSys::fLinSys(fMatrix mat, fMatrix rhs)
+	:
+	m_eps(1e-12),
+	m_size(mat.getSizeM()),
+	m_nRhs(rhs.getSizeN()),
+	m_mat(m_size, m_size),
+	m_l(m_size, m_size),
+	m_u(m_size, m_size),
+	m_solution(m_size, m_nRhs)
+{
+	assert(mat.isSquare());
+	assert(mat.getSizeM() == rhs.getSizeM());
+
+	m_mat = mat;
+	m_rhs = rhs;
+	m_luDone = false; 
 }
 
 fLinSys::~fLinSys()
@@ -287,15 +281,38 @@ bool fLinSys::solve()
 	//	}
 	//}
 
-
+	m_solved = true;
 	return true; 
 }
 
 
 
 
- 
+fMatrix fLinSys::getL()
+{
+	if(!m_luDone)
+	{
+		m_luDone = fLinSys::buildLU();
+	}
+	return m_l;
+}
+fMatrix fLinSys::getU()
+{
+	if(!m_luDone)
+	{
+		m_luDone = fLinSys::buildLU();
+	}
+	return m_u;
+}
 
+fMatrix fLinSys::getSolution()
+{
+	if(!m_solved)
+	{
+		m_solved = this->solve();
+	}
+	return m_solution;
+}
 
 
 

@@ -3,12 +3,12 @@
 #include <cassert>
 #include <sys/stat.h>
 
-
 #include "Setup.h"
 #include "Mesh.h"
 #include "Node.h"
 #include "PointLoad.h"
 #include "FemCase.h"
+#include "fLinSys.h"
  
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 
@@ -337,6 +337,7 @@ bool FemCase::prepareComputation()
 		m->unvImport(m_path + "meshes/"+ m_meshFile[i]);
 		m_mesh[i] = m;
 		// computing stuff once and for all
+		// IL FAUDRAIT FAIRE UNE METHODE mesh.read() QUI DETERMINERAIT SON TYPE (unv...), L'IMPORTERAIT ET LE PREPARERAIT
 		m_mesh[i]->computeAspectRatio();
 		m_mesh[i]->calculateVolume();
 	}
@@ -364,9 +365,7 @@ bool FemCase::buildFLinSys()
 	switch(m_couplingType[0])
 	{
 		case 1:
-			buildK();
-			buildM();
-			buildB();
+			buildKM();
 			buildF();
 			break;
 		default: 
@@ -397,19 +396,697 @@ bool FemCase::performResolution()
 }
 
 
-bool FemCase::buildK()
+bool FemCase::buildKM()
 {
+	// au programme : 
+	// loop over the couplings A CODER 
+	//	 	loop over the elements to know which matrices must be initialized (et quand on bossera en sparse, pour faire un assemblage fictif et determiner la taille des matrices)
+	//	 	loop over the elements
+	//	 			check element type 
+	//	 			compute elementary matrices K and M  
+	//	 			assemble in main matrices 
+	//	 	check if everything is alright (volume compared to theory)
+
+
+
+	// variable initialisation
+	int iC(0);// index of coupling => should be replaced by a loop, fixed at 0 for now 
+	int nN(m_mesh[iC]->getNodesNumber());
+	int nE(m_mesh[iC]->getElementNumber());
+	int countSeg(0);// counts the number of segment elements
+	int countSurf(0);// .. surface elements 
+	int countVol(0);// .. volume elements 
+	int globalI(0);
+	int globalJ(0);
+	Element elem;// current element
+	string message("");
+	vector<int> perm;
+	fMatrix *currentK; 
+	fMatrix *currentM;
+   	fMatrix *Ke; Ke = new fMatrix(1,1); 
+	fMatrix *Me; Me = new fMatrix(1,1);
+	int np(0); // number of nodes in the current element
+	int gw(0); // index of the column containing the weights 
+	int ngp(0); // number of gauss points
+	int nb(0); // number of lines in the gradient matrix
+	double detJac(0);
+	fMatrix one(nN, 1);
+	one.setOne();
+	fMatrix check(1,1);
+
+	// pointers on gauss points tables, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 
+	fMatrix *gp_se3 = getGauss(22, 5);
+	fMatrix *gp_t6 = getGauss(42, 4);
+	// idem for shape functions 
+	fMatrix *N_se3 = getN(22, *gp_se3);
+	fMatrix *N_t6 = getN(42, *gp_t6);
+	fMatrix *B_se3 = getB(22, *gp_se3);	
+	fMatrix *B_t6 = getB(42, *gp_t6);	
+	
+	gp_se3->print();
+	//gp_t6->print();
+	N_se3->print();
+	//N_t6->print();
+	B_se3->print();
+	//B_t6->print();
+
+	fMatrix *gp;// gauss points and weights for current element 
+	fMatrix *N;// shape functions for current element 
+	fMatrix *Ng; Ng = new fMatrix(1,1);// shape functions for current gauss point. Submat of *N
+	fMatrix *B; // idem for gradient matrix
+	fMatrix *Bg; Bg = new fMatrix(1,1);
+	fMatrix *Bref; Bref = new fMatrix(1,1);
+	fMatrix *JacG; JacG = new fMatrix(1,1);
+	fMatrix *coord; coord = new fMatrix(1,1);
+	vector<int> *nodes; nodes = new vector<int>;
+	fLinSys *temp; temp = new fLinSys();
+	message = "Beginning assembly"; 
+	cout << message << endl; 
+	writeInfo(message);
+	
+	
+	// matrix initialisation, as well as gauss points and shape functions 
+	if (m_mesh[iC]->contains1D())
+	{
+		//cout << "yes 1D" << endl;	
+		m_Mseg = new fMatrix(nN, nN);
+		m_Kseg = new fMatrix(nN, nN);
+	}
+	if (m_mesh[iC]->contains2D())
+	{
+		//cout << "yes 2D" << endl;
+		m_Msurf = new fMatrix(nN, nN);
+		m_Ksurf = new fMatrix(nN, nN);
+	}
+	if (m_mesh[iC]->contains3D())
+	{
+		//cout << "yes 3D" << endl;
+		m_Mvol = new fMatrix(nN, nN);
+		m_Kvol = new fMatrix(nN, nN);
+	}
+	
+	if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) 
+	{
+		cout << "your mesh hasn't been prepared correctly" << endl;
+	}
+	
+	for(int iE = 0; iE < nE; iE++)
+	{
+		// initialisation  
+		elem = m_mesh[iC]->getElement(iE);
+		np = elem.getnN(); // nombre de noeuds 
+		// construction de la liste de noeuds et réorganisation 
+		delete coord;
+		delete nodes;
+		coord = new fMatrix(np,3);
+		nodes = new vector<int>; // A REMPLACER PAR UNE MATRICE AVEC TEMPLATE
+		*coord = elem.getCoordinates();
+		//coord->print();
+		*nodes = elem.getNodesIds();	
+		//cout << nodes->size() << endl;
+		if (elem.is1D())
+		{
+			countSeg++;
+			currentK = m_Kseg;
+			currentM = m_Mseg;
+
+			//FAUT LES REORGANISER. METHODE PERMUTATE ? qui prend un ou deux vector<int> en input 
+			switch (elem.getFeDescriptor()){
+				case 22:
+					gp = gp_se3;
+					N = N_se3;
+					B = B_se3;
+					perm = {0,1,2}; // unv to aster format. Avec des SE3 l'interet est limite, j'avoue... 
+					*coord = coord->swapLines(perm);
+					*nodes = swapLines(*nodes, perm); // AAAAAH !! A REMPLACER PAR UNE PUTAIN DE FMATRIX
+					break;
+				default:
+					cout << "Unsupported element in FemCase::buildKM, type" << elem.getFeDescriptor() << endl;
+			}
+		}
+		else if (elem.is2D())
+		{
+			countSurf++;
+			currentK = m_Ksurf;
+			currentM = m_Msurf;
+			switch (elem.getFeDescriptor()){
+				case 42:
+					gp = gp_t6;
+					N = N_t6;
+					B = B_t6;
+					perm = {0,2,4,1,3,5}; // 42 unv to T6 aster format 
+					*coord = coord->swapLines(perm);
+					*nodes = swapLines(*nodes, perm); // AAAAAH !! A REMPLACER PAR UNE PUTAIN DE FMATRIX
+					break;
+				default:
+					cout << "Unsupported element in FemCase::buildKM, type" << elem.getFeDescriptor() << endl;
+			}
+		}
+		else if(elem.is3D())
+		{
+			countVol++;
+			currentK = m_Kvol;
+			currentM = m_Mvol;
+			switch (elem.getFeDescriptor()){
+				case 125462: // T10
+					perm = {0,2,4,9,1,3,5,6,7,8}; // unv ?? to T10 aster format 
+					coord->swapLines(perm);
+					*nodes = swapLines(*nodes, perm); // AAAAAH !! A REMPLACER PAR UNE PUTAIN DE FMATRIX
+					break;
+				default:
+					cout << "Unsupported element in FemCase::buildKM, type" << elem.getFeDescriptor() << endl;
+			}
+		}
+		else
+		{
+			message = "Incoherent mesh, make sure it has been prepared correctly. The current element is neither 1D, 2D or not 3D";
+			cout << message << endl; 
+			writeError(message);
+		}
+		gw = gp->getSizeN()-1;// index of the column containing the weights  
+		ngp = gp->getSizeM();// number of gauss points
+		nb = B->getSizeM()/ngp;
+		delete(Ke);
+		delete(Me);
+		delete(Bg);
+		delete(Bref);
+		delete(Ng);
+		delete(JacG);
+		//delete(temp);
+		Ke = new fMatrix(np, np);
+		Me = new fMatrix(np, np);
+		Bg = new fMatrix(nb, np);
+		Bref = new fMatrix(nb, np);
+		Ng = new fMatrix(1, np);
+		JacG = new fMatrix(np,np);
+		Ke->setZero();
+		Me->setZero();
+		Bg->setZero();
+		Bref->setZero();
+		Ng->setZero();
+		JacG->setZero();
+		for (int iG = 0; iG < ngp; iG++)
+		{
+			*Bref = B->submat(nb*iG, (nb*(iG+1))-1, 0, np-1);
+			*Ng = N->submat(iG, iG ,0 ,np-1);
+			//Ng->print();
+			//cout << Bref->getSizeM() << Bref->getSizeN() << endl;	
+			//cout << coord->getSizeM() << coord->getSizeN() << endl;	
+			*JacG = (*Bref)**coord;
+			detJac = JacG->getFemDetJac();
+			//cout << "JacG :" << endl;
+			//JacG->print();
+			//cout << detJac << endl << endl;
+			//Bref->print();
+			//temp = new fLinSys(*JacG, *Bref);
+			//WHEREAMI
+			//temp->solve();
+			//*Bg = temp->getSolution();
+			//B = JacG\Bref;
+			cout << "JacG : " << endl;
+			JacG->print();
+			cout << "Bref : " << endl;
+			Bref->print();
+			*Bg = computeFemB(*JacG, *Bref);
+			cout << "Bg: " << endl;
+			Bg->print();
+			//Bg = Bref; // temporaire...
+			*Ke = *Ke + detJac*(*gp)(iG, gw)*(Bg->t())**Bg; // det(Jac)*gauss weight * B^T * B. multiple * because we are dealing with pointers on matrices, not directly on matrices. 
+			*Me = *Me + detJac*(*gp)(iG, gw)*Ng->t()**Ng;
+			//cout << endl << "det(Jac) = " << detJac << endl << "JacG : " << endl;
+			//JacG->print();
+			//cout << "Ng = " << endl;
+			//Ng->print();
+			//cout << "Bg = " << endl;
+			//Bg->print();
+			//cout << "Me = " << endl;
+			//Me->print();
+			//if(elem.getFeDescriptor() == 42)
+			//{
+			//	return true;
+			//}	
+
+		}
+		//cout << "N :" << endl;
+		//N->print();
+		// Assembling in the global matrices;
+		assert(Ke->getSizeM() == Me->getSizeM()); 
+		assert(Ke->getSizeN() == Me->getSizeN());
+	   	//cout << endl;	
+		for (unsigned int i = 0 ; i < Ke->getSizeM() ; i++)
+		{
+			globalI = (*nodes)[i]-1;
+			for (unsigned int j = 0; j < Ke->getSizeN() ; j++ )
+			{
+				globalJ = (*nodes)[j]-1;
+				//cout << globalI << " " << globalJ << endl;
+				(*currentK)(globalI, globalJ) += (*Ke)(i,j);
+				(*currentM)(globalI, globalJ) += (*Me)(i,j);
+			}
+		}
+		// stop to check current matrices 
+		if(elem.getFeDescriptor() == 42)
+		{
+		//	cout << "Me : " << endl;
+		//	Me->print();
+			cout << "Ke : " << endl;
+			Ke->print();
+		//	cout << "coord : " << endl;
+		//	coord->print();
+		//	cout << "Nodes : " ;
+		//	for(int i = 0; i<np ; i++)
+		//	{
+		//		cout << (*nodes)[i] << " ";
+		//	}	
+			return true;
+		}
+	}	
+
+// for iElem = 1:nElem
+//     numElem = unvConec.numero(iElem);
+//     gaussPts = getGauss('T10', 5);
+//     nG = size(gaussPts, 1);
+//     nodes = unvConec.NumNoeud(iElem,:);
+//     if nodes(9) ~= 0 % -> T10 normalement
+//         iVolElem = iVolElem + 1;
+//         nodes = nodes([1 3 5 10 2 4 6 7 8 9]); % notation Aster / Nastran.
+//         x = unvCoord.x(nodes);
+//         y = unvCoord.y(nodes);
+//         z = unvCoord.z(nodes);
+// 
+//         He = zeros(nX, nX);
+//         Qe = zeros(nX, nX);
+//         detJacG = zeros(1,nG);
+//         for iG = 1:nG
+//             % Building He
+//             BrefG = buildBref('T10', gaussPts(iG, 1:3));
+//             JacG = BrefG*[x y z];
+//             B = JacG\BrefG;
+//             detJacG(iG) = det(JacG);
+//             He = He + detJacG(iG)*gaussPts(iG, 4)*(B')*B;
+//             % Building Qe
+//             NiG = buildNi('T10', gaussPts(iG, 1:3));
+//             Qe = Qe + detJacG(iG)*gaussPts(iG, 4)*(NiG')*NiG;
+//         end
+// 
+//         H(nodes,nodes) = H(nodes,nodes) + He;
+//         Q(nodes,nodes) = Q(nodes,nodes) + Qe;
+// 
+//     end % end of the T10 if structure
+// end % end of the loop over the elements
+	
+	// check que le volume est correct 
+	if (m_mesh[iC]->contains1D())
+	{
+		check = one.t()**m_Mseg*one;
+		cout << "Total distance computed from M ";
+		check.print();
+	}
+	if (m_mesh[iC]->contains2D())
+	{
+		check = one.t()**m_Msurf*one;
+		cout << "Total surface computed from M ";
+		check.print();
+	}
+	if (m_mesh[iC]->contains3D())
+	{
+		check = one.t()**m_Mvol*one;
+		cout << "Total volume computed from M ";
+		check.print();
+	}
+	cout << "Assembly finished sucessfully, with " << countSeg << " segment elements, " << countSurf << " surface elements, and " << countVol << " volume elements." << endl;
 	return true; 
 }
-bool FemCase::buildM()
-{
-	return true; 
-}
-bool FemCase::buildB()
-{
-	return true; 
-}
+
 bool FemCase::buildF()
 {
+	m_Fvol = new fMatrix(m_mesh[0]->getNodesNumber(),1);
+	m_Fsurf = new fMatrix(m_mesh[0]->getNodesNumber(),1);
+	m_Fseg = new fMatrix(m_mesh[0]->getNodesNumber(),1);
+	(*m_Fvol)(1,0) = 1;
 	return true; 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Assembly functions 
+
+fMatrix* FemCase::getGauss(int element, int order)
+{
+	// in case of an error, err is returned and message is printed
+	fMatrix *err;
+	err = new fMatrix(0,0);
+	stringstream message;
+	message << "Fatal error : element " << element << " with order " << order << " unsupported in FemCase::getGauss";
+	// if everything goes alright, we return gp
+	fMatrix *gp;
+	// initialization of various shit 
+	double a = 0.445948490915965;
+    double b = 0.091576213509771;
+	double c = 0.11169079483905;
+	double d = 0.0549758718227661;	
+	switch (element)
+	{
+		case 22: // segment SE3
+		case 21: // segment SE2
+			switch (order)
+			{
+				case 1:
+					gp = new fMatrix(1,2);
+					(*gp) (0,0) = 0;
+					(*gp)(0,1) = 2;
+					break;
+				case 3:
+					gp = new fMatrix(2,2);
+					(*gp)(0,0) = -0.57735;
+					(*gp)(0,1) = 1;
+					(*gp)(1,0) = 0.57735;
+					(*gp)(1,1) = 1;
+					break;
+				case 5:
+					gp = new fMatrix(3,2);
+					(*gp)(0,0) = -0.77460;
+					(*gp)(0,1) = 0.555555556;
+					(*gp)(1,0) = 0; 
+					(*gp)(1,1) = 0.888888889;
+					(*gp)(2,0) = 0.77460;
+					(*gp)(2,1) = 0.555555556;
+					break;
+				default:
+					cout << message.str() << endl;
+				   	writeError(message.str());
+					return err;	
+			}
+			break;
+		case 42: // T6 
+			switch (order)
+			{
+				case 1:
+					gp = new fMatrix(1,3);
+					(*gp)(0,0) = 0.33333333334;
+					(*gp)(0,1) = 0.33333333334;
+					(*gp)(0,2) = 0.5;
+					break;
+				case 2:
+					gp = new fMatrix(3,3);
+					gp->setOne();
+					*gp = *gp*(0.16666666667);
+					(*gp)(1,0) = 0.66666666667;
+					(*gp)(2,1) = 0.66666666667;
+					break;
+				case 4:
+					gp = new fMatrix(6,3);
+					gp->setOne();
+					*gp = *gp*a;
+					(*gp)(1,0) = 1-2*a;
+					(*gp)(2,1) = 1-2*a;
+					(*gp)(3,0) = b;
+					(*gp)(3,1) = b;
+					(*gp)(4,0) = 1-2*b;
+					(*gp)(4,1) = b;
+					(*gp)(5,0) = b;
+					(*gp)(5,1) = 1-2*b;
+					(*gp)(0,2) = c;
+					(*gp)(1,2) = c;
+					(*gp)(2,2) = c;
+					(*gp)(3,2) = d;
+					(*gp)(4,2) = d;
+					(*gp)(5,2) = d;
+					break;
+				default:
+					cout << message.str() << endl;
+				   	writeError(message.str());
+					return err;	
+			}
+			break;
+		default:
+			cout << message.str() << endl;
+			writeError(message.str());
+			return err;
+	}
+	return gp;
+}
+
+
+fMatrix* FemCase::getN(int element, fMatrix gp)
+{
+	// in case of an error, err is returned and message is printed
+	fMatrix *err;
+	err = new fMatrix(0,0);
+	stringstream message;
+	message << "Fatal error : element " << element << " unsupported in FemCase::getN";
+	// if everything goes alright, we return gp
+	fMatrix *N;
+	
+	// initialization of various shit 
+	int ng(gp.getSizeM());
+	double a(0);
+	double xi(0);
+	double eta(0);
+	double ksi(0);
+
+
+	switch (element)
+	{
+		case 22: // segment SE3
+			N = new fMatrix(ng,3);
+			for (int ig = 0; ig < ng ; ig++)
+			{
+				ksi = gp(ig,0);
+				//cout << "ksi :" << ksi<< endl;
+				(*N)(ig,0) = -0.5*ksi*(1-ksi);
+				(*N)(ig,1) = (1-ksi*ksi); 
+				(*N)(ig,2) = 0.5*ksi*(1+ksi);
+			}	
+			//ksiG = gaussPts(1);
+        	//Ni = [-ksiG*(1-ksiG); ...
+        	//    2*(1-ksiG^2) ; ...
+        	//    ksiG*(1+ksiG)];
+        	//Ni = 1/2*Ni';
+			break;
+		case 42: // T6 
+			N = new fMatrix(ng,6);
+			for (int ig = 0; ig < ng ; ig++)
+			{
+				xi = gp(ig,0);
+				eta = gp(ig,1);
+				a = 1-xi-eta;
+				(*N)(ig,0) = -a*(1-2*a); 
+				(*N)(ig,1) = -xi*(1-2*xi); 
+				(*N)(ig,2) = -eta*(1-2*eta); 
+				(*N)(ig,3) = 4*xi*a; 
+				(*N)(ig,4) = 4*xi*eta; 
+				(*N)(ig,5) = 4*eta*a; 
+			}
+			//xi = gaussPts(1);
+        	//eta = gaussPts(2);
+        	//a = 1-xi-eta ;
+        	//Ni = [-a*(1-2*a), ...       %1
+        	//    -xi*(1-2*xi)...         %2
+        	//    -eta*(1-2*eta)...       %3
+        	//    4*xi*a...               %4
+        	//    4*xi*eta...             %5
+        	//    4*eta*a ] ;             %6
+			break;
+		default:
+			cout << message.str() << endl;
+			writeError(message.str());
+			return err;
+	}
+	return N;
+}
+
+fMatrix* FemCase::getB(int element, fMatrix gp)
+{
+	// in case of an error, err is returned and message is printed
+	fMatrix *err;
+	err = new fMatrix(0,0);
+	stringstream message;
+	message << "Fatal error : element " << element << " unsupported in FemCase::getN";
+	// if everything goes alright, we return gp
+	fMatrix *B;
+	
+	// initialization of various shit 
+	int ng(gp.getSizeM());
+	double a(0);
+	double xi(0);
+	double eta(0);
+	double ksi(0);
+	
+	switch (element)
+	{
+		case 22: // segment SE3
+			B = new fMatrix(ng,3);
+			for (int ig = 0; ig < ng ; ig++)
+			{
+				ksi = gp(ig,0);
+				(*B)(ig,0) = 0.5*(-1+2*ksi); 
+				(*B)(ig,1) = -2*ksi; 
+				(*B)(ig,2) = 0.5*(1+2*ksi);
+			}
+			//ksi = gaussPts(1);
+        	//Bref = 1/2*[-1+2*ksi -4*ksi 1+2*ksi];	
+			break;
+		case 42: // T6 
+			B = new fMatrix(ng*2,6);
+			for (int ig = 0; ig < ng ; ig++)
+			{
+				//cout <<"assembling T6 gp, ig = " << ig << endl; 
+				xi = gp(ig,0);
+				eta = gp(ig,1);
+				a = 1-4*(1-xi-eta);
+				(*B)(2*ig+0,0) = a; 
+				(*B)(2*ig+0,1) = -1+4*xi; 
+				(*B)(2*ig+0,2) = 0; 
+				(*B)(2*ig+0,3) = 4*(1-2*xi-eta); 
+				(*B)(2*ig+0,4) = 4*eta; 
+				(*B)(2*ig+0,5) = -4*eta; 
+				(*B)(2*ig+1,0) = a; 
+				(*B)(2*ig+1,1) = 0; 
+				(*B)(2*ig+1,2) = -1+4*eta; 
+				(*B)(2*ig+1,3) = -4*xi; 
+				(*B)(2*ig+1,4) = 4*xi; 
+				(*B)(2*ig+1,5) = 4*(1-xi-2*eta); 
+			}
+			//xi = gaussPts(1);
+        	//eta = gaussPts(2);
+        	//a = 1-4*(1-xi-eta);
+        	//Bref(:,1) = [a ; a] ;
+        	//Bref(:,2) = [-1+4*xi ; 0] ;
+        	//Bref(:,3) = [0 ; -1+4*eta] ;
+        	//Bref(:,4) = [4*(1-2*xi-eta) ; -4*xi] ;
+        	//Bref(:,5) = [4*eta ; 4*xi] ;
+        	//Bref(:,6) = [-4*eta ; 4*(1-xi-2*eta)] ;
+			break;
+		default:
+			cout << message.str() << endl;
+			writeError(message.str());
+			return err;
+	}
+	return B;
+}
+
+
+fMatrix FemCase::computeFemB(fMatrix Jac, fMatrix Bref) const
+{
+	// if Bref is 3*3, return inv(Jac)*Bref
+	// if Bref is 2*3, return 2 uper lines of inv([Jac ; 1 1 1])*[Bref ; 1 1 1]
+	// if Bref is 1*3, should not be used for now, return null vector
+	
+	fMatrix B(3,3);
+	fMatrix fullJac(3,3);	
+	fMatrix fullBref(3,Bref.getSizeN());
+
+	if(Jac.getSizeM() == 3)
+	{
+		assert(Jac.getSizeM()==3);
+		B = Jac.inv()*Bref;
+	}
+	else if(Jac.getSizeM() == 2)
+	{
+		assert(Jac.getSizeN() == 3);
+		assert(Bref.getSizeN()==6);
+		fullJac(0,0) = Jac(0,0);
+		fullJac(0,1) = Jac(0,1);
+		fullJac(0,2) = Jac(0,2);
+		fullJac(1,0) = Jac(1,0);
+		fullJac(1,1) = Jac(1,1);
+		fullJac(1,2) = Jac(1,2);
+		fullJac(2,0) = 1;
+		fullJac(2,1) = 1;
+		fullJac(2,2) = 1;
+		fullBref(0,0) = Bref(0,0);
+		fullBref(0,1) = Bref(0,1);
+		fullBref(0,2) = Bref(0,2);
+		fullBref(0,3) = Bref(0,3);
+		fullBref(0,4) = Bref(0,4);
+		fullBref(0,5) = Bref(0,5);
+		fullBref(1,0) = Bref(1,0);
+		fullBref(1,1) = Bref(1,1);
+		fullBref(1,2) = Bref(1,2);
+		fullBref(1,3) = Bref(1,3);
+		fullBref(1,4) = Bref(1,4);
+		fullBref(1,5) = Bref(1,5);
+		fullBref(2,0) = 1;
+		fullBref(2,1) = 1;
+		fullBref(2,2) = 1;
+		fullBref(2,3) = 1;
+		fullBref(2,4) = 1;
+		fullBref(2,5) = 1;
+		B = (fullJac.inv()*fullBref); //.submat(0,1,0,2);
+		//cout << "inside computeFemB" << endl << "fullJac, fullB, B" << endl;
+		//fullJac.print();
+		//fullBref.print();
+		//B.print();
+
+		B(2,0) = 0;
+		B(2,1) = 0;
+		B(2,2) = 0;
+		B(2,3) = 0;
+		B(2,4) = 0;
+		B(2,5) = 0;
+	}
+	return B;
+}
+
+
+// CRAAAAAAADE !! FAIS UN TEMPLATE VITE !
+vector<int> FemCase::swapLines(vector<int> v, vector<int> perm) const
+{
+	// reorganizes the lines of the vector. Useful only until fMatrix is made via template. 
+	// Pleaaaase delete me as fast as possible !
+	//
+	
+	if (perm.size()!= v.size())
+	{
+		cout << "perm.size() = " << perm.size() << " and v.size() = " << v.size() << endl;
+		assert(perm.size() == v.size());
+	}
+	
+	vector<int> v2(v.size());
+	unsigned int newI;
+	
+	for(unsigned int i = 0 ; i < v.size() ; i++)
+	{
+		newI = perm[i];
+		v2[i] = v[newI];
+		//assert(newI<v.size());
+		//for(unsigned int j = 0 ; j < m_n ; j++)
+		//{
+		//}
+	}
+	return v2;
+}
+
+
+
+
+
+

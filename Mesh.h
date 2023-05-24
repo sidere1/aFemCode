@@ -21,6 +21,7 @@ public:
     int import2412(std::string unvFileToRead, int position);
     bool addNode(int index, float x, float y, float z);
     bool addElement(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
+	Element getElement(int index) const;
     bool getConnectivities() const;
     bool getCoordinates() const;
     int typeAssign(int nbOfNodes);
@@ -39,7 +40,10 @@ public:
     bool writeError(std::string error) const;
 
 	bool computeAspectRatio();
-
+	bool computeJacobians(); // the aim is just to check if all elements are correctly oriented and not swiped 
+	bool contains1D() const;
+	bool contains2D() const;
+	bool contains3D() const;
 
 private:
     std::vector<Node> m_nodes;
@@ -51,6 +55,9 @@ private:
 	double m_dist;
 	double m_surf; 
 	double m_vol;
+	bool m_1D;
+	bool m_2D;
+	bool m_3D;
 };
 
 #endif

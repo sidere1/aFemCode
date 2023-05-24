@@ -408,3 +408,34 @@ float Element::getVolume() const
 {
 	return m_vol;
 }
+
+int Element::getnN() const
+{
+	return m_numberOfNodes;
+}
+vector<int> Element::getNodesIds() const
+{
+	//vector<int> nodes(m_numberOfNodes, 1);
+	vector<int> nodes;
+	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
+	{
+		nodes.push_back(m_nodes[iNode]->getIndex());
+	}
+	return nodes;
+}
+fMatrix Element::getCoordinates() const
+{
+	fMatrix coord(m_numberOfNodes, 3);
+   	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
+	{
+		coord(iNode, 0) = m_nodes[iNode]->getX();
+		coord(iNode, 1) = m_nodes[iNode]->getY();
+		coord(iNode, 2) = m_nodes[iNode]->getZ();
+	}
+	return coord;
+}
+
+
+
+
+
