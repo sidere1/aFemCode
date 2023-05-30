@@ -1,20 +1,27 @@
-SRC_DIR := .
-OBJ_DIR := .
-SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
-OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SRC_FILES))
-LDFLAGS := 
-CPPFLAGS := -Wall -Wextra -pedantic -g 
-CXXFLAGS := 
+SOURCES := $(wildcard *.cpp)
+OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
+DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 
+# ADD MORE WARNINGS!
+WARNING := -Wall -Wextra
+
+# .PHONY means these rules get executed even if
+# files of those names exist.
+.PHONY: all clean
+
+# The first rule is the default, ie. "make",
+# "make all" and "make parking" mean the same
 all: prog
 	time ./prog ~/Documents/femCases/stupidCircle/setup/main	
 
-prog: $(OBJ_FILES)
-	g++ $(LDFLAGS) -o $@ $^
-
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	g++ $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
-
 clean:
-	rm -rf *.o
+	$(RM) $(OBJECTS) $(DEPENDS) prog
 
+# Linking the executable from the object files
+prog: $(OBJECTS)
+	$(CXX) $(WARNING) $(CXXFLAGS) $^ -o $@
+
+-include $(DEPENDS)
+
+%.o: %.cpp Makefile
+	$(CXX) $(WARNING) $(CXXFLAGS) -MMD -MP -c $< -o $@

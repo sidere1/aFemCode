@@ -7,7 +7,7 @@
 #include "Node.h"
 #include "Mesh.h"
 
-#define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
+//#define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
@@ -283,7 +283,7 @@ bool Mesh::addElement(int index, std::vector<Node*> nodes, int feDescriptor, int
     }
 }
 
-bool Mesh::getConnectivities() const
+bool Mesh::printConnectivities() const
 {
     cout << endl << "Mesh contains " << m_elements.size() << " elements : " << endl ; 
     for(unsigned int i = 0; i < m_elements.size(); i++)
@@ -293,7 +293,7 @@ bool Mesh::getConnectivities() const
     return true; 
 }
 
-bool Mesh::getCoordinates() const
+bool Mesh::printCoordinates() const
 {
     cout << endl << "Coordinate table : " << endl;
     cout << "Node           x       y       z " << endl;
@@ -303,6 +303,109 @@ bool Mesh::getCoordinates() const
     }
 
     return true; 
+}
+
+fMatrix<int> Mesh::getConnectivities() const
+{
+	// return a matrix with the connectivities
+	int maxNElem(0);
+	vector<int> nodes;
+	for(unsigned int i = 0 ; i < m_nE ; i++)
+	{
+		if(m_elements[i].getnN() > maxNElem)
+			maxNElem = m_elements[i].getnN();
+	}
+	fMatrix<int> conec(m_nE, maxNElem);    
+	for(unsigned int iE = 0; iE < m_nE ; iE++)
+	{
+		nodes = m_elements[iE].getNodesIds();
+		for(unsigned int iNode = 0 ; iNode < nodes.size() ; iNode++)
+		{
+			conec(iE, iNode) = nodes[iNode];
+		}
+	}
+	return conec; 
+}
+fMatrix<int> Mesh::getConecAndNN() const
+{
+	// return a matrix with the connectivities, for VTK file 
+	// the first row indicates the number of nodes for the corresponding element
+	// the order corresponds to the one required by wtk file format 
+	// in VTK file standard, the first node index is 0, therefore all indexes are shifted 
+		
+	int maxNElem(0);
+	vector<int> nodes;
+	vector<int> n;
+
+	for(unsigned int i = 0 ; i < m_nE ; i++)
+	{
+		if(m_elements[i].getnN() > maxNElem)
+			maxNElem = m_elements[i].getnN();
+	}
+	fMatrix<int> conec(m_nE, maxNElem+1);    
+	for(unsigned int iE = 0; iE < m_nE ; iE++)
+	{
+		n = m_elements[iE].getNodesIds();
+		// reorganizing the nodes in order to match the vtk file format
+		switch (m_elements[iE].getFeDescriptor())
+		{
+			case 22: 
+				nodes = {n[0]-1,n[2]-1,n[1]-1};
+				break;
+			case 42:
+				nodes = {n[0]-1,n[2]-1,n[4]-1,n[1]-1,n[3]-1,n[5]-1};
+				break;
+			default: 
+				cout << "Oui ben faut l'coder mon pote, on peut pas utiliser ça pour l'instant ! Allez allez au boulot !" << endl; 
+				cout << "Mesh::getConecAndNN, not supported element type " << m_elements[iE].getFeDescriptor();
+				break;
+		}
+		conec(iE, 0) = nodes.size();
+		for(unsigned int iNode = 0 ; iNode < nodes.size() ; iNode++)
+		{
+			conec(iE, iNode+1) = nodes[iNode];
+		}
+	}
+	return conec; 
+}
+fMatrix<int> Mesh::getElemTypesVtk() const
+{
+	// return a row vector with the elements types for vtk file
+	
+	fMatrix<int> elemTypes(m_nE, 1);    
+	for(unsigned int iE = 0; iE < m_nE ; iE++)
+	{
+		//see https://examples.vtk.org/site/VTKFileFormats/
+		switch (m_elements[iE].getFeDescriptor())
+		{
+			case 22: // SE3
+				elemTypes(iE, 0) = 21;
+				break;
+			case 42: // T6
+				elemTypes(iE, 0) = 22;
+				break;
+			case 118 : // T10
+				elemTypes(iE, 0) = 24;
+				break;
+			default:
+				cout << "unsupported element type " << m_elements[iE].getFeDescriptor() << " in Mesh::getElemTypesVtk" << endl;
+				break;
+		}
+	}
+	return elemTypes; 
+}
+
+fMatrix<float> Mesh::getCoordinates() const
+{
+	// return a matrix with the coordinates 
+	fMatrix<float> coord(m_nN, 3);
+	for(unsigned int iNode = 0; iNode < m_nN ; iNode++)
+	{
+		coord(iNode, 0) = m_nodes[iNode].getX();
+		coord(iNode, 1) = m_nodes[iNode].getY();
+		coord(iNode, 2) = m_nodes[iNode].getZ();
+	}
+    return coord; 
 }
 
 int Mesh::typeAssign(int nbOfNodes)

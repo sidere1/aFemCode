@@ -4,18 +4,13 @@
 #include "Element.h"
 #include "Node.h"
 
+#define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 using namespace std;
 
 Element::Element() :  m_index(1)//, m_numberOfNodes(3)
 {
 
 }
-
-// Element::Element(int type, int index, std::vector<Node*> nodes): m_type(type), m_index(index)
-// {
-// 	m_nodes = nodes;
-// 	// cout << "element added" << endl; 
-// }
 
 Element::Element(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes): m_index(index),m_feDescriptor(feDescriptor), m_physicalProperty(physicalProperty), m_materialProperty(materialProperty), m_color(color),  m_numberOfNodes(numberOfNodes)
 {
@@ -423,14 +418,14 @@ vector<int> Element::getNodesIds() const
 	}
 	return nodes;
 }
-fMatrix Element::getCoordinates() const
+fMatrix<double> Element::getCoordinates() const
 {
-	fMatrix coord(m_numberOfNodes, 3);
+	fMatrix<double> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
    	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
 	{
-		coord(iNode, 0) = m_nodes[iNode]->getX();
-		coord(iNode, 1) = m_nodes[iNode]->getY();
-		coord(iNode, 2) = m_nodes[iNode]->getZ();
+		coord((unsigned int)iNode, 0) = m_nodes[iNode]->getX();
+		coord((unsigned int)iNode, 1) = m_nodes[iNode]->getY();
+		coord((unsigned int)iNode, 2) = m_nodes[iNode]->getZ();
 	}
 	return coord;
 }

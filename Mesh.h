@@ -22,8 +22,12 @@ public:
     bool addNode(int index, float x, float y, float z);
     bool addElement(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
 	Element getElement(int index) const;
-    bool getConnectivities() const;
-    bool getCoordinates() const;
+    bool printConnectivities() const;
+    bool printCoordinates() const;
+    fMatrix<int> getConnectivities() const;
+    fMatrix<int> getConecAndNN() const;
+    fMatrix<float> getCoordinates() const;
+	fMatrix<int> getElemTypesVtk() const;
     int typeAssign(int nbOfNodes);
     bool isBeginEnd(std::string line);
     bool calculateVolume() ;

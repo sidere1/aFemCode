@@ -30,7 +30,11 @@ public:
     bool readFrequencies(std::string fileToRead, int end);
     bool readMicros(std::string fileToRead, int end);
     bool readLoads(std::string fileToRead);//, int end);
-    bool getFrequencies();
+    
+	bool displayFrequencies();
+    vector<double> getFrequencies();
+    vector<int> getMics();
+	double getC();
 
 	bool displayInfo();
     //bool buildH();

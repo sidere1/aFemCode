@@ -514,6 +514,7 @@ bool Setup::readFrequencies(string fileToRead, int end)
             while(frqFile >> index)
             {
                 frqFile >> freq;
+				//cout << freq << endl;
                 m_frequencies.push_back(freq);
                 // cout << "fréquence : " << index << " | valeur : " << freq << endl;
             }
@@ -679,7 +680,7 @@ bool Setup::readLoads(string fileToRead)//, int end)
     }
 }
 
-bool Setup::getFrequencies()
+bool Setup::displayFrequencies()
 {
     string message;
     writeInfo("Resolution spectrum : \n");
@@ -687,8 +688,30 @@ bool Setup::getFrequencies()
     {
         message = SSTR(i+1) + "      " + SSTR(m_frequencies[i]);
         writeInfo(message);
+		cout << message << endl;
     }
     return true;
+}
+
+vector<double> Setup::getFrequencies()
+{
+	return m_frequencies;
+}
+
+vector<int> Setup::getMics()
+{
+	//vector<int> mics;
+	//cout << "micros size : " << m_micros.size();
+	//for(unsigned int iMic = 0; iMic < m_micros.size() ; iMic ++)
+	//{
+	//	mics.push_back(m_micros[iMic].getIndex());
+	//}
+	return m_microsIndex;
+}
+
+double Setup::getC()
+{
+	return m_c;
 }
 
 bool Setup::displayInfo()
@@ -698,7 +721,7 @@ bool Setup::displayInfo()
 	cout << m_loads.size() << " loads " << endl;  
 	cout << "rho " << m_rho << endl;  
 	cout << "c" << m_c << endl; 
-   	cout << endl; 	
+   	cout << endl;
 	//for (int i = 0; i < m_nCoupling; i++)
 	//{
 	//	cout << i+1 << " : " << m_meshFile[i] << " ; " << m_setupFile[i] << " ; type " << m_couplingType[i] << endl; 

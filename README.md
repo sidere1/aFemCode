@@ -64,6 +64,6 @@ remarques :
 * dans fLinSys, mettre des pointeurs sur les matrices plutot... 
 * remplacer tous les assert par une meilleure gestion des erreurs pour faciliter le debugage 
 * coder l'overload << pour fMatrix ;) 
-
-
-
+* getGauss, N B, etc : static ?? 
+* pour pouvoir calculer le determinant en trace(L)x trace(U), il faudrait mettre la facto en méthode de fMatrix et pas en méthode de fLinSys ! 
+* un writeResults appelé à chaque itération, avec : un writeEnsight, un writeLatexRes, qui sorte les résultats de m_currentSys
