@@ -251,15 +251,19 @@ template<typename T>
 bool fLinSys<T>::solve()
 {
 	fMatrix<T> y(m_size, m_nRhs); 
-	m_l.submat(0,10,0,10).print();
-	m_u.submat(0,10,0,10).print();
 	T sum(0);
 	if (!m_luDone)
 	{
+		cout << "Performing LU factorization" << endl; 
 		m_luDone = fLinSys<T>::buildLU();
 	}
-
+	//m_l.submat(0,45,0,45).print();
+	//m_u.submat(0,45,0,45).print();
+	//m_mat.submat(0,45,0,45).print();
+	
+	//m_u.diag().print();
 	// loop on the rhs 
+	cout << "LU descente - remontée" << endl;
 	for(int l = 0; l < m_nRhs; l++)
 	{
 		// solving Ly = b 

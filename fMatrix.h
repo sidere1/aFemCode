@@ -37,6 +37,27 @@ public:
 	T const & operator()(std::size_t x, std::size_t y) const;
 	// Version d'accès en écriture.
 	T& operator()(std::size_t x, std::size_t y);
+	fMatrix<double> operator=(fMatrix<float> f)
+	{
+		unsigned int M(f.getSizeM());
+		unsigned int N (f.getSizeN());
+		m_m = M; 
+		m_n = N;
+		m_mat[0].resize(M);
+
+		for(unsigned int i = 0; i < M; i++)
+		{
+			m_mat[i].resize(N);
+		}
+		for (unsigned int i = 0;  i < M ; i++)
+		{
+			for(unsigned int j = 0; j < N ; j++)
+			{
+				m_mat[i][j] = f(i,j);
+			}
+		}
+		return *this;
+	}
 
 	// basic operations 
 	//fMatrix<T> operator*(fMatrix<T> const& rightM);
@@ -119,7 +140,6 @@ ostream& operator<<( ostream &out, fMatrix<T> const& mat )
 
 
 
-
 template<typename T>
 fMatrix<T>::fMatrix() : m_m(0), m_n(0)
 {
@@ -137,35 +157,6 @@ fMatrix<T>::fMatrix(unsigned int m, unsigned int n)
 		m_mat[i].resize(m_n);
 	}
 }
-
-
-//template<typename T>
-//fMatrix<T>::fMatrix(int m, int n)
-//{
-//	unsigned int um(m);
-//	unsigned int un(n);
-//	m_m = um;
-//	m_n = un;
-//	m_mat.resize(m_m);
-//	for(unsigned int i = 0; i < m_m ; i++)
-//	{
-//		m_mat[i].resize(m_n);
-//	}
-//}
-//template<typename T>
-//fMatrix<T>::fMatrix(unsigned long m, unsigned long n)
-//{
-//	unsigned int um(m);
-//	unsigned int un(n);
-//	m_m = um;
-//	m_n = un;
-//	m_mat.resize(m_m);
-//	for(unsigned int i = 0; i < m_m ; i++)
-//	{
-//		m_mat[i].resize(m_n);
-//	}
-//}
-
 
 template<typename T>
 fMatrix<T>::~fMatrix()
@@ -280,41 +271,6 @@ T& fMatrix<T>::operator()(std::size_t x, std::size_t y)
     return m_mat[x][y];
 }
 
-// multiplication 
-//template<typename T>
-//fMatrix<T> operator*(fMatrix<T> const& leftM, fMatrix<T> const& rightM)
-//// ca, ca marche pas : fMatrix fMatrix<T>::operator*(fMatrix const & leftM, fMatrix const & rightM)
-//{
-//	T sum(0);
-//    //unsigned int m1(leftM.m_m);
-//    unsigned int m1(leftM.getSizeM());
-//    unsigned int m2(rightM.getSizeM());
-//    unsigned int n1(leftM.getSizeN());
-//    unsigned int n2(rightM.getSizeN());
-//	//fMatrix<T> res(leftM.m_m, rightM.m_n);
-//	fMatrix<T> res(m1, n2);
-//	
-//	if(n1!=m2)
-//	{
-//		cout << "impossible operation. leftM is of size (" << m1 << "," << n1 << "); rightM (" << m2 << "," << n2 << ")." << endl;
-//		assert(n1==m2);
-//	}
-//    
-//	for (unsigned int i = 0 ; i < m1 ; i++)
-//	{
-//		for(unsigned int j = 0; j < n2 ; j++)
-//		{
-//			sum = 0;
-//			for(unsigned int k = 0; k < n1 ; k++)
-//			{
-//				sum+= leftM(i,k)*rightM(k,j);
-//			}
-//			res(i,j)=sum;
-//		}
-//	}
-//
-//    return res;
-//}
 
 template<typename T>
 fMatrix<T> operator*(fMatrix<T> const & leftM, fMatrix<T> const & rightM)
@@ -504,9 +460,9 @@ fMatrix<T> fMatrix<T>::diag() const
 {
 	assert(m_n==m_m);
 	fMatrix diag(m_n, 1);
-	for(int i = 0 ; i < m_m ; i++)
+	for(unsigned int i = 0 ; i < m_m ; i++)
 	{
-		diag(i,i) = m_mat[i][i];
+		diag(i,0) = m_mat[i][i];
 	}
 	return diag;
 }
@@ -584,17 +540,29 @@ T fMatrix<T>::det() const
 	fMatrix<T> u(m_m, m_m);
 	luFact(&l,&u);
 
-	return l.trace()*u.trace();	
-	
-	//T det(0);
-	//if(m_m == 2)
-	//{
-	//	det = m_mat[0][0]*m_mat[1][1]-m_mat[0][1]*m_mat[1][0];
-	//}
-	//else
-	//{
-	//	det = m_mat[0][0];
-	//}
+	T deter(0);
+	if(m_m > 3)
+	{
+		return l.trace()*u.trace();	
+	}
+	if(m_m == 1)
+	{
+		return m_mat[0][0];
+	}
+	if(m_m == 2)
+	{
+		return (m_mat[0][0]*m_mat[1][1])-(m_mat[0][1]*m_mat[1][0]);
+	}
+	if(m_m == 3)
+	{
+		deter = (m_mat[0][0]*((m_mat[1][1]*m_mat[2][2])-(m_mat[2][1]*m_mat[1][2])))-(m_mat[1][0]*((m_mat[0][1]*m_mat[2][2])-(m_mat[2][1]*m_mat[0][2])))+(m_mat[2][0]*((m_mat[0][1]*m_mat[1][2])-(m_mat[1][1]*m_mat[0][2])));
+		return deter;
+	}
+	if(m_m == 0)
+	{// who should require the determinant of an empty matrix ?!? 
+		return 0;
+	}
+	return 0;// otherwise le control il would reach la end of une non-void function....
 }
 
 
@@ -813,6 +781,22 @@ bool fMatrix<T>::setId()
 
 
 
+//template<>
+//fMatrix<double> operator=(fMatrix<float> f)
+//{
+//	M = f.getSizeM();
+//	N = f.getSizeN();
+//	delete(this);
+//	this = new fMatrix<double>(M, N);
+//	for (unsigned int = 0 : i < M ; i++)
+//	{
+//		for(unsigned int j = 0; j < N ; j++)
+//		{
+//			m_mat[i][j] = f(i,j);
+//		}
+//	}
+//	return *this;
+//}
 
 
 

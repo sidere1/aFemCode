@@ -12,7 +12,7 @@ WARNING := -Wall -Wextra
 # The first rule is the default, ie. "make",
 # "make all" and "make parking" mean the same
 all: prog
-	time ./prog ~/Documents/femCases/stupidCircle/setup/main	
+	/usr/bin/time -v ./prog ~/Documents/femCases/stupidCircle/setup/main	
 
 clean:
 	$(RM) $(OBJECTS) $(DEPENDS) prog

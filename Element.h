@@ -28,7 +28,7 @@ public:
 	float getVolume() const;
 	int getnN() const;
 	std::vector<int> getNodesIds() const;
-	fMatrix<double> getCoordinates() const;
+	fMatrix<float> getCoordinates() const;
 private:
     // int m_type;
     int m_index;

@@ -598,6 +598,7 @@ bool FemCase<T>::buildKM()
 	fMatrix<T> *Bg; Bg = new fMatrix<T>(1,1);
 	fMatrix<T> *Bref; Bref = new fMatrix<T>(1,1);
 	fMatrix<T> *JacG; JacG = new fMatrix<T>(1,1);
+	//fMatrix<float> *coordF; coordF = new fMatrix<float>(1,1);
 	fMatrix<T> *coord; coord = new fMatrix<T>(1,1);
 	vector<int> *nodes; nodes = new vector<int>;
 	//fLinSys<T> *temp; temp = new fLinSys<T>();
@@ -642,6 +643,7 @@ bool FemCase<T>::buildKM()
 		coord = new fMatrix<T>(np,3);
 		nodes = new vector<int>; // A REMPLACER PAR UNE MATRICE AVEC TEMPLATE
 		*coord = elem.getCoordinates();
+		//*coord = *coordF;
 		//coord->print();
 		*nodes = elem.getNodesIds();	
 		//cout << nodes->size() << endl;
@@ -734,8 +736,17 @@ bool FemCase<T>::buildKM()
 			*Bg = computeFemB(*JacG, *Bref);
 			*Ke = *Ke + detJac*(*gp)(iG, gw)*(Bg->t())**Bg; 
 			*Me = *Me + detJac*(*gp)(iG, gw)*Ng->t()**Ng;
+			//if(iE == 148)
+			//{
+			//	cout << "Element " << iE << ", gauss point " << iG << endl;
+			//	cout << "detJac = " << detJac << endl;
+			//	cout << "gp = " << (*gp)(iG, gw) << endl;
+			//	cout << "JacG= " << *JacG << endl;
+			//	cout << "Bref = " << *Bref << endl;
+			//	cout << "Bg = " << *Bg << endl;
+			//	cout << "Bg^T*Bg = " << (Bg->t()**Bg) << endl;
+			//}
 		}
-		// Assembling in the global matrices;
 		assert(Ke->getSizeM() == Me->getSizeM()); 
 		assert(Ke->getSizeN() == Me->getSizeN());
 		for (unsigned int i = 0 ; i < Ke->getSizeM() ; i++)
@@ -746,6 +757,16 @@ bool FemCase<T>::buildKM()
 				globalJ = (*nodes)[j]-1;
 				(*currentK)(globalI, globalJ) += (*Ke)(i,j);
 				(*currentM)(globalI, globalJ) += (*Me)(i,j);
+				if(isnan((*Me)(i,j)))
+				{
+					cout << "Found a nan in Me, element " << iE << endl << *Me << endl;
+					return false; 	
+				}
+				if(isnan((*Ke)(i,j)))
+				{
+					cout << "Found a nan in Ke, element " << iE << endl << *Ke << endl;
+					return false;	
+				}
 				//cout << "Ke : ";
 				//cout << *Ke << endl;
 				//return false;
@@ -1212,6 +1233,9 @@ fMatrix<T> FemCase<T>::computeFemB(fMatrix<T> Jac, fMatrix<T> Bref) const
 		fullBref(2,3) = 1;
 		fullBref(2,4) = 1;
 		fullBref(2,5) = 1;
+		//cout << "fullJac.det() : " << endl << fullJac.det(); 
+		//cout << "fullJac.inv() : " << endl;
+		//fullJac.inv().print();
 		B = (fullJac.inv()*fullBref); //.submat(0,1,0,2);
 		//cout << "inside computeFemB" << endl << "fullJac, fullB, B" << endl;
 		//fullJac.print();

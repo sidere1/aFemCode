@@ -21,7 +21,7 @@ public:
     int import2412(std::string unvFileToRead, int position);
     bool addNode(int index, float x, float y, float z);
     bool addElement(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
-	Element getElement(int index) const;
+	Element getElement(unsigned int index) const;
     bool printConnectivities() const;
     bool printCoordinates() const;
     fMatrix<int> getConnectivities() const;
@@ -54,8 +54,8 @@ private:
     std::vector<Element> m_elements;
     std::string m_info;
     std::string m_error;
-	int m_nN;
-	int m_nE;
+	unsigned int m_nN;
+	unsigned int m_nE;
 	double m_dist;
 	double m_surf; 
 	double m_vol;

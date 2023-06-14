@@ -590,7 +590,7 @@ bool Mesh::writeError(string error) const
 bool Mesh::computeAspectRatio()
 {
 	string message("");
-	for(int i = 0; i < m_nE; i++)
+	for(unsigned int i = 0; i < m_nE; i++)
 	{
 		if (!m_elements[i].computeAspectRatio())
 		{
@@ -615,7 +615,7 @@ bool Mesh::contains3D() const
 {return m_3D;}
 
 
-Element Mesh::getElement(int index) const
+Element Mesh::getElement(unsigned int index) const
 {
 	string message("");
 	if (index > m_nE)

@@ -418,9 +418,9 @@ vector<int> Element::getNodesIds() const
 	}
 	return nodes;
 }
-fMatrix<double> Element::getCoordinates() const
+fMatrix<float> Element::getCoordinates() const
 {
-	fMatrix<double> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
+	fMatrix<float> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
    	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
 	{
 		coord((unsigned int)iNode, 0) = m_nodes[iNode]->getX();
