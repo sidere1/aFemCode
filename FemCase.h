@@ -42,7 +42,7 @@ public:
 
 
 	bool displayInfo(); // for debugging purposes 
-	
+	bool isLoaded() const;
 	bool prepareComputation(); // read meshn, renumber, compute volumes, aspect ratios, jacobs, etc. 
 	bool buildFLinSys(); // assemblage
 	bool buildKM(); 
@@ -72,7 +72,8 @@ public:
 	vector<int> swapLines(vector<int> v, vector<int> perm) const;
 
 private:
-    std::string m_info;
+	bool m_loaded;
+	std::string m_info;
     std::string m_error;
 	int m_nCoupling;
     std::string m_mainSetup;
@@ -104,12 +105,13 @@ template <typename T>
 
 FemCase<T>::FemCase()
 {
-
+	m_loaded = false;
 }
 
 template <typename T>
 FemCase<T>::FemCase(std::string setupFile)
 {
+	m_loaded = true;
 	m_nCoupling = 0;
     //opening the setup file 
     string entry;
@@ -186,14 +188,24 @@ FemCase<T>::FemCase(std::string setupFile)
 		{
 			cout << "Reading coupling " << i << m_path + "setup/" + m_setupFile[i] << endl;
 			cout << m_path;
+			WHEREAMI 
 			Setup s(m_path + "setup/" + m_setupFile[i], m_path);
-			m_setup[i] = s;
+			if (s.isLoaded())
+			{
+				m_setup[i] = s;
+			}
+			else
+			{
+				cout << "In FemCase.h, your setup file has not been loaded correctly";
+				m_loaded = false;
+			} 
 		}
     }
     else
     {
         cout << "Your setup file hasn't been found or opened" << endl;    
-    }
+    	m_loaded = false;
+	}
 }
 
 template <typename T>
@@ -210,7 +222,7 @@ int FemCase<T>::addAtribute(int cursor, string entry, string value)
     string message;
     string checkEntry;
     // int count;
-    unsigned int countAim;
+    unsigned int countAim(0);
     switch (cursor)
     {
         case 1 :
@@ -324,7 +336,7 @@ int FemCase<T>::addAtribute(int cursor, string entry, string value)
 
     
         default:
-            message = string("Entry " + SSTR(entry) + string(" was not expected here."));
+            message = string("Entry ")  + entry + string(" was not expected here.");
             writeError(message);
             return  0;
             break;
@@ -453,6 +465,11 @@ bool FemCase<T>::displayInfo()
 	return true; 
 }
 
+template <typename T>
+bool FemCase<T>::isLoaded() const
+{	
+	return m_loaded;
+}
 
 template <typename T>
 bool FemCase<T>::buildFLinSys()

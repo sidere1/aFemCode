@@ -89,7 +89,7 @@ public:
 private: 
 	unsigned int m_m; // il ne faut pas les mettre en const sous peine de voir l'operateur = se faire supprimer... 
 	unsigned int m_n;
-	vector<vector<T>> m_mat;
+	vector<vector<T> > m_mat;
 };
 
 

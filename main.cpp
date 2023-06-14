@@ -44,6 +44,11 @@ int main(int argc, char** argv)
 	
 	//FemCase<complex<double>> fc(setupFile.c_str());
 	FemCase<double> fc(setupFile.c_str());
+	if (!fc.isLoaded())
+	{
+		cout << "Femcase not loaded correctly" << endl;
+		return 0;
+	}
 	fc.displayInfo();	
 	fc.prepareComputation();	
 	fc.buildKM(); // à remplacer par buildFLinSys 	

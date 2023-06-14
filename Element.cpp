@@ -23,7 +23,7 @@ Element::Element(int index, std::vector<Node*> nodes, int feDescriptor, int phys
 	{
 		m_1D = true; 
 	}
-	if ((feDescriptor > 40) || (feDescriptor < 66))
+	if ((feDescriptor > 40) && (feDescriptor < 66))
 	{
 		m_2D = true; 
 	}

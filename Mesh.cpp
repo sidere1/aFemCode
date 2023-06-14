@@ -35,7 +35,8 @@ bool Mesh::unvImport(string unvFileToRead )
     int position;
     int unvBlock;
     string line;
-    string message;
+    //string message;// a eradiquer ! faut le remplacer partout par msg 
+	stringstream msg;
     // string beginEnd("    -1");
     // string beginEnd("    -1");
 
@@ -60,9 +61,11 @@ bool Mesh::unvImport(string unvFileToRead )
                 // unvBlock = std::stoi(line.c_str());
                 if(sscanf(line.c_str(), "%i", &unvBlock) != 1)
                 {
-                    message = string("The unv file does not look like it is supposed to. I expected a block number, I found ") + SSTR(unvBlock); 
-                    writeError(message);
-                    cout << message;
+					msg << "The unv file does not look like it's supposed to. I expected a block number and found " << unvBlock;
+                    //message = msg.str();
+					//message = string("The unv file does not look like it is supposed to. I expected a block number, I found ") + SSTR(unvBlock); 
+                    writeError(msg.str());
+                    cout << msg.str();
                 }
                 
                 position = importFile.tellg();
@@ -72,24 +75,24 @@ bool Mesh::unvImport(string unvFileToRead )
                         // cout << "Reading nodes (block unv 2411)" << endl; 
                         writeInfo("Reading nodes (block unv 2411)") ;
                         importFile.seekg(import2411(unvFileToRead, position));
-                        message = string("-> ") + SSTR(m_nodes.size()) + string(" nodes read");
-                        writeInfo(message);
-                        cout << message << endl; 
+                        msg << "-> " << m_nodes.size() << " nodes read";
+                        writeInfo(msg.str());
+                        cout << msg.str() << endl; 
                         break;
 
                     case (2412):
                         // cout << "Reading connectivities (block unv 2412)" << endl; 
                         writeInfo("Reading connectivities (block unv 2412)");
                         importFile.seekg(import2412(unvFileToRead, position));
-                        message = string("-> ") + SSTR(m_elements.size()) + string(" elements read");
-                        writeInfo(message);
-                        cout << message << endl; 
+                        msg << "-> " << m_elements.size() << " elements read";
+                        writeInfo(msg.str());
+                        cout << msg.str() << endl; 
 						break;
                 
                     default:
                         // cout << "Unknown block : " << line << endl ; 
-                        message = "Unknown block : " + line ; 
-                        writeInfo(message);
+                        msg << "Unknown block : " << line ; 
+                        writeInfo(msg.str());
                         while(!isBeginEnd(line))
                         {
                             getline(importFile, line);
@@ -105,14 +108,15 @@ bool Mesh::unvImport(string unvFileToRead )
     // Si le fichier ne s'est pas ouvert correctement on s'arrête là 
     else 
     {
-        cout << "Mesh file " << unvFileToRead << " could not be openend, file  " << __FILE__ << " line "  << __LINE__ << endl;
-        message = string("Mesh file ") + unvFileToRead + string(" could not be openend, file  ") + __FILE__  + string (" line ") + SSTR(__LINE__);
+        // cout << "Mesh file " << unvFileToRead << " could not be openend, file " << __FILE__ << " line "  << __LINE__ << endl;
+        msg << "Mesh file " << unvFileToRead << " could not be openend, file " << __FILE__  << " line " << __LINE__;
         // message = "Mesh file " + unvFileToRead  ; 
         // message = message + " could not be openend, file "  ; 
         // message = message + __FILE__ ; 
         // message = message + SSTR(__LINE__) ; 
         //+ " could not be openend, file  " + __FILE__ + " line "  + __LINE__ ;
-        writeError(message);
+        writeError(msg.str());
+		cout << msg.str() << endl;
         return false;
     }
             

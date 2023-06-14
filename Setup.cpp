@@ -60,18 +60,13 @@ Setup::Setup(std::string setupFile, std::string path):m_path(path)
             }
             
         }
-
-        //writeInfo("Reading Mesh");
-        //m_mesh = Mesh(m_info, m_error);
-        //m_mesh.unvImport(getMeshFile());
-        //writeInfo("Ok\n\n");
-
-
+		m_loaded = true;
     }
     else
     {
         cout << "Your setup file hasn't been found or opened" << endl;    
-    }
+    	m_loaded = false;
+	}
 }
 
 Setup::~Setup()
@@ -131,43 +126,13 @@ Setup::~Setup()
 
 int Setup::addAtribute(int cursor, string entry, string value) 
 {// we return the number of line that should be skipped 
-    string message;
-    string checkEntry;
+    //string message;
+    stringstream msg;
+	string checkEntry;
     // int count;
     unsigned int countAim;
     switch (cursor)
     {
-        //case 1 :
-        //{
-        //    if (entry != "info") 
-        //    {
-        //        cout << "Please check your setup file. Found " << entry << " instead of info." << endl;
-        //        message = string("Please check your setup file. Found") + entry + string( " instead of info.");
-        //        writeError(message);
-        //        break;
-        //    }
-        //    else
-        //    {
-        //        setInfo(value);
-        //        return 0;
-        //    }
-        //    break;
-        //}
-        //case 2 :
-        //{
-        //    if (entry != "errors") 
-        //    {
-        //        cout << "Please check your setup file. Found " << entry << " instead of errors." << endl;
-        //        break;
-        //    }
-        //    else
-        //    {
-        //        setError(value);
-        //        return 0;
-        //    }
-        //    break;
-        //}
-
         case 1 :
         {
             if (entry != "3D") 
@@ -192,29 +157,13 @@ int Setup::addAtribute(int cursor, string entry, string value)
             break;
         }
 
-        //case 4 :
-        //{
-        //    if (entry != "meshFile") 
-        //    {
-        //        cout << "Please check your setup file. Found " << entry << " instead of meshFile." << endl;
-        //        break;
-        //    }
-        //    else
-        //    {
-		//		cout << "deprecated" << endl; 
-        //        //setMeshFile(value);
-        //        return 0;
-        //    }
-        //    break;
-        //}
-
         case 2 :
         {
             if (entry != "nodal") 
             {
-                cout << "Please check your setup file. Found " << entry << " instead of nodal." << endl;
-                message = string("Please check your setup file. Found") + entry + string( " instead of nodal.");
-                writeError(message);
+                msg << "Please check your setup file. Found" << entry <<" instead of nodal.";
+                writeError(msg.str());
+				cout << msg.str() << endl;
                 break;
             }
             else
@@ -241,9 +190,9 @@ int Setup::addAtribute(int cursor, string entry, string value)
 
             if (entry.compare(checkEntry) != 0) 
             {
-                cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; ////////////////À PROPAGER DANS LES PRÉCÉDENTS ////////////////
-                message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-                writeError(message);
+                //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; ////////////////À PROPAGER DANS LES PRÉCÉDENTS ////////////////
+                msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
+                writeError(msg.str());
                 break;
             }
             else
@@ -276,9 +225,11 @@ int Setup::addAtribute(int cursor, string entry, string value)
 
             if (entry.compare(checkEntry) != 0) 
             {
-                cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; 
-                message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-                writeError(message);
+                //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; 
+                //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
+                //writeError(message);
+                msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
+                writeError(msg.str());
                 break;
             }
             else
@@ -311,9 +262,11 @@ int Setup::addAtribute(int cursor, string entry, string value)
 
             if (entry.compare(checkEntry) != 0) 
             {
-                cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; 
-                message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-                writeError(message);
+                //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; 
+                //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
+                //writeError(message);
+                msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
+                writeError(msg.str());
                 break;
             }
             else
@@ -325,20 +278,8 @@ int Setup::addAtribute(int cursor, string entry, string value)
                 }
                 else
                 {
-                    message = "Expected a filename with .femload extension";
-                    writeError(message);
-
-
-                    // countAim = atoi(value.c_str());
-                    // ///////////// IL FAUDRAIT CHECKER QUE LA CONVERSION A BIEN MARCHÉ /////////////////////////
-                    // // readLoads(m_setupFile,countAim);    
-                    // readLoads(m_setupFile);    
-                    // cout << "countaim vaut " << countAim << " et m_loads.size "<< m_microsIndex.size() << endl;
-                    // if (countAim != m_microsIndex.size())
-                    // {
-                    //     cout << "erreur cheloue Setup.cpp ligne " << __LINE__ << endl;
-                    // }    
-                    // return countAim;
+                    msg << "Expected a filename with .femload extension";
+                    writeError(msg.str());
                     return 0;
                 }
             }
@@ -350,9 +291,11 @@ int Setup::addAtribute(int cursor, string entry, string value)
 
             if (entry.compare(checkEntry) != 0) 
             {
-                message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-                cout << message << endl; 
-				writeError(message);
+                //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
+                //cout << message << endl; 
+				//writeError(message);
+                msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
+                writeError(msg.str());
                 break;
             }
             else
@@ -367,9 +310,11 @@ int Setup::addAtribute(int cursor, string entry, string value)
 
             if (entry.compare(checkEntry) != 0) 
             {
-                message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-                cout << message << endl; 
-				writeError(message);
+                //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
+                //cout << message << endl; 
+				//writeError(message);
+                msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
+                writeError(msg.str());
                 break;
             }
             else
@@ -380,8 +325,9 @@ int Setup::addAtribute(int cursor, string entry, string value)
         }     
     
         default:
-            message = string("Entry " + SSTR(entry) + string(" was not expected here."));
-            writeError(message);
+            msg << "Entry " << entry << " was not expected here.";
+            writeError(msg.str());
+			cout << msg.str() << endl;
             return  0;
             break;
     }
@@ -682,14 +628,14 @@ bool Setup::readLoads(string fileToRead)//, int end)
 
 bool Setup::displayFrequencies()
 {
-    string message;
+    stringstream msg;
     writeInfo("Resolution spectrum : \n");
     for(unsigned int i = 0; i < m_frequencies.size(); i++)
     {
-        message = SSTR(i+1) + "      " + SSTR(m_frequencies[i]);
-        writeInfo(message);
-		cout << message << endl;
+        msg << i+1 << "      " << m_frequencies[i] << endl;
     }
+    writeInfo(msg.str());
+	cout << msg.str() << endl;
     return true;
 }
 
@@ -727,4 +673,9 @@ bool Setup::displayInfo()
 	//	cout << i+1 << " : " << m_meshFile[i] << " ; " << m_setupFile[i] << " ; type " << m_couplingType[i] << endl; 
 	//}
 	return true; 
+}
+
+bool Setup::isLoaded()
+{
+	return m_loaded;
 }

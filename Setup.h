@@ -37,6 +37,7 @@ public:
 	double getC();
 
 	bool displayInfo();
+	bool isLoaded();
     //bool buildH();
     //bool printH() const;
 
@@ -47,6 +48,7 @@ public:
 private:
     std::string m_setupFile;
 	std::string m_path;
+	bool m_loaded;
 	//Mesh m_mesh;
     std::vector<double> m_frequencies;
     std::vector<Node> m_micros;// pointeur sur des noeuds ? pas utilise
