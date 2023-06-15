@@ -16,11 +16,67 @@
 //#include "Mesh.h"
 //#include "PointLoad.h"
 #include "FemCase.h"
+#include <Eigen/Dense>
+
 
 using namespace std;
+using Eigen::MatrixXd;
+using Eigen::VectorXd;
+
 
 int main(int argc, char** argv)
 {
+
+	unsigned int n(1000);
+	MatrixXd A = MatrixXd::Random(n,n);
+	VectorXd x = MatrixXd::Random(n,1);
+	
+	fMatrix<double> B(n,n);
+	fMatrix<double> y(n,1);
+	B.fill();
+	y.fill();
+
+	fLinSys<double> f(B,y);
+
+	cout << "EEEEEEET C'EST LE TSEEEEET !!" << endl;
+
+	// Eigen 
+	cout << "Eigen fullPivLU    : " ;
+	clock_t tStart = clock();
+	VectorXd a = A.fullPivLu().solve(x);
+	cout << clock()-tStart << endl;
+	
+	// Eigen 
+	cout << "Eigen partialPivLU : "; 
+	tStart = clock();
+	a = A.partialPivLu().solve(x);
+	cout << clock()-tStart << endl;
+	
+	// Eigen 
+	cout << "Eigen : QR         : "; 
+	tStart = clock();
+	a = A.colPivHouseholderQr().solve(x);
+	cout << clock()-tStart << endl;
+	
+	// Eigen 
+	cout << "Eigen LDLt         : ";
+	tStart = clock();
+	a = A.ldlt().solve(x);
+	cout << clock()-tStart << endl;
+	
+	// fMatrix 
+	cout << "fMatrix            : " ;
+	tStart = clock();
+	f.solve();	
+	cout << clock()-tStart << endl;
+	
+	// Fin du tset 
+	cout << "Fin du tset." << endl;
+
+
+	return 0;
+
+
 	srand (time(NULL));
 	cout << endl << endl; 	
 	assert(argc == 2 && "please provide the name of the setup file as parameter in the command line");

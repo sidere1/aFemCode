@@ -2,8 +2,7 @@ SOURCES := $(wildcard *.cpp)
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 
-CXXFLAGS := -std=c++11 -Wall -Wextra -pedantic -g
-
+CXXFLAGS := -std=c++11 -Wall -Wextra -pedantic -g -O3 -fopenmp
 # ADD MORE WARNINGS!
 WARNING := -Wall -Wextra
 

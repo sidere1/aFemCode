@@ -254,7 +254,7 @@ bool fLinSys<T>::solve()
 	T sum(0);
 	if (!m_luDone)
 	{
-		cout << "Performing LU factorization" << endl; 
+		//cout << "Performing LU factorization" << endl; 
 		m_luDone = fLinSys<T>::buildLU();
 	}
 	//m_l.submat(0,45,0,45).print();
@@ -263,7 +263,7 @@ bool fLinSys<T>::solve()
 	
 	//m_u.diag().print();
 	// loop on the rhs 
-	cout << "LU descente - remontée" << endl;
+	//cout << "LU descente - remontée" << endl;
 	for(int l = 0; l < m_nRhs; l++)
 	{
 		// solving Ly = b 
@@ -288,7 +288,7 @@ bool fLinSys<T>::solve()
 				sum += m_u(i,k)*m_solution(k,l);
 			}
 			//cout << sum << endl;
-			cout << abs(m_u(i,i)) << endl;
+			//cout << abs(m_u(i,i)) << endl;
 			assert(abs(m_u(i,i)) > m_eps);
 			m_solution(i,l) = (y(i,l) - sum)/m_u(i,i);
 		}
