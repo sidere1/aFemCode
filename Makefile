@@ -1,8 +1,17 @@
+# preparing different actions depending of the OS 
+UNAME := $(shell uname)
+
+
 SOURCES := $(wildcard *.cpp)
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 
+ifeq ($(UNAME), Darwin)
+CXXFLAGS := -std=c++11 -g -O3 -I/opt//homebrew/Cellar/eigen/3.4.0_1/lib/
+endif
+ifeq ($(UNAME), Linux)
 CXXFLAGS := -std=c++11 -g -O3 -fopenmp
+endif
 
 # ADD MORE WARNINGS!
 WARNING := -Wall -Wextra -pedantic -Wtautological-overlap-compare
@@ -11,8 +20,6 @@ WARNING := -Wall -Wextra -pedantic -Wtautological-overlap-compare
 # files of those names exist.
 .PHONY: all clean
 
-# preparing different actions depending of the OS 
-UNAME := $(shell uname)
 
 # The first rule is the default, ie. "make",
 # "make all" and "make parking" mean the same
