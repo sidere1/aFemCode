@@ -188,7 +188,6 @@ FemCase<T>::FemCase(std::string setupFile)
 		{
 			cout << "Reading coupling " << i << m_path + "setup/" + m_setupFile[i] << endl;
 			cout << m_path;
-			WHEREAMI 
 			Setup s(m_path + "setup/" + m_setupFile[i], m_path);
 			if (s.isLoaded())
 			{
@@ -534,7 +533,7 @@ bool FemCase<T>::performResolution()
 			//cout << endl << endl << endl ;
 			linSys->solve();
 			cout << endl << endl << endl ;
-			cout << linSys->getSolution()(1,0) << endl;
+			//cout << linSys->getSolution()(1,0) << endl;
 			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
 			{
 				//values.push_back(iMic);

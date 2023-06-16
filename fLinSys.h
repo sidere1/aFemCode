@@ -144,45 +144,11 @@ bool fLinSys<T>::fillMatrix()
 template<typename T>
 bool fLinSys<T>::buildLU()
 {
-	//fMatrix<T> l;
-	//fMatrix<T> u;
-	//
-	//l = new fMatrix<T>(m_size, m_size);
-	//u = new fMatrix<T>(m_size, m_size);
-	return m_mat.luFact(&m_l, &m_u);
-	//T sum(0);
-	//for(int i = 0; i < m_size-1; i++)	
-	//{
-	//	for(int j = i ; j < m_size ; j++)
-	//	{
-	//		sum = 0;
-	//		for(int k = 0; k < i; k++)
-	//		{
-	//			sum += m_l(i,k) * m_u(k,j);
-	//		}
-	//		m_u(i,j) = m_mat(i,j) - sum;
-	//	}
-	//	for(int j = i+1 ; j < m_size ; j++)
-	//	{
-	//		sum = 0;
-	//		for(int k = 0; k < i; k++)
-	//		{
-	//			sum += m_l(j,k) * m_u(k,i);
-	//		}
-	//		m_l(j,i) = 1/m_u(i,i)*(m_mat(j,i) - sum);
-	//	}
-	//}
-	//sum = 0;
-	//for(int k = 0 ; k < m_size-1 ; k++)
-	//{
-	//	sum+=m_l(m_size-1,k)*m_u(k,m_size-1);
-	//}
-	//m_u(m_size-1,m_size-1) = m_mat(m_size-1,m_size-1) - sum;
-	//for(int i = 0 ; i < m_size ; i++)
-	//{
-	//	m_l(i,i) = 1;
-	//}
-	//return true; 
+	if (!m_luDone)
+	{
+		m_luDone = m_mat.luFact(&m_l, &m_u);
+	}
+	return m_luDone;
 }
 
 template<typename T>
@@ -257,13 +223,8 @@ bool fLinSys<T>::solve()
 		cout << "Performing LU factorization" << endl; 
 		m_luDone = fLinSys<T>::buildLU();
 	}
-	//m_l.submat(0,45,0,45).print();
-	//m_u.submat(0,45,0,45).print();
-	//m_mat.submat(0,45,0,45).print();
-	
-	//m_u.diag().print();
 	// loop on the rhs 
-	cout << "LU descente - remontée" << endl;
+	//cout << "LU descente - remontée" << endl;
 	for(int l = 0; l < m_nRhs; l++)
 	{
 		// solving Ly = b 
@@ -288,33 +249,12 @@ bool fLinSys<T>::solve()
 				sum += m_u(i,k)*m_solution(k,l);
 			}
 			//cout << sum << endl;
-			cout << abs(m_u(i,i)) << endl;
+			//cout << abs(m_u(i,i)) << endl;
 			assert(abs(m_u(i,i)) > m_eps);
 			m_solution(i,l) = (y(i,l) - sum)/m_u(i,i);
 		}
 	
 	}
-	// printing results 
-	// cout << endl << "Result for first RHS " << endl ;
-	// for (int i = 0; i< m_size ; i++)
-	// {
-	// 	cout << m_solution[i][1] << endl; 
-	// }
-	
-	//for (int l=0; l < m_nRhs ; l++)
-	//{
-	//	cout << endl << "A*x(" << l+1 << ") " << endl ;
-	//	for (int i = 0; i< m_size ; i++)
-	//	{
-	//		sum = 0;
-	//		for (int k = 0 ; k < m_size ; k++)
-	//		{
-	//			sum += m_mat[i][k]*m_solution[k][l];
-	//		}
-	//		cout << sum << endl; 
-	//	}
-	//}
-
 	m_solved = true;
 	return true; 
 }
