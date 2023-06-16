@@ -6,7 +6,6 @@
 #include <time.h>
 #include <cassert>
 #include <complex>
-
 #include <Eigen/Dense>
 
 #include "fMatrix.h"
