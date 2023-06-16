@@ -220,7 +220,7 @@ bool fLinSys<T>::solve()
 	T sum(0);
 	if (!m_luDone)
 	{
-		cout << "Performing LU factorization" << endl; 
+		//cout << "Performing LU factorization" << endl; 
 		m_luDone = fLinSys<T>::buildLU();
 	}
 	// loop on the rhs 

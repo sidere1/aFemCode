@@ -2,10 +2,10 @@ SOURCES := $(wildcard *.cpp)
 OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 
-CXXFLAGS := -std=c++11 -pedantic -g -Wtautological-overlap-compare
+CXXFLAGS := -std=c++11 -g -O3 -fopenmp
 
 # ADD MORE WARNINGS!
-WARNING := -Wall -Wextra
+WARNING := -Wall -Wextra -pedantic -Wtautological-overlap-compare
 
 # .PHONY means these rules get executed even if
 # files of those names exist.
