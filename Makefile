@@ -30,12 +30,24 @@ endif
 ifeq ($(UNAME), Linux)
 	/usr/bin/time -v ./prog ~/Documents/femCases/stupidCircle/setup/main	
 endif
+
+test:prog_test
+ifeq ($(UNAME), Darwin)
+	/usr/bin/time -lp tests/prog_test
+endif
+ifeq ($(UNAME), Linux)
+	/usr/bin/time -v ./prog_test
+endif
+
 clean:
 	$(RM) $(OBJECTS) $(DEPENDS) prog
 
 # Linking the executable from the object files
 prog: $(OBJECTS)
 	$(CXX) $(WARNING) $(CXXFLAGS) $^ -o $@
+
+prog_test: $(OBJECTS) tests/main.o
+	$(CXX) $(WARNING) $(CXXFLAGS) Element.o FemCase.o Mesh.o Node.o PointLoad.o Setup.o fLinSys.o fMatrix.o tests/main.o  -o tests/prog_test
 
 -include $(DEPENDS)
 

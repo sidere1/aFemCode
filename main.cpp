@@ -7,15 +7,17 @@
 #include <cassert>
 #include <complex>
 #include <Eigen/Dense>
+#include <Eigen/Sparse>
 
 #include "fMatrix.h"
 #include "FemCase.h"
 
 
 using namespace std;
-using Eigen::MatrixXd;
-using Eigen::VectorXd;
-
+//using Eigen::MatrixXd;
+//using Eigen::VectorXd;
+typedef Eigen::SparseMatrix<double> SpMatXd;
+typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
 
 int main(int argc, char** argv)
 {

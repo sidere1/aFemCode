@@ -1,6 +1,7 @@
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <time.h>
@@ -9,8 +10,9 @@
 
 
 
-#include "fMatrix.h"
-#include "FemCase.h"
+#include "../fMatrix.h"
+#include "../fLinSys.h"
+//#include "FemCase.h"
 #include <Eigen/Dense>
 
 
@@ -21,6 +23,16 @@ using Eigen::VectorXd;
 
 int main(int argc, char** argv)
 {
+	string fileName("compEigenVsfMatrix");
+	cout << fileName << endl;
+	ofstream resFile(fileName.c_str(), ios::app);
+
+	if(!resFile)
+	{
+		return 0;
+	}
+
+	
 	unsigned int n(1000);
 	MatrixXd A = MatrixXd::Random(n,n);
 	VectorXd x = MatrixXd::Random(n,1);
