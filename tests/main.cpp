@@ -23,7 +23,7 @@ using Eigen::VectorXd;
 
 int main(int argc, char** argv)
 {
-	string fileName("compEigenVsfMatrix");
+	string fileName("tests/compEigenVsfMatrix");
 	cout << fileName << endl;
 	ofstream resFile(fileName.c_str(), ios::app);
 
@@ -32,8 +32,9 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	
-	unsigned int n(1000);
+	assert(argc == 2 && "please provide n as parameter in the command line");
+
+	unsigned int n(stoi(argv[1]));
 	MatrixXd A = MatrixXd::Random(n,n);
 	VectorXd x = MatrixXd::Random(n,1);
 	
@@ -44,37 +45,43 @@ int main(int argc, char** argv)
 
 	fLinSys<double> f(B,y);
 
-	cout << "EEEEEEET C'EST LE TSEEEEET !!" << endl;
+	cout << "Using n = " << n << endl;
+	resFile << n << "					" ;
 
 	// Eigen 
 	cout << "Eigen fullPivLU    : " ;
 	clock_t tStart = clock();
 	VectorXd a = A.fullPivLu().solve(x);
 	cout << clock()-tStart << endl;
+	resFile << clock()-tStart << "					" ;
 	
 	// Eigen 
 	cout << "Eigen partialPivLU : "; 
 	tStart = clock();
 	a = A.partialPivLu().solve(x);
 	cout << clock()-tStart << endl;
+	resFile << clock()-tStart << "					" ;
 	
 	// Eigen 
 	cout << "Eigen : QR         : "; 
 	tStart = clock();
 	a = A.colPivHouseholderQr().solve(x);
 	cout << clock()-tStart << endl;
+	resFile << clock()-tStart << "					" ;
 	
 	// Eigen 
 	cout << "Eigen LDLt         : ";
 	tStart = clock();
 	a = A.ldlt().solve(x);
 	cout << clock()-tStart << endl;
+	resFile << clock()-tStart << "					" ;
 	
 	// fMatrix 
 	cout << "fMatrix            : " ;
 	tStart = clock();
 	f.solve();	
 	cout << clock()-tStart << endl;
+	resFile << clock()-tStart << "					" << endl;
 	
 	// Fin du tset 
 	cout << "Fin du tset." << endl;

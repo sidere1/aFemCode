@@ -7,14 +7,14 @@ OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 
 ifeq ($(UNAME), Darwin)
-CXXFLAGS := -std=c++11 -g -O3 -I/opt//homebrew/Cellar/eigen/3.4.0_1/lib/
+CXXFLAGS := -std=c++11 -g O3 -I/opt//homebrew/Cellar/eigen/3.4.0_1/lib/
 endif
 ifeq ($(UNAME), Linux)
-CXXFLAGS := -std=c++11 -g -O3 -fopenmp
+CXXFLAGS := -std=c++11 -g -O3
 endif
 
 # ADD MORE WARNINGS!
-WARNING := -Wall -Wextra -pedantic -Wtautological-overlap-compare
+WARNING := -Wall -Wextra -pedantic -Wtautological-compare
 
 # .PHONY means these rules get executed even if
 # files of those names exist.
@@ -33,14 +33,14 @@ endif
 
 test:prog_test
 ifeq ($(UNAME), Darwin)
-	/usr/bin/time -lp tests/prog_test
+	/usr/bin/time -lp tests/prog_test 10
 endif
 ifeq ($(UNAME), Linux)
-	/usr/bin/time -v ./prog_test
+	/usr/bin/time -v tests/prog_test 10
 endif
 
 clean:
-	$(RM) $(OBJECTS) $(DEPENDS) prog
+	$(RM) $(OBJECTS) $(DEPENDS) prog prog_test
 
 # Linking the executable from the object files
 prog: $(OBJECTS)
