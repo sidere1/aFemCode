@@ -46,42 +46,42 @@ int main(int argc, char** argv)
 	fLinSys<double> f(B,y);
 
 	cout << "Using n = " << n << endl;
-	resFile << n << "					" ;
+	resFile << n << " " ;
 
 	// Eigen 
 	cout << "Eigen fullPivLU    : " ;
 	clock_t tStart = clock();
 	VectorXd a = A.fullPivLu().solve(x);
 	cout << clock()-tStart << endl;
-	resFile << clock()-tStart << "					" ;
+	resFile << clock()-tStart << " " ;
 	
 	// Eigen 
 	cout << "Eigen partialPivLU : "; 
 	tStart = clock();
 	a = A.partialPivLu().solve(x);
 	cout << clock()-tStart << endl;
-	resFile << clock()-tStart << "					" ;
+	resFile << clock()-tStart << " " ;
 	
 	// Eigen 
 	cout << "Eigen : QR         : "; 
 	tStart = clock();
 	a = A.colPivHouseholderQr().solve(x);
 	cout << clock()-tStart << endl;
-	resFile << clock()-tStart << "					" ;
+	resFile << clock()-tStart << " " ;
 	
 	// Eigen 
 	cout << "Eigen LDLt         : ";
 	tStart = clock();
 	a = A.ldlt().solve(x);
 	cout << clock()-tStart << endl;
-	resFile << clock()-tStart << "					" ;
+	resFile << clock()-tStart << " " ;
 	
 	// fMatrix 
 	cout << "fMatrix            : " ;
 	tStart = clock();
 	f.solve();	
 	cout << clock()-tStart << endl;
-	resFile << clock()-tStart << "					" << endl;
+	resFile << clock()-tStart << endl ;
 	
 	// Fin du tset 
 	cout << "Fin du tset." << endl;

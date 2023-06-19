@@ -5,7 +5,7 @@ filename = "compEigenVsfMatrix";
 
 x = dlmread(filename);
 x = x(2:end, :);
-disp(x);
+%disp(x);
 n = x(:,1);
 
 
