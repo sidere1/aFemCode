@@ -9,7 +9,8 @@
 #include <cassert>
 #include <sys/stat.h>
 #include "Setup.h"
-#include "fMatrix.h"
+//#include "Eigen::SparseMatrix.h"
+#include <Eigen/Sparse>
 #include <vector> 
 #include <complex>
 #include "fLinSys.h"
@@ -18,6 +19,11 @@
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
+
+#include <Eigen/Sparse>
+typedef Eigen::SparseMatrix<double> SpMatXd;
+typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
+// ces typedef ne sont aps utilisés normalement... 
 
 template <typename T>
 class FemCase
@@ -51,10 +57,10 @@ public:
 	bool performResolution(); // solve 
 
 	// Assembly functions 
-	fMatrix<T> *getGauss(int element, int order);
-	fMatrix<T> *getN(int element, fMatrix<T> gp);
-	fMatrix<T> *getB(int element, fMatrix<T> gp);
-	fMatrix<T> computeFemB(fMatrix<T> Jac, fMatrix<T> Bref) const; 
+	Eigen::SparseMatrix<T> *getGauss(int element, int order);
+	Eigen::SparseMatrix<T> *getN(int element, Eigen::SparseMatrix<T> gp);
+	Eigen::SparseMatrix<T> *getB(int element, Eigen::SparseMatrix<T> gp);
+	Eigen::SparseMatrix<T> computeFemB(Eigen::SparseMatrix<T> Jac, Eigen::SparseMatrix<T> Bref) const; 
 
 
 	// postProcessing 
@@ -65,7 +71,7 @@ public:
 	bool writeMicFrequencies();
 
 	bool writeVtkMesh(string filename) const;
-	bool writeVtkData(string filename, string dataName, fMatrix<T> data) const;
+	bool writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data) const;
 
 
 	// crade sa mere la race de sa grand mere 
@@ -85,16 +91,16 @@ private:
 	std::string m_path;
 	// tout ça dans une Class storedResults ?
 	// pour plusieurs couplings : un vecteur de storedResults ?  
-	fMatrix<T> *m_Kvol;
-	fMatrix<T> *m_Ksurf;
-	fMatrix<T> *m_Kseg;
-	fMatrix<T> *m_Mvol;
-	fMatrix<T> *m_Msurf;
-	fMatrix<T> *m_Mseg;
-	fMatrix<T> *m_Fvol;
-	fMatrix<T> *m_Fsurf;
-	fMatrix<T> *m_Fseg;
-	fMatrix<T> *currentSys;
+	Eigen::SparseMatrix<T> *m_Kvol;
+	Eigen::SparseMatrix<T> *m_Ksurf;
+	Eigen::SparseMatrix<T> *m_Kseg;
+	Eigen::SparseMatrix<T> *m_Mvol;
+	Eigen::SparseMatrix<T> *m_Msurf;
+	Eigen::SparseMatrix<T> *m_Mseg;
+	Eigen::SparseMatrix<T> *m_Fvol;
+	Eigen::SparseMatrix<T> *m_Fsurf;
+	Eigen::SparseMatrix<T> *m_Fseg;
+	Eigen::SparseMatrix<T> *currentSys;
 };
 
 
@@ -506,7 +512,7 @@ bool FemCase<T>::performResolution()
 	double k(0);
 	int nNodes(m_mesh[0]->getNodesNumber());
 	vector<double> frequencies(m_setup[0].getFrequencies());
-	currentSys = new fMatrix<T>(nNodes, nNodes);
+	currentSys = new Eigen::SparseMatrix<T>(nNodes, nNodes);
 
 	// preparing results 
 	vector<int> mics = m_setup[0].getMics();
@@ -578,27 +584,27 @@ bool FemCase<T>::buildKM()
 	Element elem;// current element
 	string message("");
 	vector<int> perm;
-	fMatrix<T> *currentK; 
-	fMatrix<T> *currentM;
-   	fMatrix<T> *Ke; Ke = new fMatrix<T>(1,1); 
-	fMatrix<T> *Me; Me = new fMatrix<T>(1,1);
+	Eigen::SparseMatrix<T> *currentK; 
+	Eigen::SparseMatrix<T> *currentM;
+   	Eigen::SparseMatrix<T> *Ke; Ke = new Eigen::SparseMatrix<T>(1,1); 
+	Eigen::SparseMatrix<T> *Me; Me = new Eigen::SparseMatrix<T>(1,1);
 	int np(0); // number of nodes in the current element
 	int gw(0); // index of the column containing the weights 
 	int ngp(0); // number of gauss points
 	int nb(0); // number of lines in the gradient matrix
 	double detJac(0);
-	fMatrix<T> one(nN, 1);
-	one.setOne();
-	fMatrix<T> check(1,1);
+	Eigen::SparseMatrix<T> one(nN, 1);
+	one = MatrixXd::Constant(nN, 1, 1); // chuis pas sûr 
+	Eigen::SparseMatrix<T> check(1,1);
 
 	// pointers on gauss points tables, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 
-	fMatrix<T> *gp_se3 = getGauss(22, 5);
-	fMatrix<T> *gp_t6 = getGauss(42, 4);
+	Eigen::SparseMatrix<T> *gp_se3 = getGauss(22, 5);
+	Eigen::SparseMatrix<T> *gp_t6 = getGauss(42, 4);
 	// idem for shape functions 
-	fMatrix<T> *N_se3 = getN(22, *gp_se3);
-	fMatrix<T> *N_t6 = getN(42, *gp_t6);
-	fMatrix<T> *B_se3 = getB(22, *gp_se3);	
-	fMatrix<T> *B_t6 = getB(42, *gp_t6);	
+	Eigen::SparseMatrix<T> *N_se3 = getN(22, *gp_se3);
+	Eigen::SparseMatrix<T> *N_t6 = getN(42, *gp_t6);
+	Eigen::SparseMatrix<T> *B_se3 = getB(22, *gp_se3);	
+	Eigen::SparseMatrix<T> *B_t6 = getB(42, *gp_t6);	
 	
 	//gp_se3->print();
 	//gp_t6->print();
@@ -607,15 +613,15 @@ bool FemCase<T>::buildKM()
 	//B_se3->print();
 	//B_t6->print();
 
-	fMatrix<T> *gp;// gauss points and weights for current element 
-	fMatrix<T> *N;// shape functions for current element 
-	fMatrix<T> *Ng; Ng = new fMatrix<T>(1,1);// shape functions for current gauss point. Submat of *N
-	fMatrix<T> *B; // idem for gradient matrix
-	fMatrix<T> *Bg; Bg = new fMatrix<T>(1,1);
-	fMatrix<T> *Bref; Bref = new fMatrix<T>(1,1);
-	fMatrix<T> *JacG; JacG = new fMatrix<T>(1,1);
-	//fMatrix<float> *coordF; coordF = new fMatrix<float>(1,1);
-	fMatrix<T> *coord; coord = new fMatrix<T>(1,1);
+	Eigen::SparseMatrix<T> *gp;// gauss points and weights for current element 
+	Eigen::SparseMatrix<T> *N;// shape functions for current element 
+	Eigen::SparseMatrix<T> *Ng; Ng = new Eigen::SparseMatrix<T>(1,1);// shape functions for current gauss point. Submat of *N
+	Eigen::SparseMatrix<T> *B; // idem for gradient matrix
+	Eigen::SparseMatrix<T> *Bg; Bg = new Eigen::SparseMatrix<T>(1,1);
+	Eigen::SparseMatrix<T> *Bref; Bref = new Eigen::SparseMatrix<T>(1,1);
+	Eigen::SparseMatrix<T> *JacG; JacG = new Eigen::SparseMatrix<T>(1,1);
+	//Eigen::SparseMatrix<float> *coordF; coordF = new Eigen::SparseMatrix<float>(1,1);
+	Eigen::SparseMatrix<T> *coord; coord = new Eigen::SparseMatrix<T>(1,1);
 	vector<int> *nodes; nodes = new vector<int>;
 	//fLinSys<T> *temp; temp = new fLinSys<T>();
 	message = "Beginning assembly"; 
@@ -627,20 +633,20 @@ bool FemCase<T>::buildKM()
 	if (m_mesh[iC]->contains1D())
 	{
 		//cout << "yes 1D" << endl;	
-		m_Mseg = new fMatrix<T>(nN, nN);
-		m_Kseg = new fMatrix<T>(nN, nN);
+		m_Mseg = new Eigen::SparseMatrix<T>(nN, nN);
+		m_Kseg = new Eigen::SparseMatrix<T>(nN, nN);
 	}
 	if (m_mesh[iC]->contains2D())
 	{
 		//cout << "yes 2D" << endl;
-		m_Msurf = new fMatrix<T>(nN, nN);
-		m_Ksurf = new fMatrix<T>(nN, nN);
+		m_Msurf = new Eigen::SparseMatrix<T>(nN, nN);
+		m_Ksurf = new Eigen::SparseMatrix<T>(nN, nN);
 	}
 	if (m_mesh[iC]->contains3D())
 	{
 		//cout << "yes 3D" << endl;
-		m_Mvol = new fMatrix<T>(nN, nN);
-		m_Kvol = new fMatrix<T>(nN, nN);
+		m_Mvol = new Eigen::SparseMatrix<T>(nN, nN);
+		m_Kvol = new Eigen::SparseMatrix<T>(nN, nN);
 	}
 	
 	if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) 
@@ -656,7 +662,7 @@ bool FemCase<T>::buildKM()
 		// construction de la liste de noeuds et réorganisation 
 		delete coord;
 		delete nodes;
-		coord = new fMatrix<T>(np,3);
+		coord = new Eigen::SparseMatrix<T>(np,3);
 		nodes = new vector<int>; // A REMPLACER PAR UNE MATRICE AVEC TEMPLATE
 		*coord = elem.getCoordinates();
 		//*coord = *coordF;
@@ -731,12 +737,12 @@ bool FemCase<T>::buildKM()
 		delete(Bref);
 		delete(Ng);
 		delete(JacG);
-		Ke = new fMatrix<T>(np, np);
-		Me = new fMatrix<T>(np, np);
-		Bg = new fMatrix<T>(nb, np);
-		Bref = new fMatrix<T>(nb, np);
-		Ng = new fMatrix<T>(1, np);
-		JacG = new fMatrix<T>(np,np);
+		Ke = new Eigen::SparseMatrix<T>(np, np);
+		Me = new Eigen::SparseMatrix<T>(np, np);
+		Bg = new Eigen::SparseMatrix<T>(nb, np);
+		Bref = new Eigen::SparseMatrix<T>(nb, np);
+		Ng = new Eigen::SparseMatrix<T>(1, np);
+		JacG = new Eigen::SparseMatrix<T>(np,np);
 		Ke->setZero();
 		Me->setZero();
 		Bg->setZero();
@@ -750,8 +756,8 @@ bool FemCase<T>::buildKM()
 			*JacG = (*Bref)**coord;
 			detJac = JacG->getFemDetJac();
 			*Bg = computeFemB(*JacG, *Bref);
-			*Ke = *Ke + detJac*(*gp)(iG, gw)*(Bg->t())**Bg; 
-			*Me = *Me + detJac*(*gp)(iG, gw)*Ng->t()**Ng;
+			*Ke = *Ke + detJac*(*gp)(iG, gw)*(Bg->transpose())**Bg; 
+			*Me = *Me + detJac*(*gp)(iG, gw)*Ng->transpose()**Ng;
 			//if(iE == 148)
 			//{
 			//	cout << "Element " << iE << ", gauss point " << iG << endl;
@@ -809,17 +815,17 @@ bool FemCase<T>::buildKM()
 	// check que le volume est correct 
 	if (m_mesh[iC]->contains1D())
 	{
-		check = one.t()**m_Mseg*one;
+		check = one.transpose()**m_Mseg*one;
 		cout << "Total distance computed from M " << check << endl;
 	}
 	if (m_mesh[iC]->contains2D())
 	{
-		check = one.t()**m_Msurf*one;
+		check = one.transpose()**m_Msurf*one;
 		cout << "Total surface computed from M " << check << endl;
 	}
 	if (m_mesh[iC]->contains3D())
 	{
-		check = one.t()**m_Mvol*one;
+		check = one.transpose()**m_Mvol*one;
 		cout << "Total volume computed from M " << check << endl;
 	}
 	cout << "Assembly finished sucessfully, with " << countSeg << " segment elements, " << countSurf << " surface elements, and " << countVol << " volume elements." << endl;
@@ -832,9 +838,9 @@ bool FemCase<T>::buildKM()
 template <typename T>
 bool FemCase<T>::buildF()
 {
-	m_Fvol = new fMatrix<T>(m_mesh[0]->getNodesNumber(),1);
-	m_Fsurf = new fMatrix<T>(m_mesh[0]->getNodesNumber(),1);
-	m_Fseg = new fMatrix<T>(m_mesh[0]->getNodesNumber(),1);
+	m_Fvol = new Eigen::SparseMatrix<T>(m_mesh[0]->getNodesNumber(),1);
+	m_Fsurf = new Eigen::SparseMatrix<T>(m_mesh[0]->getNodesNumber(),1);
+	m_Fseg = new Eigen::SparseMatrix<T>(m_mesh[0]->getNodesNumber(),1);
 	(*m_Fvol)(254,0) = 1;
 	(*m_Fsurf)(254,0) = 1;
 	(*m_Fseg)(254,0) = 1;
@@ -900,10 +906,11 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 
 	int nNodes(m_mesh[0]->getNodesNumber()); 
 	int nElem(m_mesh[0]->getElementNumber());
-	fMatrix<float> coord(m_mesh[0]->getCoordinates()+(float)1E-7);
-	fMatrix<int> conec(m_mesh[0]->getConecAndNN());
-	fMatrix<int> elemType(m_mesh[0]->getElemTypesVtk());
-	int nTot(conec.submat(0,nElem-1, 0,0).sum() + nElem);
+	Eigen::SparseMatrix<float> coord(m_mesh[0]->getCoordinates()+(float)1E-7);
+	Eigen::SparseMatrix<int> conec(m_mesh[0]->getConecAndNN());
+	Eigen::SparseMatrix<int> elemType(m_mesh[0]->getElemTypesVtk());
+	//int nTot(conec.submat(0,nElem-1, 0,0).sum() + nElem); // version fMatrix 
+	int nTot(conec.block(0, 0, nElem-1, 0).sum() + nElem); // version Eigen 
 
 	
 	vtkfile << "# vtk DataFile Version 2.0" << endl << "VTK from aFemCode" << endl;
@@ -923,7 +930,7 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 }
 
 template <typename T>
-bool FemCase<T>::writeVtkData(string filename, string dataName, fMatrix<T> data) const
+bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data) const
 {
 	ofstream vtkfile(m_path+"results/"+filename, ios::app);
 	if(!vtkfile)
@@ -964,15 +971,15 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, fMatrix<T> data)
 // Assembly functions 
 
 template <typename T>
-fMatrix<T>* FemCase<T>::getGauss(int element, int order)
+Eigen::SparseMatrix<T>* FemCase<T>::getGauss(int element, int order)
 {
 	// in case of an error, err is returned and message is printed
-	fMatrix<T> *err;
-	err = new fMatrix<T>(0,0);
+	Eigen::SparseMatrix<T> *err;
+	err = new Eigen::SparseMatrix<T>(0,0);
 	stringstream message;
 	message << "Fatal error : element " << element << " with order " << order << " unsupported in FemCase<T>::getGauss";
 	// if everything goes alright, we return gp
-	fMatrix<T> *gp;
+	Eigen::SparseMatrix<T> *gp;
 	// initialization of various shit 
 	double a = 0.445948490915965;
     double b = 0.091576213509771;
@@ -985,19 +992,19 @@ fMatrix<T>* FemCase<T>::getGauss(int element, int order)
 			switch (order)
 			{
 				case 1:
-					gp = new fMatrix<T>(1,2);
+					gp = new Eigen::SparseMatrix<T>(1,2);
 					(*gp) (0,0) = 0;
 					(*gp)(0,1) = 2;
 					break;
 				case 3:
-					gp = new fMatrix<T>(2,2);
+					gp = new Eigen::SparseMatrix<T>(2,2);
 					(*gp)(0,0) = -0.57735;
 					(*gp)(0,1) = 1;
 					(*gp)(1,0) = 0.57735;
 					(*gp)(1,1) = 1;
 					break;
 				case 5:
-					gp = new fMatrix<T>(3,2);
+					gp = new Eigen::SparseMatrix<T>(3,2);
 					(*gp)(0,0) = -0.77460;
 					(*gp)(0,1) = 0.555555556;
 					(*gp)(1,0) = 0; 
@@ -1015,20 +1022,20 @@ fMatrix<T>* FemCase<T>::getGauss(int element, int order)
 			switch (order)
 			{
 				case 1:
-					gp = new fMatrix<T>(1,3);
+					gp = new Eigen::SparseMatrix<T>(1,3);
 					(*gp)(0,0) = 0.33333333334;
 					(*gp)(0,1) = 0.33333333334;
 					(*gp)(0,2) = 0.5;
 					break;
 				case 2:
-					gp = new fMatrix<T>(3,3);
+					gp = new Eigen::SparseMatrix<T>(3,3);
 					gp->setOne();
 					*gp = *gp*(0.16666666667);
 					(*gp)(1,0) = 0.66666666667;
 					(*gp)(2,1) = 0.66666666667;
 					break;
 				case 4:
-					gp = new fMatrix<T>(6,3);
+					gp = new Eigen::SparseMatrix<T>(6,3);
 					gp->setOne();
 					*gp = *gp*a;
 					(*gp)(1,0) = 1-2*a;
@@ -1062,15 +1069,15 @@ fMatrix<T>* FemCase<T>::getGauss(int element, int order)
 
 
 template <typename T>
-fMatrix<T>* FemCase<T>::getN(int element, fMatrix<T> gp)
+Eigen::SparseMatrix<T>* FemCase<T>::getN(int element, Eigen::SparseMatrix<T> gp)
 {
 	// in case of an error, err is returned and message is printed
-	fMatrix<T> *err;
-	err = new fMatrix<T>(0,0);
+	Eigen::SparseMatrix<T> *err;
+	err = new Eigen::SparseMatrix<T>(0,0);
 	stringstream message;
 	message << "Fatal error : element " << element << " unsupported in FemCase<T>::getN";
 	// if everything goes alright, we return gp
-	fMatrix<T> *N;
+	Eigen::SparseMatrix<T> *N;
 	
 	// initialization of various shit 
 	int ng(gp.getSizeM());
@@ -1083,7 +1090,7 @@ fMatrix<T>* FemCase<T>::getN(int element, fMatrix<T> gp)
 	switch (element)
 	{
 		case 22: // segment SE3
-			N = new fMatrix<T>(ng,3);
+			N = new Eigen::SparseMatrix<T>(ng,3);
 			for (int ig = 0; ig < ng ; ig++)
 			{
 				ksi = gp(ig,0);
@@ -1099,7 +1106,7 @@ fMatrix<T>* FemCase<T>::getN(int element, fMatrix<T> gp)
         	//Ni = 1/2*Ni';
 			break;
 		case 42: // T6 
-			N = new fMatrix<T>(ng,6);
+			N = new Eigen::SparseMatrix<T>(ng,6);
 			for (int ig = 0; ig < ng ; ig++)
 			{
 				xi = gp(ig,0);
@@ -1131,15 +1138,15 @@ fMatrix<T>* FemCase<T>::getN(int element, fMatrix<T> gp)
 }
 
 template <typename T>
-fMatrix<T>* FemCase<T>::getB(int element, fMatrix<T> gp)
+Eigen::SparseMatrix<T>* FemCase<T>::getB(int element, Eigen::SparseMatrix<T> gp)
 {
 	// in case of an error, err is returned and message is printed
-	fMatrix<T> *err;
-	err = new fMatrix<T>(0,0);
+	Eigen::SparseMatrix<T> *err;
+	err = new Eigen::SparseMatrix<T>(0,0);
 	stringstream message;
 	message << "Fatal error : element " << element << " unsupported in FemCase<T>::getN";
 	// if everything goes alright, we return gp
-	fMatrix<T> *B;
+	Eigen::SparseMatrix<T> *B;
 	
 	// initialization of various shit 
 	int ng(gp.getSizeM());
@@ -1151,7 +1158,7 @@ fMatrix<T>* FemCase<T>::getB(int element, fMatrix<T> gp)
 	switch (element)
 	{
 		case 22: // segment SE3
-			B = new fMatrix<T>(ng,3);
+			B = new Eigen::SparseMatrix<T>(ng,3);
 			for (int ig = 0; ig < ng ; ig++)
 			{
 				ksi = gp(ig,0);
@@ -1163,7 +1170,7 @@ fMatrix<T>* FemCase<T>::getB(int element, fMatrix<T> gp)
         	//Bref = 1/2*[-1+2*ksi -4*ksi 1+2*ksi];	
 			break;
 		case 42: // T6 
-			B = new fMatrix<T>(ng*2,6);
+			B = new Eigen::SparseMatrix<T>(ng*2,6);
 			for (int ig = 0; ig < ng ; ig++)
 			{
 				//cout <<"assembling T6 gp, ig = " << ig << endl; 
@@ -1203,15 +1210,15 @@ fMatrix<T>* FemCase<T>::getB(int element, fMatrix<T> gp)
 
 
 template <typename T>
-fMatrix<T> FemCase<T>::computeFemB(fMatrix<T> Jac, fMatrix<T> Bref) const
+Eigen::SparseMatrix<T> FemCase<T>::computeFemB(Eigen::SparseMatrix<T> Jac, Eigen::SparseMatrix<T> Bref) const
 {
 	// if Bref is 3*3, return inv(Jac)*Bref
 	// if Bref is 2*3, return 2 uper lines of inv([Jac ; 1 1 1])*[Bref ; 1 1 1]
 	// if Bref is 1*3, should not be used for now, return null vector
 	
-	fMatrix<T> B(3,3);
-	fMatrix<T> fullJac(3,3);	
-	fMatrix<T> fullBref(3,Bref.getSizeN());
+	Eigen::SparseMatrix<T> B(3,3);
+	Eigen::SparseMatrix<T> fullJac(3,3);	
+	Eigen::SparseMatrix<T> fullBref(3,Bref.getSizeN());
 
 	if(Jac.getSizeM() == 3)
 	{
@@ -1273,7 +1280,7 @@ fMatrix<T> FemCase<T>::computeFemB(fMatrix<T> Jac, fMatrix<T> Bref) const
 template <typename T>
 vector<int> FemCase<T>::swapLines(vector<int> v, vector<int> perm) const
 {
-	// reorganizes the lines of the vector. Useful only until fMatrix<T> is made via template. 
+	// reorganizes the lines of the vector. Useful only until Eigen::SparseMatrix<T> is made via template. 
 	// Pleaaaase delete me as fast as possible !
 	//
 	

@@ -5,7 +5,8 @@
 #include <complex>
 #include <iostream>
 #include <cassert>
-#include "fMatrix.h"
+//#include "Eigen::SparseMatrix.h"
+#include <Eigen/Sparse>
 
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
@@ -19,7 +20,7 @@ class fLinSys
 public: 	
 	fLinSys();
 	fLinSys(int size, int nRhs);
-	fLinSys(fMatrix<T> mat, fMatrix<T> rhs);
+	fLinSys(Eigen::SparseMatrix<T> mat, Eigen::SparseMatrix<T> rhs);
 	~fLinSys();
 	bool fillMatrix();
 	bool printMatrix();
@@ -27,9 +28,9 @@ public:
 	bool printLU();
 	bool solve();
 	int getSize();
-	fMatrix<T> getL();
-	fMatrix<T> getU();
-	fMatrix<T> getSolution();
+	Eigen::SparseMatrix<T> getL();
+	Eigen::SparseMatrix<T> getU();
+	Eigen::SparseMatrix<T> getSolution();
 
 private: 
 	T const m_eps;
@@ -37,11 +38,11 @@ private:
 	int m_nRhs;
 	bool m_luDone;
 	bool m_solved;
-	fMatrix<T> m_mat;
-	fMatrix<T> m_l;
-	fMatrix<T> m_u;
-	fMatrix<T> m_rhs;
-	fMatrix<T> m_solution;
+	Eigen::SparseMatrix<T> m_mat;
+	Eigen::SparseMatrix<T> m_l;
+	Eigen::SparseMatrix<T> m_u;
+	Eigen::SparseMatrix<T> m_rhs;
+	Eigen::SparseMatrix<T> m_solution;
 	//vector<vector<double>> m_mat;
 	//vector<vector<double>> m_l;
 	//vector<vector<double>> m_u;
@@ -76,7 +77,7 @@ fLinSys<T>::fLinSys(int size, int nRhs)
 }
 
 template<typename T>
-fLinSys<T>::fLinSys(fMatrix<T> mat, fMatrix<T> rhs)
+fLinSys<T>::fLinSys(Eigen::SparseMatrix<T> mat, Eigen::SparseMatrix<T> rhs)
 	:
 	m_eps(1e-12),
 	m_size(mat.getSizeM()),
@@ -167,13 +168,13 @@ bool fLinSys<T>::printLU()
 	cout << endl << "U : " << endl;
 	printU = m_u.print();
 	cout << endl << "L*U" << endl;
-	fMatrix<T> lu(m_l*m_u);
+	Eigen::SparseMatrix<T> lu(m_l*m_u);
 	lu.print();
 	//cout << endl << "A+A" << endl;
-	//fMatrix<T> apa(m_mat+m_mat);
+	//Eigen::SparseMatrix<T> apa(m_mat+m_mat);
 	//apa.print();
 	//cout << endl << "2A" << endl;
-	//fMatrix<T> a2(m_mat+m_mat);
+	//Eigen::SparseMatrix<T> a2(m_mat+m_mat);
 	//a2.print();
 	//cout << endl << endl;
 
@@ -216,7 +217,7 @@ bool fLinSys<T>::printLU()
 template<typename T>
 bool fLinSys<T>::solve()
 {
-	fMatrix<T> y(m_size, m_nRhs); 
+	Eigen::SparseMatrix<T> y(m_size, m_nRhs); 
 	T sum(0);
 	if (!m_luDone)
 	{
@@ -263,7 +264,7 @@ bool fLinSys<T>::solve()
 
 
 template<typename T>
-fMatrix<T> fLinSys<T>::getL()
+Eigen::SparseMatrix<T> fLinSys<T>::getL()
 {
 	if(!m_luDone)
 	{
@@ -272,7 +273,7 @@ fMatrix<T> fLinSys<T>::getL()
 	return m_l;
 }
 template<typename T>
-fMatrix<T> fLinSys<T>::getU()
+Eigen::SparseMatrix<T> fLinSys<T>::getU()
 {
 	if(!m_luDone)
 	{
@@ -282,7 +283,7 @@ fMatrix<T> fLinSys<T>::getU()
 }
 
 template<typename T>
-fMatrix<T> fLinSys<T>::getSolution()
+Eigen::SparseMatrix<T> fLinSys<T>::getSolution()
 {
 	if(!m_solved)
 	{
