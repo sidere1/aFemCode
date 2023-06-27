@@ -24,10 +24,14 @@ public:
 	Element getElement(unsigned int index) const;
     bool printConnectivities() const;
     bool printCoordinates() const;
-    fMatrix<int> getConnectivities() const;
-    fMatrix<int> getConecAndNN() const;
-    fMatrix<float> getCoordinates() const;
-	fMatrix<int> getElemTypesVtk() const;
+    Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> getConnectivities() const;
+    Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> getConecAndNN() const;
+    Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> getCoordinates() const;
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> getElemTypesVtk() const;
+    // fMatrix<int> getConnectivities() const;
+    // fMatrix<int> getConecAndNN() const;
+    // fMatrix<float> getCoordinates() const;
+	// fMatrix<int> getElemTypesVtk() const;
     int typeAssign(int nbOfNodes);
     bool isBeginEnd(std::string line);
     bool calculateVolume() ;

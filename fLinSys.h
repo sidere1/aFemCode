@@ -5,7 +5,6 @@
 #include <complex>
 #include <iostream>
 #include <cassert>
-//#include "Eigen::SparseMatrix.h"
 #include <Eigen/Sparse>
 
 
@@ -80,15 +79,15 @@ template<typename T>
 fLinSys<T>::fLinSys(Eigen::SparseMatrix<T> mat, Eigen::SparseMatrix<T> rhs)
 	:
 	m_eps(1e-12),
-	m_size(mat.getSizeM()),
-	m_nRhs(rhs.getSizeN()),
+	m_size(mat.rows()),
+	m_nRhs(rhs.cols()),
 	m_mat(m_size, m_size),
 	m_l(m_size, m_size),
 	m_u(m_size, m_size),
 	m_solution(m_size, m_nRhs)
 {
-	assert(mat.isSquare());
-	assert(mat.getSizeM() == rhs.getSizeM());
+	assert(mat.rows() == mat.cols());
+	assert(mat.rows() == rhs.rows());
 
 	m_mat = mat;
 	m_rhs = rhs;

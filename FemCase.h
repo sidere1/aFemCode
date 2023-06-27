@@ -25,6 +25,8 @@ typedef Eigen::SparseMatrix<double> SpMatXd;
 typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
 // ces typedef ne sont aps utilisés normalement... 
 
+// using namespace Eigen; // c'est pas ouf d'avoir un namespace dans un .h.... 
+
 template <typename T>
 class FemCase
 {
@@ -57,10 +59,10 @@ public:
 	bool performResolution(); // solve 
 
 	// Assembly functions 
-	Eigen::SparseMatrix<T> *getGauss(int element, int order);
-	Eigen::SparseMatrix<T> *getN(int element, Eigen::SparseMatrix<T> gp);
-	Eigen::SparseMatrix<T> *getB(int element, Eigen::SparseMatrix<T> gp);
-	Eigen::SparseMatrix<T> computeFemB(Eigen::SparseMatrix<T> Jac, Eigen::SparseMatrix<T> Bref) const; 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *getGauss(int element, int order);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *getN(int element, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gp);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *getB(int element, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gp);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> computeFemB(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Jac, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Bref) const; 
 
 
 	// postProcessing 
@@ -74,8 +76,9 @@ public:
 	bool writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data) const;
 
 
-	// crade sa mere la race de sa grand mere 
 	vector<int> swapLines(vector<int> v, vector<int> perm) const;
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> swapLines(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m, vector<int> perm) const;
+	T computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m) const;
 
 private:
 	bool m_loaded;
@@ -550,7 +553,7 @@ bool FemCase<T>::performResolution()
 			dataName.str("");
 			dataName << "sol_f_" << abs(frequencies[iFreq]);
 			cout << dataName.str() << endl; 
-			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().submat(0,nNodes-1, 0,0));
+			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes-1, 0));
 			//writeVtkMesh(vtkfilename, "sol_f_"+(string)abs(frequencies[iFreq]), linSys->getSolution().submat(0,nNodes-1, 0,0));
 		}
 	}
@@ -563,13 +566,8 @@ bool FemCase<T>::buildKM()
 {
 	// au programme : 
 	// loop over the couplings A CODER 
-	//	 	loop over the elements to know which matrices must be initialized (et quand on bossera en sparse, pour faire un assemblage fictif et determiner la taille des matrices)
-	//	 	loop over the elements
-	//	 			check element type 
-	//	 			compute elementary matrices K and M  
-	//	 			assemble in main matrices 
-	//	 	check if everything is alright (volume compared to theory)
-
+	// faire un assemblage creux : un vecteur de triplets de taille connue, une création de matrice par triplet. 
+	// on peut tout passer en matrices pleines en fait...... 
 
 
 	// variable initialisation
@@ -584,27 +582,37 @@ bool FemCase<T>::buildKM()
 	Element elem;// current element
 	string message("");
 	vector<int> perm;
-	Eigen::SparseMatrix<T> *currentK; 
-	Eigen::SparseMatrix<T> *currentM;
-   	Eigen::SparseMatrix<T> *Ke; Ke = new Eigen::SparseMatrix<T>(1,1); 
-	Eigen::SparseMatrix<T> *Me; Me = new Eigen::SparseMatrix<T>(1,1);
+	// Eigen::SparseMatrix<T> *currentK; 
+	// Eigen::SparseMatrix<T> *currentM;
+	std::vector<Eigen::Triplet<T> > *currentK; 
+	std::vector<Eigen::Triplet<T> > *currentM;
+
+	std::vector<Eigen::Triplet<T> > *Kseg; 
+	std::vector<Eigen::Triplet<T> > *Mseg; 
+	std::vector<Eigen::Triplet<T> > *Ksurf; 
+	std::vector<Eigen::Triplet<T> > *Msurf; 
+	std::vector<Eigen::Triplet<T> > *Kvol; 
+	std::vector<Eigen::Triplet<T> > *Mvol; 
+	
+
+   	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Ke; Ke = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>; 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Me; Me = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
 	int np(0); // number of nodes in the current element
 	int gw(0); // index of the column containing the weights 
 	int ngp(0); // number of gauss points
 	int nb(0); // number of lines in the gradient matrix
 	double detJac(0);
-	Eigen::SparseMatrix<T> one(nN, 1);
-	one = MatrixXd::Constant(nN, 1, 1); // chuis pas sûr 
-	Eigen::SparseMatrix<T> check(1,1);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> one(nN, 1);
+	one = Eigen::MatrixXd::Constant(nN, 1, 1); // chuis pas sûr 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> check(1,1);
 
-	// pointers on gauss points tables, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 
-	Eigen::SparseMatrix<T> *gp_se3 = getGauss(22, 5);
-	Eigen::SparseMatrix<T> *gp_t6 = getGauss(42, 4);
-	// idem for shape functions 
-	Eigen::SparseMatrix<T> *N_se3 = getN(22, *gp_se3);
-	Eigen::SparseMatrix<T> *N_t6 = getN(42, *gp_t6);
-	Eigen::SparseMatrix<T> *B_se3 = getB(22, *gp_se3);	
-	Eigen::SparseMatrix<T> *B_t6 = getB(42, *gp_t6);	
+	// pointers on gauss points tables and shape functions, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_se3 = getGauss(22, 5);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_t6 = getGauss(42, 4);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N_se3 = getN(22, *gp_se3);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N_t6 = getN(42, *gp_t6);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_se3 = getB(22, *gp_se3);	
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_t6 = getB(42, *gp_t6);	
 	
 	//gp_se3->print();
 	//gp_t6->print();
@@ -613,17 +621,18 @@ bool FemCase<T>::buildKM()
 	//B_se3->print();
 	//B_t6->print();
 
-	Eigen::SparseMatrix<T> *gp;// gauss points and weights for current element 
-	Eigen::SparseMatrix<T> *N;// shape functions for current element 
-	Eigen::SparseMatrix<T> *Ng; Ng = new Eigen::SparseMatrix<T>(1,1);// shape functions for current gauss point. Submat of *N
-	Eigen::SparseMatrix<T> *B; // idem for gradient matrix
-	Eigen::SparseMatrix<T> *Bg; Bg = new Eigen::SparseMatrix<T>(1,1);
-	Eigen::SparseMatrix<T> *Bref; Bref = new Eigen::SparseMatrix<T>(1,1);
-	Eigen::SparseMatrix<T> *JacG; JacG = new Eigen::SparseMatrix<T>(1,1);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp;// gauss points and weights for current element 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N;// shape functions for current element 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Ng; Ng = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);// shape functions for current gauss point. Submat of *N
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B; // idem for gradient matrix
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Bg; Bg = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Bref; Bref = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *JacG; JacG = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
+	
 	//Eigen::SparseMatrix<float> *coordF; coordF = new Eigen::SparseMatrix<float>(1,1);
-	Eigen::SparseMatrix<T> *coord; coord = new Eigen::SparseMatrix<T>(1,1);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *coord; coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
 	vector<int> *nodes; nodes = new vector<int>;
-	//fLinSys<T> *temp; temp = new fLinSys<T>();
+
 	message = "Beginning assembly"; 
 	cout << message << endl; 
 	writeInfo(message);
@@ -633,20 +642,32 @@ bool FemCase<T>::buildKM()
 	if (m_mesh[iC]->contains1D())
 	{
 		//cout << "yes 1D" << endl;	
-		m_Mseg = new Eigen::SparseMatrix<T>(nN, nN);
-		m_Kseg = new Eigen::SparseMatrix<T>(nN, nN);
+		// m_Mseg = new Eigen::SparseMatrix<T>(nN, nN);
+		// m_Kseg = new Eigen::SparseMatrix<T>(nN, nN);
+		Mseg = new std::vector<Eigen::Triplet<T>>;
+		Kseg = new std::vector<Eigen::Triplet<T>>;
+		Kseg->reserve(nN);
+		Mseg->reserve(nN);
 	}
 	if (m_mesh[iC]->contains2D())
 	{
 		//cout << "yes 2D" << endl;
-		m_Msurf = new Eigen::SparseMatrix<T>(nN, nN);
-		m_Ksurf = new Eigen::SparseMatrix<T>(nN, nN);
+		// m_Msurf = new Eigen::SparseMatrix<T>(nN, nN);
+		// m_Ksurf = new Eigen::SparseMatrix<T>(nN, nN);
+		Msurf = new std::vector<Eigen::Triplet<T>>;
+		Ksurf = new std::vector<Eigen::Triplet<T>>;
+		Ksurf->reserve(nN);
+		Msurf->reserve(nN);
 	}
 	if (m_mesh[iC]->contains3D())
 	{
 		//cout << "yes 3D" << endl;
-		m_Mvol = new Eigen::SparseMatrix<T>(nN, nN);
-		m_Kvol = new Eigen::SparseMatrix<T>(nN, nN);
+		// m_Mvol = new Eigen::SparseMatrix<T>(nN, nN);
+		// m_Kvol = new Eigen::SparseMatrix<T>(nN, nN);
+		Mvol = new std::vector<Eigen::Triplet<T>>;
+		Kvol = new std::vector<Eigen::Triplet<T>>;
+		Kvol->reserve(nN);
+		Mvol->reserve(nN);
 	}
 	
 	if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) 
@@ -662,18 +683,18 @@ bool FemCase<T>::buildKM()
 		// construction de la liste de noeuds et réorganisation 
 		delete coord;
 		delete nodes;
-		coord = new Eigen::SparseMatrix<T>(np,3);
-		nodes = new vector<int>; // A REMPLACER PAR UNE MATRICE AVEC TEMPLATE
-		*coord = elem.getCoordinates();
-		//*coord = *coordF;
-		//coord->print();
-		*nodes = elem.getNodesIds();	
-		//cout << nodes->size() << endl;
+		coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np,3);
+		nodes = new vector<int>; 
+		*coord = elem.getCoordinates().cast<T>();
+		*nodes = elem.getNodesIds();
 		if (elem.is1D())
 		{
 			countSeg++;
-			currentK = m_Kseg;
-			currentM = m_Mseg;
+			currentK = Kseg;
+			currentM = Mseg;
+			// currentK = m_Kseg;
+			// currentM = m_Mseg;
+
 
 			//FAUT LES REORGANISER. METHODE PERMUTATE ? qui prend un ou deux vector<int> en input 
 			switch (elem.getFeDescriptor()){
@@ -682,8 +703,9 @@ bool FemCase<T>::buildKM()
 					N = N_se3;
 					B = B_se3;
 					perm = {0,1,2}; // unv to aster format. Avec des SE3 l'interet est limite, j'avoue... 
-					*coord = coord->swapLines(perm);
-					*nodes = swapLines(*nodes, perm); // AAAAAH !! A REMPLACER PAR UNE PUTAIN DE FMATRIX
+					// *coord = coord->swapLines(perm);
+					*coord = swapLines(*coord, perm);
+					*nodes = swapLines(*nodes, perm); 
 					break;
 				default:
 					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
@@ -692,16 +714,19 @@ bool FemCase<T>::buildKM()
 		else if (elem.is2D())
 		{
 			countSurf++;
-			currentK = m_Ksurf;
-			currentM = m_Msurf;
+			// currentK = m_Ksurf;
+			// currentM = m_Msurf;
+			currentK = Ksurf;
+			currentM = Msurf;
 			switch (elem.getFeDescriptor()){
 				case 42:
 					gp = gp_t6;
 					N = N_t6;
 					B = B_t6;
 					perm = {0,2,4,1,3,5}; // 42 unv to T6 aster format 
-					*coord = coord->swapLines(perm);
-					*nodes = swapLines(*nodes, perm); // AAAAAH !! A REMPLACER PAR UNE PUTAIN DE FMATRIX
+					// *coord = coord->swapLines(perm);
+					*coord = swapLines(*coord, perm);
+					*nodes = swapLines(*nodes, perm); 
 					break;
 				default:
 					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
@@ -710,13 +735,13 @@ bool FemCase<T>::buildKM()
 		else if(elem.is3D())
 		{
 			countVol++;
-			currentK = m_Kvol;
-			currentM = m_Mvol;
+			// currentK = m_Kvol;
+			// currentM = m_Mvol;
+			currentK = Kvol;
+			currentM = Mvol;
 			switch (elem.getFeDescriptor()){
 				case 125462: // T10
 					perm = {0,2,4,9,1,3,5,6,7,8}; // unv ?? to T10 aster format 
-					coord->swapLines(perm);
-					*nodes = swapLines(*nodes, perm); // AAAAAH !! A REMPLACER PAR UNE PUTAIN DE FMATRIX
 					break;
 				default:
 					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
@@ -728,21 +753,21 @@ bool FemCase<T>::buildKM()
 			cout << message << endl; 
 			writeError(message);
 		}
-		gw = gp->getSizeN()-1;// index of the column containing the weights  
-		ngp = gp->getSizeM();// number of gauss points
-		nb = B->getSizeM()/ngp;
+		gw = gp->cols()-1;// index of the column containing the weights  
+		ngp = gp->rows();// number of gauss points
+		nb = B->rows()/ngp;
 		delete(Ke);
 		delete(Me);
 		delete(Bg);
 		delete(Bref);
 		delete(Ng);
 		delete(JacG);
-		Ke = new Eigen::SparseMatrix<T>(np, np);
-		Me = new Eigen::SparseMatrix<T>(np, np);
-		Bg = new Eigen::SparseMatrix<T>(nb, np);
-		Bref = new Eigen::SparseMatrix<T>(nb, np);
-		Ng = new Eigen::SparseMatrix<T>(1, np);
-		JacG = new Eigen::SparseMatrix<T>(np,np);
+		Ke = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np, np);
+		Me = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np, np);
+		Bg = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(nb, np);
+		Bref = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(nb, np);
+		Ng = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1, np);
+		JacG = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np,np);
 		Ke->setZero();
 		Me->setZero();
 		Bg->setZero();
@@ -751,13 +776,13 @@ bool FemCase<T>::buildKM()
 		JacG->setZero();
 		for (int iG = 0; iG < ngp; iG++)
 		{
-			*Bref = B->submat(nb*iG, (nb*(iG+1))-1, 0, np-1);
-			*Ng = N->submat(iG, iG ,0 ,np-1);
+			*Bref = B->block(nb*iG, 0, (nb*(iG+1))-1, np-1);
+			*Ng = N->block(iG, 0, iG, np-1);
 			*JacG = (*Bref)**coord;
-			detJac = JacG->getFemDetJac();
+			detJac = computeFemDetJac(*JacG);
 			*Bg = computeFemB(*JacG, *Bref);
-			*Ke = *Ke + detJac*(*gp)(iG, gw)*(Bg->transpose())**Bg; 
-			*Me = *Me + detJac*(*gp)(iG, gw)*Ng->transpose()**Ng;
+			*Ke = *Ke + detJac*(*gp).coeff(iG, gw)*(Bg->transpose())**Bg; 
+			*Me = *Me + detJac*(*gp).coeff(iG, gw)*Ng->transpose()**Ng;
 			//if(iE == 148)
 			//{
 			//	cout << "Element " << iE << ", gauss point " << iG << endl;
@@ -769,16 +794,18 @@ bool FemCase<T>::buildKM()
 			//	cout << "Bg^T*Bg = " << (Bg->t()**Bg) << endl;
 			//}
 		}
-		assert(Ke->getSizeM() == Me->getSizeM()); 
-		assert(Ke->getSizeN() == Me->getSizeN());
-		for (unsigned int i = 0 ; i < Ke->getSizeM() ; i++)
+		assert(Ke->rows() == Me->rows()); 
+		assert(Ke->cols() == Me->cols());
+		for (unsigned int i = 0 ; i < Ke->rows() ; i++)
 		{
 			globalI = (*nodes)[i]-1;
-			for (unsigned int j = 0; j < Ke->getSizeN() ; j++ )
+			for (unsigned int j = 0; j < Ke->cols() ; j++ )
 			{
 				globalJ = (*nodes)[j]-1;
-				(*currentK)(globalI, globalJ) += (*Ke)(i,j);
-				(*currentM)(globalI, globalJ) += (*Me)(i,j);
+				// (*currentK)(globalI, globalJ) += (*Ke).coeff(i,j); // version full
+				// (*currentM)(globalI, globalJ) += (*Me).coeff(i,j);
+				currentK->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Ke).coeff(i,j))); // version sparse
+				currentM->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Me).coeff(i,j)));
 				if(isnan((*Me)(i,j)))
 				{
 					cout << "Found a nan in Me, element " << iE << endl << *Me << endl;
@@ -789,9 +816,6 @@ bool FemCase<T>::buildKM()
 					cout << "Found a nan in Ke, element " << iE << endl << *Ke << endl;
 					return false;	
 				}
-				//cout << "Ke : ";
-				//cout << *Ke << endl;
-				//return false;
 			}
 		}
 		// stop to check current matrices 
@@ -811,7 +835,33 @@ bool FemCase<T>::buildKM()
 		//	return true;
 		//}
 	}	
+
+
+
+	// FInally, building matrices from triplets 
+	if (m_mesh[iC]->contains1D())
+	{
+		m_Mseg = new Eigen::SparseMatrix<T> (nN, nN);
+		m_Mseg->setFromTriplets(Mseg->begin(), Mseg->end());
+		m_Kseg = new Eigen::SparseMatrix<T> (nN, nN);
+		m_Kseg->setFromTriplets(Kseg->begin(), Kseg->end());
+	}
+	if (m_mesh[iC]->contains2D())
+	{
+		m_Msurf = new Eigen::SparseMatrix<T> (nN, nN);
+		m_Msurf->setFromTriplets(Msurf->begin(), Msurf->end());
+		m_Ksurf = new Eigen::SparseMatrix<T> (nN, nN);
+		m_Ksurf->setFromTriplets(Ksurf->begin(), Ksurf->end());
+	}
+	if (m_mesh[iC]->contains3D())
+	{
+		m_Mvol = new Eigen::SparseMatrix<T>(nN, nN);
+		m_Mvol->setFromTriplets(Mvol->begin(), Mvol->end());
+		m_Kvol = new Eigen::SparseMatrix<T>(nN, nN);
+		m_Kvol->setFromTriplets(Kvol->begin(), Kvol->end());
+	}
 	
+
 	// check que le volume est correct 
 	if (m_mesh[iC]->contains1D())
 	{
@@ -906,9 +956,9 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 
 	int nNodes(m_mesh[0]->getNodesNumber()); 
 	int nElem(m_mesh[0]->getElementNumber());
-	Eigen::SparseMatrix<float> coord(m_mesh[0]->getCoordinates()+(float)1E-7);
-	Eigen::SparseMatrix<int> conec(m_mesh[0]->getConecAndNN());
-	Eigen::SparseMatrix<int> elemType(m_mesh[0]->getElemTypesVtk());
+	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord(m_mesh[0]->getCoordinates()+(float)1E-7);
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_mesh[0]->getConecAndNN());
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemType(m_mesh[0]->getElemTypesVtk());
 	//int nTot(conec.submat(0,nElem-1, 0,0).sum() + nElem); // version fMatrix 
 	int nTot(conec.block(0, 0, nElem-1, 0).sum() + nElem); // version Eigen 
 
@@ -966,20 +1016,24 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMat
 
 
 
-
-
 // Assembly functions 
 
 template <typename T>
-Eigen::SparseMatrix<T>* FemCase<T>::getGauss(int element, int order)
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getGauss(int element, int order)
 {
 	// in case of an error, err is returned and message is printed
-	Eigen::SparseMatrix<T> *err;
-	err = new Eigen::SparseMatrix<T>(0,0);
+	
+
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *err;
+	err = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(0,0);
 	stringstream message;
 	message << "Fatal error : element " << element << " with order " << order << " unsupported in FemCase<T>::getGauss";
-	// if everything goes alright, we return gp
-	Eigen::SparseMatrix<T> *gp;
+	// if everything goes ok, we return gp
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp;
+	// Eigen::SparseMatrix<T> *gpSparse(0);
+	// gpSparse = new Eigen::SparseMatrix<T>;
+
+	
 	// initialization of various shit 
 	double a = 0.445948490915965;
     double b = 0.091576213509771;
@@ -992,19 +1046,19 @@ Eigen::SparseMatrix<T>* FemCase<T>::getGauss(int element, int order)
 			switch (order)
 			{
 				case 1:
-					gp = new Eigen::SparseMatrix<T>(1,2);
-					(*gp) (0,0) = 0;
+					gp = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,2);
+					(*gp)(0,0) = 0;
 					(*gp)(0,1) = 2;
 					break;
 				case 3:
-					gp = new Eigen::SparseMatrix<T>(2,2);
+					gp = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(2,2);
 					(*gp)(0,0) = -0.57735;
 					(*gp)(0,1) = 1;
 					(*gp)(1,0) = 0.57735;
 					(*gp)(1,1) = 1;
 					break;
 				case 5:
-					gp = new Eigen::SparseMatrix<T>(3,2);
+					gp = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(3,2);
 					(*gp)(0,0) = -0.77460;
 					(*gp)(0,1) = 0.555555556;
 					(*gp)(1,0) = 0; 
@@ -1022,21 +1076,23 @@ Eigen::SparseMatrix<T>* FemCase<T>::getGauss(int element, int order)
 			switch (order)
 			{
 				case 1:
-					gp = new Eigen::SparseMatrix<T>(1,3);
+					gp = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1, 3);
 					(*gp)(0,0) = 0.33333333334;
 					(*gp)(0,1) = 0.33333333334;
 					(*gp)(0,2) = 0.5;
 					break;
 				case 2:
-					gp = new Eigen::SparseMatrix<T>(3,3);
-					gp->setOne();
+					gp = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(3, 3);
+					*gp = Eigen::MatrixXd::Constant(3,3,1);
+					// gp->setOne();
 					*gp = *gp*(0.16666666667);
 					(*gp)(1,0) = 0.66666666667;
 					(*gp)(2,1) = 0.66666666667;
 					break;
 				case 4:
-					gp = new Eigen::SparseMatrix<T>(6,3);
-					gp->setOne();
+					gp = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(6, 3);
+					*gp = Eigen::MatrixXd::Constant(6,3,1);
+					// gp->setOne();
 					*gp = *gp*a;
 					(*gp)(1,0) = 1-2*a;
 					(*gp)(2,1) = 1-2*a;
@@ -1064,23 +1120,25 @@ Eigen::SparseMatrix<T>* FemCase<T>::getGauss(int element, int order)
 			writeError(message.str());
 			return err;
 	}
+	// *gpSparse = gp->sparseView();
+	// return gpSparse;
 	return gp;
 }
 
 
 template <typename T>
-Eigen::SparseMatrix<T>* FemCase<T>::getN(int element, Eigen::SparseMatrix<T> gp)
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getN(int element, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gp)
 {
 	// in case of an error, err is returned and message is printed
-	Eigen::SparseMatrix<T> *err;
-	err = new Eigen::SparseMatrix<T>(0,0);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *err;
+	err = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(0,0);
 	stringstream message;
 	message << "Fatal error : element " << element << " unsupported in FemCase<T>::getN";
-	// if everything goes alright, we return gp
-	Eigen::SparseMatrix<T> *N;
+	// if everything goes ok, we return N. Otherwise, err
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N;
 	
 	// initialization of various shit 
-	int ng(gp.getSizeM());
+	int ng(gp.rows());
 	double a(0);
 	double xi(0);
 	double eta(0);
@@ -1090,27 +1148,24 @@ Eigen::SparseMatrix<T>* FemCase<T>::getN(int element, Eigen::SparseMatrix<T> gp)
 	switch (element)
 	{
 		case 22: // segment SE3
-			N = new Eigen::SparseMatrix<T>(ng,3);
+			N = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(ng,3);
+			// N = new Eigen::SparseMatrix<T>(ng,3);
 			for (int ig = 0; ig < ng ; ig++)
 			{
-				ksi = gp(ig,0);
+				ksi = gp.coeff(ig,0);
 				//cout << "ksi :" << ksi<< endl;
 				(*N)(ig,0) = -0.5*ksi*(1-ksi);
 				(*N)(ig,1) = (1-ksi*ksi); 
 				(*N)(ig,2) = 0.5*ksi*(1+ksi);
-			}	
-			//ksiG = gaussPts(1);
-        	//Ni = [-ksiG*(1-ksiG); ...
-        	//    2*(1-ksiG^2) ; ...
-        	//    ksiG*(1+ksiG)];
-        	//Ni = 1/2*Ni';
+			} 
 			break;
 		case 42: // T6 
-			N = new Eigen::SparseMatrix<T>(ng,6);
+			N = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(ng,6);
+			// N = new Eigen::SparseMatrix<T>(ng,6);
 			for (int ig = 0; ig < ng ; ig++)
 			{
-				xi = gp(ig,0);
-				eta = gp(ig,1);
+				xi = gp.coeff(ig,0);
+				eta = gp.coeff(ig,1);
 				a = 1-xi-eta;
 				(*N)(ig,0) = -a*(1-2*a); 
 				(*N)(ig,1) = -xi*(1-2*xi); 
@@ -1119,37 +1174,31 @@ Eigen::SparseMatrix<T>* FemCase<T>::getN(int element, Eigen::SparseMatrix<T> gp)
 				(*N)(ig,4) = 4*xi*eta; 
 				(*N)(ig,5) = 4*eta*a; 
 			}
-			//xi = gaussPts(1);
-        	//eta = gaussPts(2);
-        	//a = 1-xi-eta ;
-        	//Ni = [-a*(1-2*a), ...       %1
-        	//    -xi*(1-2*xi)...         %2
-        	//    -eta*(1-2*eta)...       %3
-        	//    4*xi*a...               %4
-        	//    4*xi*eta...             %5
-        	//    4*eta*a ] ;             %6
 			break;
 		default:
 			cout << message.str() << endl;
 			writeError(message.str());
 			return err;
 	}
+	// *NSparse = N->sparseView();
+	// return NSparse;
 	return N;
 }
 
 template <typename T>
-Eigen::SparseMatrix<T>* FemCase<T>::getB(int element, Eigen::SparseMatrix<T> gp)
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getB(int element, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gp)
 {
 	// in case of an error, err is returned and message is printed
-	Eigen::SparseMatrix<T> *err;
-	err = new Eigen::SparseMatrix<T>(0,0);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *err;
+	err = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(0,0);
 	stringstream message;
 	message << "Fatal error : element " << element << " unsupported in FemCase<T>::getN";
 	// if everything goes alright, we return gp
-	Eigen::SparseMatrix<T> *B;
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B;
+	// Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *BSparse;
 	
 	// initialization of various shit 
-	int ng(gp.getSizeM());
+	int ng(gp.rows());
 	double a(0);
 	double xi(0);
 	double eta(0);
@@ -1158,24 +1207,23 @@ Eigen::SparseMatrix<T>* FemCase<T>::getB(int element, Eigen::SparseMatrix<T> gp)
 	switch (element)
 	{
 		case 22: // segment SE3
-			B = new Eigen::SparseMatrix<T>(ng,3);
+			B = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(ng,3);
+			// B = new Eigen::SparseMatrix<T>(ng,3);
 			for (int ig = 0; ig < ng ; ig++)
 			{
-				ksi = gp(ig,0);
+				ksi = gp.coeff(ig,0);
 				(*B)(ig,0) = 0.5*(-1+2*ksi); 
 				(*B)(ig,1) = -2*ksi; 
 				(*B)(ig,2) = 0.5*(1+2*ksi);
 			}
-			//ksi = gaussPts(1);
-        	//Bref = 1/2*[-1+2*ksi -4*ksi 1+2*ksi];	
 			break;
 		case 42: // T6 
-			B = new Eigen::SparseMatrix<T>(ng*2,6);
+			B = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(ng*2,6);
+			// B = new Eigen::SparseMatrix<T>(ng*2,6);
 			for (int ig = 0; ig < ng ; ig++)
 			{
-				//cout <<"assembling T6 gp, ig = " << ig << endl; 
-				xi = gp(ig,0);
-				eta = gp(ig,1);
+				xi = gp.coeff(ig,0);
+				eta = gp.coeff(ig,1);
 				a = 1-4*(1-xi-eta);
 				(*B)(2*ig+0,0) = a; 
 				(*B)(2*ig+0,1) = -1+4*xi; 
@@ -1190,45 +1238,37 @@ Eigen::SparseMatrix<T>* FemCase<T>::getB(int element, Eigen::SparseMatrix<T> gp)
 				(*B)(2*ig+1,4) = 4*xi; 
 				(*B)(2*ig+1,5) = 4*(1-xi-2*eta); 
 			}
-			//xi = gaussPts(1);
-        	//eta = gaussPts(2);
-        	//a = 1-4*(1-xi-eta);
-        	//Bref(:,1) = [a ; a] ;
-        	//Bref(:,2) = [-1+4*xi ; 0] ;
-        	//Bref(:,3) = [0 ; -1+4*eta] ;
-        	//Bref(:,4) = [4*(1-2*xi-eta) ; -4*xi] ;
-        	//Bref(:,5) = [4*eta ; 4*xi] ;
-        	//Bref(:,6) = [-4*eta ; 4*(1-xi-2*eta)] ;
 			break;
 		default:
 			cout << message.str() << endl;
 			writeError(message.str());
 			return err;
 	}
+	// *BSparse = B->sparseView();
 	return B;
 }
 
 
 template <typename T>
-Eigen::SparseMatrix<T> FemCase<T>::computeFemB(Eigen::SparseMatrix<T> Jac, Eigen::SparseMatrix<T> Bref) const
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> FemCase<T>::computeFemB(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Jac, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Bref) const
 {
 	// if Bref is 3*3, return inv(Jac)*Bref
 	// if Bref is 2*3, return 2 uper lines of inv([Jac ; 1 1 1])*[Bref ; 1 1 1]
 	// if Bref is 1*3, should not be used for now, return null vector
 	
-	Eigen::SparseMatrix<T> B(3,3);
-	Eigen::SparseMatrix<T> fullJac(3,3);	
-	Eigen::SparseMatrix<T> fullBref(3,Bref.getSizeN());
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> B(3,3);
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> fullJac(3,3);	
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> fullBref(3,Bref.cols());
 
-	if(Jac.getSizeM() == 3)
+	if(Jac.rows() == 3)
 	{
-		assert(Jac.getSizeM()==3);
-		B = Jac.inv()*Bref;
+		assert(Jac.rows()==3);
+		B = Jac.inverse()*Bref;
 	}
-	else if(Jac.getSizeM() == 2)
+	else if(Jac.rows() == 2)
 	{
-		assert(Jac.getSizeN() == 3);
-		assert(Bref.getSizeN()==6);
+		assert(Jac.cols() == 3);
+		assert(Bref.cols()==6);
 		fullJac(0,0) = Jac(0,0);
 		fullJac(0,1) = Jac(0,1);
 		fullJac(0,2) = Jac(0,2);
@@ -1259,7 +1299,7 @@ Eigen::SparseMatrix<T> FemCase<T>::computeFemB(Eigen::SparseMatrix<T> Jac, Eigen
 		//cout << "fullJac.det() : " << endl << fullJac.det(); 
 		//cout << "fullJac.inv() : " << endl;
 		//fullJac.inv().print();
-		B = (fullJac.inv()*fullBref); //.submat(0,1,0,2);
+		B = (fullJac.inverse()*fullBref); //.submat(0,1,0,2);
 		//cout << "inside computeFemB" << endl << "fullJac, fullB, B" << endl;
 		//fullJac.print();
 		//fullBref.print();
@@ -1276,13 +1316,10 @@ Eigen::SparseMatrix<T> FemCase<T>::computeFemB(Eigen::SparseMatrix<T> Jac, Eigen
 }
 
 
-// CRAAAAAAADE !! FAIS UN TEMPLATE VITE !
 template <typename T>
 vector<int> FemCase<T>::swapLines(vector<int> v, vector<int> perm) const
 {
-	// reorganizes the lines of the vector. Useful only until Eigen::SparseMatrix<T> is made via template. 
-	// Pleaaaase delete me as fast as possible !
-	//
+	// reorganizes the lines of a vector v. 
 	
 	if (perm.size()!= v.size())
 	{
@@ -1297,17 +1334,93 @@ vector<int> FemCase<T>::swapLines(vector<int> v, vector<int> perm) const
 	{
 		newI = perm[i];
 		v2[i] = v[newI];
-		//assert(newI<v.size());
-		//for(unsigned int j = 0 ; j < m_n ; j++)
-		//{
-		//}
 	}
 	return v2;
 }
 
+template <typename T>
+Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> FemCase<T>::swapLines(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m, vector<int> perm) const
+{
+	// reorganizes the lines of a matrix m. 	
+	if (perm.size()!= m.rows())
+	{
+		cout << "PERM.SIZE() = " << perm.size() << " AND M.SIZE() = " << m.rows() << endl;
+		assert(perm.size() == m.rows()); // juste pour que ca crash bien sa race. 
+	}
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m2(m.rows(), m.cols());
+	unsigned int newI;
+	for(unsigned int i = 0 ; i < m.rows() ; i++)
+	{
+		newI = perm[i];
+		assert(newI<m.rows());
+		for(unsigned int j = 0 ; j < m.cols() ; j++)
+		{
+			m2(i,j) = m.coeff(newI,j);
+		}
+	}
+	return m2;
+}
+// a long time ago, in a galaxy far far away, in fMatrix : 
+// template<typename T>
+// fMatrix<T> fMatrix<T>::swapLines(vector<int> perm) const
+// {
+// 	// reorganizes the lines of the matrix
+// 	if (perm.size()!= m_m)
+// 	{
+// 		cout << "perm.size() = " << perm.size() << " and m_m = " << m_m << endl;
+// 		assert(perm.size() == m_m);
+// 	}
+// 	fMatrix<T> v(m_m, m_n);
+// 	unsigned int newI;
+// 	for(unsigned int i = 0 ; i < m_m ; i++)
+// 	{
+// 		newI = perm[i];
+// 		assert(newI<m_m);
+// 		for(unsigned int j = 0 ; j < m_n ; j++)
+// 		{
+// 			v(i, j) = m_mat[newI][j];
+// 		}
+// 	}
+// 	return v;
+// }
 
 
 
+template<typename T>
+T FemCase<T>::computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m) const
+{
+	//jacobian matrices may be 3*3 for 3D elements, 2*3 for 2D elements, 1*3 for 1D elements
+	//
+	assert(m.rows() < 4);
+	// assert(m.cols() > 0);
+	assert(m.cols() == 3);
+
+	if (m.rows() == 3)
+	{
+		return m.determinant();
+	}
+	else if (m.rows() == 2)
+	{
+		// norm(cross(JacG(1,:), JacG(2,:)))
+		// fMatrix a(3,1);
+		Eigen::Matrix<T,3,1> a; 
+		a(0,0) = (m(1,0)*m(2,1))-(m(2,0)*m(1,1));
+		a(1,0) = (m(0,1)*m(2,0))-(m(2,1)*m(0,0));
+		a(2,0) = (m(0,0)*m(1,1))-(m(1,0)*m(0,1));
+		return a.norm2();
+		// il doit y avoir une manière plus élégante et rapide, en réutilisan une fonction de Eigen ... 
+	}
+	else if (m.rows() == 1)
+	{
+		return sqrt(pow(m(0,0),2) + pow(m(0,1), 2) + pow(m(0,2), 2));
+	}
+	else
+	{
+		cout << "Outchwtfwhatskispasswowowo ! That's strange, I should never have gotten here !" << endl;
+		WHEREAMI
+		return 0;
+	}
+}
 
 
 

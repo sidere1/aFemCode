@@ -32,8 +32,8 @@ public:
     bool readLoads(std::string fileToRead);//, int end);
     
 	bool displayFrequencies();
-    vector<double> getFrequencies();
-    vector<int> getMics();
+    std::vector<double> getFrequencies();
+    std::vector<int> getMics();
 	double getC();
 
 	bool displayInfo();

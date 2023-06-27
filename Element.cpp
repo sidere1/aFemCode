@@ -9,7 +9,9 @@ using namespace std;
 
 Element::Element() :  m_index(1)//, m_numberOfNodes(3)
 {
-
+	m_physicalProperty = 0;
+	m_materialProperty = 0;
+	m_color = 0;
 }
 
 Element::Element(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes): m_index(index),m_feDescriptor(feDescriptor), m_physicalProperty(physicalProperty), m_materialProperty(materialProperty), m_color(color),  m_numberOfNodes(numberOfNodes)
@@ -418,10 +420,12 @@ vector<int> Element::getNodesIds() const
 	}
 	return nodes;
 }
-fMatrix<float> Element::getCoordinates() const
+// fMatrix<float> Element::getCoordinates() const
+Eigen::Matrix<float, Eigen::Dynamic, 3> Element::getCoordinates() const
 {
-	fMatrix<float> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
-   	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
+	// fMatrix<float> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
+   	Eigen::Matrix<float, Eigen::Dynamic, 3> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
+	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
 	{
 		coord((unsigned int)iNode, 0) = m_nodes[iNode]->getX();
 		coord((unsigned int)iNode, 1) = m_nodes[iNode]->getY();
