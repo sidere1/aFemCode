@@ -7,7 +7,7 @@ OBJECTS := $(patsubst %.cpp,%.o,$(SOURCES))
 DEPENDS := $(patsubst %.cpp,%.d,$(SOURCES))
 
 ifeq ($(UNAME), Darwin)
-CXXFLAGS := -std=c++11 -g -I/opt//homebrew/Cellar/eigen/3.4.0_1/lib/
+CXXFLAGS := -std=c++11 -g -O3 -I/opt//homebrew/Cellar/eigen/3.4.0_1/lib/
 endif
 ifeq ($(UNAME), Linux)
 CXXFLAGS := -std=c++11 -g -O3 -fopenmp

@@ -606,7 +606,7 @@ bool FemCase<T>::buildKM()
 	int gw(0); // index of the column containing the weights 
 	int ngp(0); // number of gauss points
 	int nb(0); // number of lines in the gradient matrix
-	double detJac(0);
+	T detJac(0);
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> one(nN, 1);
 	one = Eigen::MatrixXd::Constant(nN, 1, 1); // chuis pas sûr 
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> check(1,1);
@@ -775,24 +775,11 @@ bool FemCase<T>::buildKM()
 		Bref->setZero();
 		Ng->setZero();
 		JacG->setZero();
-		// cout << "iE = " << iE << endl;
 		for (int iG = 0; iG < ngp; iG++)
 		{
-			// cout << "nb" << nb << endl;
-			// cout << "B->rows()" << B->rows() << endl;
-			// cout << "ngp" << ngp << endl;
-			// cout << "np" << np << endl;
 			*Bref = B->block(nb*iG, 0, nb, np);
-			// *Bref = B->submat(nb*iG, (nb*(iG+1))-1, 0, np-1);
 			*Ng = N->block(iG, 0, 1, np);
-			// *Ng = N->submat(iG, iG, 0, np-1);
-			// cout << Bref->rows() << Bref->cols() << Bref->size() << endl; 
-			// cout << "Bref " << Bref->size() << endl << "coord : " << coord->size() << endl << "coord " << *coord << endl;
 			*JacG = (*Bref)**coord;
-			
-			// cout << "Bref->rows() : " << Bref->rows() << "; Bref->cols() : " << Bref->cols() << endl;
-			// cout << "coord->rows() : " << coord->rows() << "; coord->cols() : " << coord->cols() << endl;
-			// cout << "JacG->rows() : " << JacG->rows() << "; JacG->cols() : " << JacG->cols() << endl;
 			detJac = computeFemDetJac(*JacG);
 			*Bg = computeFemB(*JacG, *Bref);
 			*Ke = *Ke + detJac*(*gp).coeff(iG, gw)*(Bg->transpose())**Bg; 
@@ -816,20 +803,18 @@ bool FemCase<T>::buildKM()
 			for (unsigned int j = 0; j < Ke->cols() ; j++ )
 			{
 				globalJ = (*nodes)[j]-1;
-				// (*currentK)(globalI, globalJ) += (*Ke).coeff(i,j); // version full
-				// (*currentM)(globalI, globalJ) += (*Me).coeff(i,j);
 				currentK->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Ke).coeff(i,j))); // version sparse
 				currentM->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Me).coeff(i,j)));
-				if(isnan((*Me)(i,j)))
-				{
-					cout << "Found a nan in Me, element " << iE << endl << *Me << endl;
-					return false; 	
-				}
-				if(isnan((*Ke)(i,j)))
-				{
-					cout << "Found a nan in Ke, element " << iE << endl << *Ke << endl;
-					return false;	
-				}
+				// if(isnan((*Me)(i,j))) // en complexe il n'y a pas de isnan possible... 
+				// {
+				// 	cout << "Found a nan in Me, element " << iE << endl << *Me << endl;
+				// 	return false; 	
+				// }
+				// if(isnan((*Ke)(i,j)))
+				// {
+				// 	cout << "Found a nan in Ke, element " << iE << endl << *Ke << endl;
+				// 	return false;	
+				// }
 			}
 		}
 		// stop to check current matrices 
@@ -850,9 +835,7 @@ bool FemCase<T>::buildKM()
 		//}
 	}	
 
-
-
-	// FInally, building matrices from triplets 
+	// Finally, building matrices from triplets 
 	if (m_mesh[iC]->contains1D())
 	{
 		m_Mseg = new Eigen::SparseMatrix<T> (nN, nN);
@@ -961,7 +944,7 @@ bool FemCase<T>::writeMicValues(double f, vector<T> values)
 	// micValues << f << "		";
 	for(unsigned int iMic = 0; iMic < m_setup[0].getMics().size() ; iMic ++)
 	{
-		micValues << values[iMic] << " ";
+		micValues << abs(values[iMic]) << " ";
 		// si plusieurs segments, il faut rajouter une boucle là...
 		// micValues << "		";
 	}
@@ -1023,7 +1006,7 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMat
 	vtkfile << "LOOKUP_TABLE default" << endl; 
 	// vtkfile << data << endl;
 	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> dataFloat;
-	dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.template cast<float>());
+	dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.cwiseAbs().template cast<float>());
 	addToVtkFile(vtkfile, dataFloat);
 	return true;
 }
@@ -1208,10 +1191,10 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getN(int element, 
 	
 	// initialization of various shit 
 	int ng(gp.rows());
-	double a(0);
-	double xi(0);
-	double eta(0);
-	double ksi(0);
+	T a(0);
+	T xi(0);
+	T eta(0);
+	T ksi(0);
 
 
 	switch (element)
@@ -1223,9 +1206,9 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getN(int element, 
 			{
 				ksi = gp.coeff(ig,0);
 				//cout << "ksi :" << ksi<< endl;
-				(*N)(ig,0) = -0.5*ksi*(1-ksi);
-				(*N)(ig,1) = (1-ksi*ksi); 
-				(*N)(ig,2) = 0.5*ksi*(1+ksi);
+				(*N)(ig,0) = -0.5*ksi*(1.0-ksi); // (T)(1) allows compatibility with complex
+				(*N)(ig,1) = (1.0-ksi*ksi); 
+				(*N)(ig,2) = 0.5*ksi*(1.0+ksi);
 			} 
 			break;
 		case 42: // T6 
@@ -1235,13 +1218,13 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getN(int element, 
 			{
 				xi = gp.coeff(ig,0);
 				eta = gp.coeff(ig,1);
-				a = 1-xi-eta;
-				(*N)(ig,0) = -a*(1-2*a); 
-				(*N)(ig,1) = -xi*(1-2*xi); 
-				(*N)(ig,2) = -eta*(1-2*eta); 
-				(*N)(ig,3) = 4*xi*a; 
-				(*N)(ig,4) = 4*xi*eta; 
-				(*N)(ig,5) = 4*eta*a; 
+				a = 1.0-xi-eta;
+				(*N)(ig,0) = -a*(1.0-2.0*a); 
+				(*N)(ig,1) = -xi*(1.0-2.0*xi); 
+				(*N)(ig,2) = -eta*(1.0-2.0*eta); 
+				(*N)(ig,3) = 4.0*xi*a; 
+				(*N)(ig,4) = 4.0*xi*eta; 
+				(*N)(ig,5) = 4.0*eta*a; 
 			}
 			break;
 		default:
@@ -1268,10 +1251,10 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getB(int element, 
 	
 	// initialization of various shit 
 	int ng(gp.rows());
-	double a(0);
-	double xi(0);
-	double eta(0);
-	double ksi(0);
+	T a(0);
+	T xi(0);
+	T eta(0);
+	T ksi(0);
 	
 	switch (element)
 	{
@@ -1281,9 +1264,9 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getB(int element, 
 			for (int ig = 0; ig < ng ; ig++)
 			{
 				ksi = gp.coeff(ig,0);
-				(*B)(ig,0) = 0.5*(-1+2*ksi); 
-				(*B)(ig,1) = -2*ksi; 
-				(*B)(ig,2) = 0.5*(1+2*ksi);
+				(*B)(ig,0) = 0.5*(-1.0+2.0*ksi); 
+				(*B)(ig,1) = -2.0*ksi; 
+				(*B)(ig,2) = 0.5*(1.0+2.0*ksi);
 			}
 			break;
 		case 42: // T6 
@@ -1293,19 +1276,19 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getB(int element, 
 			{
 				xi = gp.coeff(ig,0);
 				eta = gp.coeff(ig,1);
-				a = 1-4*(1-xi-eta);
+				a = 1.0-4.0*(1.0-xi-eta);
 				(*B)(2*ig+0,0) = a; 
-				(*B)(2*ig+0,1) = -1+4*xi; 
+				(*B)(2*ig+0,1) = -1.0+4.0*xi; 
 				(*B)(2*ig+0,2) = 0; 
-				(*B)(2*ig+0,3) = 4*(1-2*xi-eta); 
-				(*B)(2*ig+0,4) = 4*eta; 
-				(*B)(2*ig+0,5) = -4*eta; 
+				(*B)(2*ig+0,3) = 4.0*(1.0-2.0*xi-eta); 
+				(*B)(2*ig+0,4) = 4.0*eta; 
+				(*B)(2*ig+0,5) = -4.0*eta; 
 				(*B)(2*ig+1,0) = a; 
 				(*B)(2*ig+1,1) = 0; 
-				(*B)(2*ig+1,2) = -1+4*eta; 
-				(*B)(2*ig+1,3) = -4*xi; 
-				(*B)(2*ig+1,4) = 4*xi; 
-				(*B)(2*ig+1,5) = 4*(1-xi-2*eta); 
+				(*B)(2*ig+1,2) = -1.0+4.0*eta; 
+				(*B)(2*ig+1,3) = -4.0*xi; 
+				(*B)(2*ig+1,4) = 4.0*xi; 
+				(*B)(2*ig+1,5) = 4.0*(1.0-xi-2.0*eta); 
 			}
 			break;
 		default:

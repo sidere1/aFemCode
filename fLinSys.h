@@ -199,7 +199,7 @@ template<typename T>
 bool fLinSys<T>::isSymmetric()
 {
 	if (true)
-	if (abs((m_mat-Eigen::SparseMatrix<T>(m_mat.transpose())).sum()) < m_eps)
+	if (abs((m_mat-Eigen::SparseMatrix<T>(m_mat.transpose())).sum()) < abs(m_eps)) // en complexe, m_eps est complexe aussi... 
 	{
 		m_sym=2;
 		return true;
