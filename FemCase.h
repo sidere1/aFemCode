@@ -546,7 +546,7 @@ bool FemCase<T>::performResolution()
 			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
 			{
 				//values.push_back(iMic);
-				values.push_back(linSys->getSolution()(mics[iMic],0));
+				values.push_back(linSys->getSolution().coeff(mics[iMic],0));
 			}
 			// writing mic pressure and vtk field for the first segment 
 			writeMicValues(frequencies[iFreq], values);
@@ -888,12 +888,22 @@ bool FemCase<T>::buildKM()
 template <typename T>
 bool FemCase<T>::buildF()
 {
-	m_Fvol = new Eigen::SparseMatrix<T>(m_mesh[0]->getNodesNumber(),1);
-	m_Fsurf = new Eigen::SparseMatrix<T>(m_mesh[0]->getNodesNumber(),1);
-	m_Fseg = new Eigen::SparseMatrix<T>(m_mesh[0]->getNodesNumber(),1);
-	(*m_Fvol)(254,0) = 1;
-	(*m_Fsurf)(254,0) = 1;
-	(*m_Fseg)(254,0) = 1;
+	int nN(m_mesh[0]->getNodesNumber()); 
+	m_Fvol = new Eigen::SparseMatrix<T>(nN,1);
+	m_Fsurf = new Eigen::SparseMatrix<T>(nN,1);
+	m_Fseg = new Eigen::SparseMatrix<T>(nN,1);
+
+
+	std::vector<Eigen::Triplet<T>> coefficients;
+	coefficients.push_back(Eigen::Triplet<T>(254,0,1));
+
+	m_Fvol->setFromTriplets(coefficients.begin(), coefficients.end());
+	m_Fsurf->setFromTriplets(coefficients.begin(), coefficients.end());
+	m_Fseg->setFromTriplets(coefficients.begin(), coefficients.end());
+
+	// (*m_Fvol)(254,0) = 1;
+	// (*m_Fsurf)(254,0) = 1;
+	// (*m_Fseg)(254,0) = 1;
 	return true; 
 }
 
@@ -956,9 +966,9 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 
 	int nNodes(m_mesh[0]->getNodesNumber()); 
 	int nElem(m_mesh[0]->getElementNumber());
-	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord(m_mesh[0]->getCoordinates()+(float)1E-7);
-	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_mesh[0]->getConecAndNN());
-	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemType(m_mesh[0]->getElemTypesVtk());
+	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord = (m_mesh[0]->getCoordinates()); // (m_mesh[0]->getCoordinates()+(float)1E-7);
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec = (m_mesh[0]->getConecAndNN());
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemType = (m_mesh[0]->getElemTypesVtk());
 	//int nTot(conec.submat(0,nElem-1, 0,0).sum() + nElem); // version fMatrix 
 	int nTot(conec.block(0, 0, nElem-1, 0).sum() + nElem); // version Eigen 
 
@@ -1342,10 +1352,10 @@ template <typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> FemCase<T>::swapLines(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m, vector<int> perm) const
 {
 	// reorganizes the lines of a matrix m. 	
-	if (perm.size()!= m.rows())
+	if (perm.size()!= (unsigned long)m.rows())
 	{
 		cout << "PERM.SIZE() = " << perm.size() << " AND M.SIZE() = " << m.rows() << endl;
-		assert(perm.size() == m.rows()); // juste pour que ca crash bien sa race. 
+		assert(perm.size() == (unsigned long)m.rows()); // juste pour que ca crash bien sa race. 
 	}
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m2(m.rows(), m.cols());
 	unsigned int newI;
@@ -1401,13 +1411,14 @@ T FemCase<T>::computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> 
 	}
 	else if (m.rows() == 2)
 	{
-		// norm(cross(JacG(1,:), JacG(2,:)))
+		// en gros on calcule norm(cross(JacG(1,:), JacG(2,:))) 
 		// fMatrix a(3,1);
 		Eigen::Matrix<T,3,1> a; 
 		a(0,0) = (m(1,0)*m(2,1))-(m(2,0)*m(1,1));
 		a(1,0) = (m(0,1)*m(2,0))-(m(2,1)*m(0,0));
 		a(2,0) = (m(0,0)*m(1,1))-(m(1,0)*m(0,1));
-		return a.norm2();
+		return a.norm();
+		// return a.norm2();
 		// il doit y avoir une manière plus élégante et rapide, en réutilisan une fonction de Eigen ... 
 	}
 	else if (m.rows() == 1)

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cassert>
 #include <Eigen/Sparse>
+// #include <Eigen/SparseLU>
 
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
@@ -135,162 +136,63 @@ bool fLinSys<T>::fillMatrix()
 		{
 			count++;
 			tripA.push_back(i,j,count);
-			//m_mat(i,j)= count;
-			//m_mat(i,j)=(double)(rand() % 100) / 100;
-			//m_mat[i][j] = count ; 
 		}
 		tripA.push_back(i,0,count);
 	}
-	//for(int i = 0; i<m_size; i++)
-	//{
-	//	for(int j = 0; j<m_nRhs; j++)
-	//	{
-	//		count ++;
-	//		//m_rhs[i][j]=(double)(rand() % 100) / 100;
-	//		m_rhs(i,j) = count;
-	//	}
-	//}
 	return true;
 }
 
-//template<typename T>
-//bool fLinSys<T>::buildLU()
-//{
-//	if (!m_luDone)
-//	{
-//		m_luDone = m_mat.luFact(&m_l, &m_u);
-//	}
-//	return m_luDone;
-//}
-//
-//template<typename T>
-//bool fLinSys<T>::printLU()
-//{
-//	bool printU(false);
-//	bool printL(false);
-//
-//	// just making sure the factorisation has been calculated already
-//	if (!m_luDone)
-//	{
-//		m_luDone = fLinSys<T>::buildLU();
-//	}
-//	cout << endl << "L : " << endl;
-//	printL = m_l.print();
-//	cout << endl << "U : " << endl;
-//	printU = m_u.print();
-//	cout << endl << "L*U" << endl;
-//	Eigen::SparseMatrix<T> lu(m_l*m_u);
-//	lu.print();
-//	//cout << endl << "A+A" << endl;
-//	//Eigen::SparseMatrix<T> apa(m_mat+m_mat);
-//	//apa.print();
-//	//cout << endl << "2A" << endl;
-//	//Eigen::SparseMatrix<T> a2(m_mat+m_mat);
-//	//a2.print();
-//	//cout << endl << endl;
-//
-//	return (printL && printU);
-//	//for(int i = 0; i < m_size ; i++)
-//	//{
-//	//	for(int j = 0; j <= i ; j++)
-//	//	{
-//	//		cout << m_l(i,j) << " " ;
-//	//	}
-//	//	cout << endl;
-//	//}
-//	//cout << "U : " << endl;
-//	//for(int i = 0; i < m_size ; i++)
-//	//{
-//	//	for(int j = 0; j < m_size ; j++)
-//	//	//for(int j = 0; j < m_size-i ; j++)
-//	//	{
-//	//		cout << m_u(i,j) << " " ;
-//	//	}
-//	//	cout << endl;
-//	//}
-//	//cout << "L*U : " << endl;
-//	//for(int i = 0; i < m_size ; i++)
-//	//{
-//	//	for(int j = 0; j < m_size ; j++)
-//	//	{
-//	//		sum = 0;
-//	//		for(int k = 0; k < m_size ; k++)
-//	//		{
-//	//			sum += m_l(i,k)*m_u(k,j);
-//	//		}
-//	//		cout << sum << " " ;
-//	//	}
-//	//	cout << endl;
-//	//}
-//	//return true;
-//}
 
 template<typename T>
 bool fLinSys<T>::solve()
 {
 	Eigen::SparseMatrix<T> y(m_size, m_nRhs); 
-	//T sum(0);
-	//if (!m_luDone)
-	//{
-	//	m_luDone = fLinSys<T>::buildLU();
-	//}
-	//// to be coded : loop on the rhs 
-	////cout << "LU descente - remontée" << endl;
-	//for(int l = 0; l < m_nRhs; l++)
-	//{
-	//	// solving Ly = b 
-	//	for(int i = 0 ; i < m_size ; i++)
-	//	{
-	//		sum = 0;
-	//		for(int k = 0; k<i; k++)
-	//		{
-	//			sum+=m_l(i,k)*y(k,l);
-	//		}
-	//		// cette ligne n'est pas hyper utile parce que la diagonale de L est unitaire, mais ca fait trop mal au coeur de diviser sans verifier, deso !
-	//		assert(abs(m_l(i,i)) > m_eps && "pivot nul dans une matrice L... how strange !");
-	//		y(i,l) = (m_rhs(i,l)  - sum)/m_l(i,i);
-	//	}
-
-	//	// solving Ux = y
-	//	for(int i = m_size-1; i >= 0 ; i--)
-	//	{
-	//		sum = 0;
-	//		for(int k = i+1; k < m_size ; k++)
-	//		{
-	//			sum += m_u(i,k)*m_solution(k,l);
-	//		}
-	//		//cout << sum << endl;
-	//		//cout << abs(m_u(i,i)) << endl;
-	//		assert(abs(m_u(i,i)) > m_eps);
-	//		m_solution(i,l) = (y(i,l) - sum)/m_u(i,i);
-	//	}
-	//
-	//}
-
 	// improve the choice of the solver... 	
 	if(isSymmetric())
 	{
-		SparseLU<SparseMatrix<T>, COLAMDOrdering<int>> solver;
+		Eigen::SparseLU<Eigen::SparseMatrix<T>, Eigen::COLAMDOrdering<int>> solver;
 		solver.analyzePattern(m_mat);
 		solver.factorize(m_mat);
-		// loop over the rhs...
+		// il manque la loop over the rhs...
 		m_solution = solver.solve(m_rhs); 
+		if(solver.info()!=Eigen::Success) 
+		{
+			return false;
+		}
+		return true;
 	}
 	else
 	{
-		SimplicialLDLT<SparseMatrix<T>, COLAMDOrdering<int>> solver;
-		solver.analyzePattern(m_mat);
-		solver.factorize(m_mat);
-		// loop over the rhs...
+		Eigen::SimplicialLDLT<Eigen::SparseMatrix<T>> solver;
+		solver.compute(m_mat);
+		if(solver.info()!=Eigen::Success) 
+		{
+			// decomposition failed
+			cout << "Decomposition failed" << endl;
+			return false;
+		}
 		m_solution = solver.solve(m_rhs);
-		// si ça marche pasa : http://www.eigen.tuxfamily.org/dox/group__TopicSparseSystems.html#TutorialSparseSolverConcept 	
+		if(solver.info()!=Eigen::Success) 
+		{
+			// solving failed
+			cout << "LDLT Solve failed" << endl;
+			return false;
+		}
+		
+		
+		// Eigen::SimplicialLDLT<Eigen::SparseMatrix<T>, Eigen::COLAMDOrdering<int>> solver;
+		// solver.analyzePattern(m_mat);
+		// solver.factorize(m_mat);
+		// // loop over the rhs...
+		// m_solution = solver.solve(m_rhs);
+		// si ça marche pas : http://www.eigen.tuxfamily.org/dox/group__TopicSparseSystems.html#TutorialSparseSolverConcept 	
 	}
 	m_solved = true;
 	return true; 
 }
 
 template<typename T>
-bool flinSys<T>::isSymmetric()
+bool fLinSys<T>::isSymmetric()
 {
 	if (abs(sum(sum(m_mat+m_mat.transpose()))) < m_eps)
 	{
@@ -302,11 +204,11 @@ bool flinSys<T>::isSymmetric()
 }
 
 template<typename T>
-bool flinSys<T>::getSymmetric()
+bool fLinSys<T>::getSymmetric()
 {
 	if(m_sym == 0)
 	{
-		return isSymmetri();
+		return isSymmetric();
 	}
 	if(m_sym == 1)
 	{
