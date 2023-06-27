@@ -73,7 +73,10 @@ public:
 	bool writeMicFrequencies();
 
 	bool writeVtkMesh(string filename) const;
-	bool writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data) const;
+	bool writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data, bool firstTime) const;
+	bool addToVtkFile(ostream &out, Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const;
+	// bool addToVtkFile(ostream &out, Eigen::Matrix<unsigned int, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const;
+	bool addToVtkFile(ostream &out, Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const;
 
 
 	vector<int> swapLines(vector<int> v, vector<int> perm) const;
@@ -526,6 +529,7 @@ bool FemCase<T>::performResolution()
 	string vtkfilename("res.vtk");
 	ostringstream dataName;
 	writeVtkMesh(vtkfilename);
+	bool firstTime(true);
 
 	if (m_couplingType[0] == 1) // ou autre chose pour de la vibration harmonique par exemple ? 
 	{
@@ -541,7 +545,7 @@ bool FemCase<T>::performResolution()
 			
 			//cout << endl << endl << endl ;
 			linSys->solve();
-			cout << endl << endl << endl ;
+			// cout << endl << endl << endl ;
 			//cout << linSys->getSolution()(1,0) << endl;
 			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
 			{
@@ -552,8 +556,9 @@ bool FemCase<T>::performResolution()
 			writeMicValues(frequencies[iFreq], values);
 			dataName.str("");
 			dataName << "sol_f_" << abs(frequencies[iFreq]);
-			cout << dataName.str() << endl; 
-			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes-1, 0));
+			// cout << dataName.str() << endl; 
+			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			firstTime = false;
 			//writeVtkMesh(vtkfilename, "sol_f_"+(string)abs(frequencies[iFreq]), linSys->getSolution().submat(0,nNodes-1, 0,0));
 		}
 	}
@@ -614,12 +619,12 @@ bool FemCase<T>::buildKM()
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_se3 = getB(22, *gp_se3);	
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_t6 = getB(42, *gp_t6);	
 	
-	//gp_se3->print();
-	//gp_t6->print();
-	//N_se3->print();
-	//N_t6->print();
-	//B_se3->print();
-	//B_t6->print();
+	// cout << endl << "gp_se3 : " << *gp_se3;
+	// cout << endl << "gp_t6 : " << *gp_t6;
+	// cout << endl << "N_se3 : " << *N_se3;
+	// cout << endl << "N_t6 : " << *N_t6;
+	// cout << endl << "B_se3 : " << *B_se3;
+	// cout << endl << "B_t6 : " << *B_t6;
 
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp;// gauss points and weights for current element 
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N;// shape functions for current element 
@@ -694,16 +699,12 @@ bool FemCase<T>::buildKM()
 			currentM = Mseg;
 			// currentK = m_Kseg;
 			// currentM = m_Mseg;
-
-
-			//FAUT LES REORGANISER. METHODE PERMUTATE ? qui prend un ou deux vector<int> en input 
 			switch (elem.getFeDescriptor()){
 				case 22:
 					gp = gp_se3;
 					N = N_se3;
 					B = B_se3;
 					perm = {0,1,2}; // unv to aster format. Avec des SE3 l'interet est limite, j'avoue... 
-					// *coord = coord->swapLines(perm);
 					*coord = swapLines(*coord, perm);
 					*nodes = swapLines(*nodes, perm); 
 					break;
@@ -724,7 +725,6 @@ bool FemCase<T>::buildKM()
 					N = N_t6;
 					B = B_t6;
 					perm = {0,2,4,1,3,5}; // 42 unv to T6 aster format 
-					// *coord = coord->swapLines(perm);
 					*coord = swapLines(*coord, perm);
 					*nodes = swapLines(*nodes, perm); 
 					break;
@@ -755,7 +755,8 @@ bool FemCase<T>::buildKM()
 		}
 		gw = gp->cols()-1;// index of the column containing the weights  
 		ngp = gp->rows();// number of gauss points
-		nb = B->rows()/ngp;
+		nb = B->rows()/ngp; // number of lines in the gradient matrix : number of coordinates according to which the shape functions are derived 
+		// reminder : np : number of nodes on the current element 
 		delete(Ke);
 		delete(Me);
 		delete(Bg);
@@ -774,11 +775,24 @@ bool FemCase<T>::buildKM()
 		Bref->setZero();
 		Ng->setZero();
 		JacG->setZero();
+		// cout << "iE = " << iE << endl;
 		for (int iG = 0; iG < ngp; iG++)
 		{
-			*Bref = B->block(nb*iG, 0, (nb*(iG+1))-1, np-1);
-			*Ng = N->block(iG, 0, iG, np-1);
+			// cout << "nb" << nb << endl;
+			// cout << "B->rows()" << B->rows() << endl;
+			// cout << "ngp" << ngp << endl;
+			// cout << "np" << np << endl;
+			*Bref = B->block(nb*iG, 0, nb, np);
+			// *Bref = B->submat(nb*iG, (nb*(iG+1))-1, 0, np-1);
+			*Ng = N->block(iG, 0, 1, np);
+			// *Ng = N->submat(iG, iG, 0, np-1);
+			// cout << Bref->rows() << Bref->cols() << Bref->size() << endl; 
+			// cout << "Bref " << Bref->size() << endl << "coord : " << coord->size() << endl << "coord " << *coord << endl;
 			*JacG = (*Bref)**coord;
+			
+			// cout << "Bref->rows() : " << Bref->rows() << "; Bref->cols() : " << Bref->cols() << endl;
+			// cout << "coord->rows() : " << coord->rows() << "; coord->cols() : " << coord->cols() << endl;
+			// cout << "JacG->rows() : " << JacG->rows() << "; JacG->cols() : " << JacG->cols() << endl;
 			detJac = computeFemDetJac(*JacG);
 			*Bg = computeFemB(*JacG, *Bref);
 			*Ke = *Ke + detJac*(*gp).coeff(iG, gw)*(Bg->transpose())**Bg; 
@@ -918,10 +932,12 @@ bool FemCase<T>::writeMicValuesHeader()
 	{
 		return false;
 	}
-	micValues << "frequencies		";
+	micValues << "frequencies ";
+	// micValues << "frequencies		";
 	for(unsigned int iMic = 0; iMic < m_setup[0].getMics().size() ; iMic ++)
 	{
-		micValues << m_setup[0].getMics()[iMic] << "		";
+		micValues << m_setup[0].getMics()[iMic] << " ";
+		// micValues << m_setup[0].getMics()[iMic] << "		";
 	}
 	micValues << endl;
 	return true;
@@ -941,12 +957,13 @@ bool FemCase<T>::writeMicValues(double f, vector<T> values)
 		cout << "incoherence between values and mics number" << endl;
 		return false;
 	}
-	micValues << f << "		";
+	micValues << f << " ";
+	// micValues << f << "		";
 	for(unsigned int iMic = 0; iMic < m_setup[0].getMics().size() ; iMic ++)
 	{
 		micValues << values[iMic] << " ";
 		// si plusieurs segments, il faut rajouter une boucle là...
-		micValues << "		";
+		// micValues << "		";
 	}
 	micValues << endl;
 	return true;
@@ -955,7 +972,7 @@ bool FemCase<T>::writeMicValues(double f, vector<T> values)
 template <typename T>
 bool FemCase<T>::writeVtkMesh(string filename) const
 {
-	cout << "Writing vtk" << endl;
+	// cout << "Writing vtk" << endl;
 	ofstream vtkfile(m_path+"results/"+filename);
 	if(!vtkfile)
 	{
@@ -963,35 +980,34 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 		return false; 	
 	}
 
-
 	int nNodes(m_mesh[0]->getNodesNumber()); 
 	int nElem(m_mesh[0]->getElementNumber());
 	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord = (m_mesh[0]->getCoordinates()); // (m_mesh[0]->getCoordinates()+(float)1E-7);
 	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec = (m_mesh[0]->getConecAndNN());
 	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemType = (m_mesh[0]->getElemTypesVtk());
 	//int nTot(conec.submat(0,nElem-1, 0,0).sum() + nElem); // version fMatrix 
-	int nTot(conec.block(0, 0, nElem-1, 0).sum() + nElem); // version Eigen 
+	int nTot(conec.block(0, 0, nElem, 1).sum() + nElem); // version Eigen 
 
-	
 	vtkfile << "# vtk DataFile Version 2.0" << endl << "VTK from aFemCode" << endl;
 	vtkfile << "ASCII" << endl << "DATASET UNSTRUCTURED_GRID" << endl;
-
 	vtkfile << "POINTS " << nNodes << " float" << endl;
-	vtkfile << coord << endl ;
+	// vtkfile << coord << endl ;
+	addToVtkFile(vtkfile, coord);
 	vtkfile << "CELLS " << nElem << " " << nTot << endl;
-	vtkfile << conec << endl ;
+	// vtkfile << conec << endl ;
+	addToVtkFile(vtkfile, conec);
 	vtkfile << "CELL_TYPES " << nElem << endl;
-	vtkfile << elemType << endl ;
-
-
-	cout << "Done" << endl;
-
+	// vtkfile << elemType << endl ;
+	addToVtkFile(vtkfile, elemType);
+	// cout << "Done" << endl;
 	return true;
 }
 
 template <typename T>
-bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data) const
+bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data, bool firstTime) const
 {
+	int nNodes(m_mesh[0]->getNodesNumber()); 
+
 	ofstream vtkfile(m_path+"results/"+filename, ios::app);
 	if(!vtkfile)
 	{
@@ -999,13 +1015,56 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMat
 		return false; 	
 	}
 	
-	int nNodes(m_mesh[0]->getNodesNumber()); 
-
-	vtkfile << "POINT_DATA " << nNodes << endl << "SCALARS " << dataName << " double 1" << endl;
+	if (firstTime){
+		vtkfile << "POINT_DATA " << nNodes << endl;
+	}
+	vtkfile << "SCALARS " << dataName << " float 1" << endl;
 	// attention je fais peut-être des bêtises avec les types...
 	vtkfile << "LOOKUP_TABLE default" << endl; 
-	vtkfile << data << endl;
+	// vtkfile << data << endl;
+	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> dataFloat;
+	dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.template cast<float>());
+	addToVtkFile(vtkfile, dataFloat);
 	return true;
+}
+
+
+template<typename T>
+bool FemCase<T>::addToVtkFile( ostream &out, Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const
+{ // as done previously in fMatrix 
+	Eigen::MatrixXi fullMat;
+	fullMat = Eigen::MatrixXi(mat);
+	for(unsigned int i = 0 ; i < mat.rows() ; i++){
+		for(unsigned int j = 0 ; j < mat.cols() ; j++){
+			if (abs(mat(i,j)) > 0){
+				out << mat(i,j) << " ";
+			}
+			else{// this way, we don't print zeros if the end of the line is empty
+				if (mat.block(i,j,1,mat.cols()-j).sum() == 0)
+					break;
+				else
+					out << mat(i,j) << " ";
+			}
+		}
+		out << endl;
+	}
+	out << endl;
+    return true;
+}
+
+template<typename T>
+bool FemCase<T>::addToVtkFile( ostream &out, Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const
+{ // as done previously in fMatrix 
+	Eigen::MatrixXf fullMat;
+	fullMat = Eigen::MatrixXf(mat);
+	for(unsigned int i = 0 ; i < mat.rows() ; i++){
+		for(unsigned int j = 0 ; j < mat.cols() ; j++){
+			out << fullMat(i,j) << " ";
+		}
+		out << endl;
+	}
+	out << endl;
+    return true;
 }
 
 
@@ -1413,11 +1472,16 @@ T FemCase<T>::computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> 
 	{
 		// en gros on calcule norm(cross(JacG(1,:), JacG(2,:))) 
 		// fMatrix a(3,1);
-		Eigen::Matrix<T,3,1> a; 
-		a(0,0) = (m(1,0)*m(2,1))-(m(2,0)*m(1,1));
-		a(1,0) = (m(0,1)*m(2,0))-(m(2,1)*m(0,0));
-		a(2,0) = (m(0,0)*m(1,1))-(m(1,0)*m(0,1));
-		return a.norm();
+		
+		// Eigen::Matrix<T,3,1> a; 
+		// a(0,0) = (m(1,0)*m(2,1))-(m(2,0)*m(1,1));
+		// a(1,0) = (m(0,1)*m(2,0))-(m(2,1)*m(0,0));
+		// a(2,0) = (m(0,0)*m(1,1))-(m(1,0)*m(0,1));
+
+		Eigen::Vector<T, 3> v(m.row(0)); 
+		Eigen::Vector<T, 3> w(m.row(1)); 
+
+		return v.cross(w).norm();
 		// return a.norm2();
 		// il doit y avoir une manière plus élégante et rapide, en réutilisan une fonction de Eigen ... 
 	}
@@ -1432,9 +1496,6 @@ T FemCase<T>::computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> 
 		return 0;
 	}
 }
-
-
-
 
 
 

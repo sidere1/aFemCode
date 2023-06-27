@@ -25,7 +25,8 @@ WARNING := -Wall -Wextra -pedantic -Wtautological-compare
 # "make all" and "make parking" mean the same
 all: prog
 ifeq ($(UNAME), Darwin)
-	/usr/bin/time -lp ./prog ~/Documents/femCases/stupidCircle/setup/main	
+#	/usr/bin/time -lp ./prog ~/Documents/femCases/stupidCircle/setup/main	
+	time ./prog ~/Documents/femCases/stupidCircle/setup/main	
 endif
 ifeq ($(UNAME), Linux)
 	/usr/bin/time -v ./prog ~/Documents/femCases/stupidCircle/setup/main	

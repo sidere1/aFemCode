@@ -126,7 +126,7 @@ bool fLinSys<T>::fillMatrix()
 	std::vector<Eigen::Triplet<T>> tripA;
 	std::vector<Eigen::Triplet<T>> tripB;
 
-	tripA.reserve(m_size);
+	tripA.reserve(m_size*m_size);
 	tripB.reserve(m_size);
 	
 	T count(0);
@@ -135,10 +135,12 @@ bool fLinSys<T>::fillMatrix()
 		for(int j = 0; j<m_size; j++)
 		{
 			count++;
-			tripA.push_back(i,j,count);
+			tripA.push_back(Eigen::Triplet<T>(i,j,count));
 		}
-		tripA.push_back(i,0,count);
+		tripB.push_back(Eigen::Triplet<T>(i,0,count));
 	}
+	m_mat.setFromTriplets(tripA->begin(), tripA->end());
+	m_rhs.setFromTriplets(tripB->begin(), tripB->end());
 	return true;
 }
 
@@ -148,8 +150,9 @@ bool fLinSys<T>::solve()
 {
 	Eigen::SparseMatrix<T> y(m_size, m_nRhs); 
 	// improve the choice of the solver... 	
-	if(isSymmetric())
+	if(!isSymmetric())
 	{
+		cout << "Using LU" << endl;
 		Eigen::SparseLU<Eigen::SparseMatrix<T>, Eigen::COLAMDOrdering<int>> solver;
 		solver.analyzePattern(m_mat);
 		solver.factorize(m_mat);
@@ -163,6 +166,7 @@ bool fLinSys<T>::solve()
 	}
 	else
 	{
+		cout << "Using LDLT" << endl;
 		Eigen::SimplicialLDLT<Eigen::SparseMatrix<T>> solver;
 		solver.compute(m_mat);
 		if(solver.info()!=Eigen::Success) 
@@ -194,7 +198,8 @@ bool fLinSys<T>::solve()
 template<typename T>
 bool fLinSys<T>::isSymmetric()
 {
-	if (abs(sum(sum(m_mat+m_mat.transpose()))) < m_eps)
+	if (true)
+	if (abs((m_mat-Eigen::SparseMatrix<T>(m_mat.transpose())).sum()) < m_eps)
 	{
 		m_sym=2;
 		return true;
