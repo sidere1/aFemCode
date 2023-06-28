@@ -16,8 +16,8 @@
 using namespace std;
 //using Eigen::MatrixXd;
 //using Eigen::VectorXd;
-typedef Eigen::SparseMatrix<double> SpMatXd;
-typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
+// typedef Eigen::SparseMatrix<double> SpMatXd;
+// typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
 
 int main(int argc, char** argv)
 {

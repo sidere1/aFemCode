@@ -140,19 +140,22 @@ template<typename T>
 bool fLinSys<T>::solve()
 {
 	Eigen::SparseMatrix<T> y(m_size, m_nRhs); 
-	// improve the choice of the solver... 	
+	// it is possible to improve the choice of the solver... 	
+	// doc http://www.eigen.tuxfamily.org/dox/group__TopicSparseSystems.html#TutorialSparseSolverConcept 	
+	// ajouter la loop over the rhs 
 	if(!isSymmetric())
 	{
 		cout << "Using LU" << endl;
 		Eigen::SparseLU<Eigen::SparseMatrix<T>, Eigen::COLAMDOrdering<int>> solver;
 		solver.analyzePattern(m_mat);
 		solver.factorize(m_mat);
-		// il manque la loop over the rhs...
 		m_solution = solver.solve(m_rhs); 
 		if(solver.info()!=Eigen::Success) 
 		{
+			m_solved = false;
 			return false;
 		}
+		m_solved = true;
 		return true;
 	}
 	else
@@ -161,29 +164,22 @@ bool fLinSys<T>::solve()
 		Eigen::SimplicialLDLT<Eigen::SparseMatrix<T>> solver;
 		solver.compute(m_mat);
 		if(solver.info()!=Eigen::Success) 
-		{
-			// decomposition failed
+		{// decomposition
 			cout << "Decomposition failed" << endl;
+			m_solved = false;
 			return false;
 		}
 		m_solution = solver.solve(m_rhs);
 		if(solver.info()!=Eigen::Success) 
-		{
-			// solving failed
+		{// descente - remontee
 			cout << "LDLT Solve failed" << endl;
+			m_solved = false;
 			return false;
 		}
-		
-		
-		// Eigen::SimplicialLDLT<Eigen::SparseMatrix<T>, Eigen::COLAMDOrdering<int>> solver;
-		// solver.analyzePattern(m_mat);
-		// solver.factorize(m_mat);
-		// // loop over the rhs...
-		// m_solution = solver.solve(m_rhs);
-		// si ça marche pas : http://www.eigen.tuxfamily.org/dox/group__TopicSparseSystems.html#TutorialSparseSolverConcept 	
+		m_solved = true;
+		return true; 
 	}
-	m_solved = true;
-	return true; 
+	
 }
 
 template<typename T>
@@ -218,25 +214,6 @@ bool fLinSys<T>::getSymmetric()
 	WHEREAMI
 	return true;
 }
-
-//template<typename T>
-//Eigen::SparseMatrix<T> fLinSys<T>::getL()
-//{
-//	if(!m_luDone)
-//	{
-//		m_luDone = fLinSys<T>::buildLU();
-//	}
-//	return m_l;
-//}
-//template<typename T>
-//Eigen::SparseMatrix<T> fLinSys<T>::getU()
-//{
-//	if(!m_luDone)
-//	{
-//		m_luDone = fLinSys<T>::buildLU();
-//	}
-//	return m_u;
-//}
 
 template<typename T>
 Eigen::SparseMatrix<T> fLinSys<T>::getSolution()

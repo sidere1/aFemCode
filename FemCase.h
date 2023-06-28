@@ -505,13 +505,16 @@ template <typename T>
 bool FemCase<T>::performResolution()
 {
 	// check for any couplings, perform coupling. 
-	// check for physics type 
+	// check for physics type, 2D, 3D, etc. 
 	// depending on the physics, goes to a specific solver : performAcResolution, preformStaticResolution, etc. 
 	// ex acResolution : 
 		// loop over the frequencies 
 		// construction de fLinSys avec la fréquence courante 
 		// résolution du systeme 
 		// storage of the result 
+
+	const complex<double> i(0.0,1.0);
+	const double pi(3.1415926);	
 
 	assert(m_nCoupling == 1 && "Not allowed yet. Don't hesitate to develop it !");
 	fLinSys<T> *linSys;
@@ -539,8 +542,8 @@ bool FemCase<T>::performResolution()
 		{
 			// computing solution for the current frequency 
 			values.clear();
-			k = 2*3.1415926*frequencies[iFreq]/m_setup[0].getC();
-			*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf);
+			k = 2*pi*frequencies[iFreq]/m_setup[0].getC();
+			*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf)+i*k*(*m_Mseg);
 			delete linSys;
 			linSys = new fLinSys<T>(*currentSys, *m_Fsurf);
 			cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << endl;
@@ -551,10 +554,13 @@ bool FemCase<T>::performResolution()
 				values.push_back(linSys->getSolution().coeff(mics[iMic],0));
 			}
 			writeMicValues(frequencies[iFreq], values);
-			dataName.str("");
-			dataName << "sol_f_" << abs(frequencies[iFreq]);
+			dataName.str(""); dataName << "sol_abs_f_" << abs(frequencies[iFreq]);
 			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 			firstTime = false;
+			dataName.str(""); dataName << "sol_real_f_" << real(frequencies[iFreq]);
+			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
+			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 		}
 	}
 	return true;
@@ -566,8 +572,6 @@ bool FemCase<T>::buildKM()
 {
 	// au programme : 
 	// loop over the couplings A CODER 
-	// faire un assemblage creux : un vecteur de triplets de taille connue, une création de matrice par triplet. 
-	// on peut tout passer en matrices pleines en fait...... 
 
 
 	// variable initialisation
@@ -582,11 +586,8 @@ bool FemCase<T>::buildKM()
 	Element elem;// current element
 	string message("");
 	vector<int> perm;
-	// Eigen::SparseMatrix<T> *currentK; 
-	// Eigen::SparseMatrix<T> *currentM;
 	std::vector<Eigen::Triplet<T> > *currentK; 
-	std::vector<Eigen::Triplet<T> > *currentM;
-
+	std::vector<Eigen::Triplet<T> > *currentM; 
 	std::vector<Eigen::Triplet<T> > *Kseg; 
 	std::vector<Eigen::Triplet<T> > *Mseg; 
 	std::vector<Eigen::Triplet<T> > *Ksurf; 
@@ -629,7 +630,6 @@ bool FemCase<T>::buildKM()
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Bref; Bref = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *JacG; JacG = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
 	
-	//Eigen::SparseMatrix<float> *coordF; coordF = new Eigen::SparseMatrix<float>(1,1);
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *coord; coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
 	vector<int> *nodes; nodes = new vector<int>;
 
@@ -637,63 +637,43 @@ bool FemCase<T>::buildKM()
 	cout << message << endl; 
 	writeInfo(message);
 	
-	
 	// matrix initialisation, as well as gauss points and shape functions 
-	if (m_mesh[iC]->contains1D())
-	{
-		//cout << "yes 1D" << endl;	
-		// m_Mseg = new Eigen::SparseMatrix<T>(nN, nN);
-		// m_Kseg = new Eigen::SparseMatrix<T>(nN, nN);
+	if (m_mesh[iC]->contains1D()){
 		Mseg = new std::vector<Eigen::Triplet<T>>;
 		Kseg = new std::vector<Eigen::Triplet<T>>;
 		Kseg->reserve(nN);
 		Mseg->reserve(nN);
 	}
-	if (m_mesh[iC]->contains2D())
-	{
-		//cout << "yes 2D" << endl;
-		// m_Msurf = new Eigen::SparseMatrix<T>(nN, nN);
-		// m_Ksurf = new Eigen::SparseMatrix<T>(nN, nN);
+	if (m_mesh[iC]->contains2D()){
 		Msurf = new std::vector<Eigen::Triplet<T>>;
 		Ksurf = new std::vector<Eigen::Triplet<T>>;
 		Ksurf->reserve(nN);
 		Msurf->reserve(nN);
 	}
-	if (m_mesh[iC]->contains3D())
-	{
-		//cout << "yes 3D" << endl;
-		// m_Mvol = new Eigen::SparseMatrix<T>(nN, nN);
-		// m_Kvol = new Eigen::SparseMatrix<T>(nN, nN);
+	if (m_mesh[iC]->contains3D()){
 		Mvol = new std::vector<Eigen::Triplet<T>>;
 		Kvol = new std::vector<Eigen::Triplet<T>>;
 		Kvol->reserve(nN);
 		Mvol->reserve(nN);
 	}
-	
-	if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) 
-	{
+	if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) {
 		cout << "your mesh hasn't been prepared correctly" << endl;
 	}
 	
 	for(int iE = 0; iE < nE; iE++)
 	{
-		// initialisation  
 		elem = m_mesh[iC]->getElement(iE);
 		np = elem.getnN(); // nombre de noeuds 
-		// construction de la liste de noeuds et réorganisation 
 		delete coord;
 		delete nodes;
 		coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np,3);
 		nodes = new vector<int>; 
 		*coord = elem.getCoordinates().cast<T>();
 		*nodes = elem.getNodesIds();
-		if (elem.is1D())
-		{
+		if (elem.is1D()){
 			countSeg++;
 			currentK = Kseg;
 			currentM = Mseg;
-			// currentK = m_Kseg;
-			// currentM = m_Mseg;
 			switch (elem.getFeDescriptor()){
 				case 22:
 					gp = gp_se3;
@@ -707,11 +687,8 @@ bool FemCase<T>::buildKM()
 					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
 			}
 		}
-		else if (elem.is2D())
-		{
+		else if (elem.is2D()){
 			countSurf++;
-			// currentK = m_Ksurf;
-			// currentM = m_Msurf;
 			currentK = Ksurf;
 			currentM = Msurf;
 			switch (elem.getFeDescriptor()){
@@ -727,11 +704,8 @@ bool FemCase<T>::buildKM()
 					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
 			}
 		}
-		else if(elem.is3D())
-		{
+		else if(elem.is3D()){
 			countVol++;
-			// currentK = m_Kvol;
-			// currentM = m_Mvol;
 			currentK = Kvol;
 			currentM = Mvol;
 			switch (elem.getFeDescriptor()){
@@ -742,8 +716,7 @@ bool FemCase<T>::buildKM()
 					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
 			}
 		}
-		else
-		{
+		else{
 			message = "Incoherent mesh, make sure it has been prepared correctly. The current element is neither 1D, 2D or not 3D";
 			cout << message << endl; 
 			writeError(message);
@@ -831,29 +804,25 @@ bool FemCase<T>::buildKM()
 	}	
 
 	// Finally, building matrices from triplets 
-	if (m_mesh[iC]->contains1D())
-	{
+	if (m_mesh[iC]->contains1D()){
 		m_Mseg = new Eigen::SparseMatrix<T> (nN, nN);
 		m_Mseg->setFromTriplets(Mseg->begin(), Mseg->end());
 		m_Kseg = new Eigen::SparseMatrix<T> (nN, nN);
 		m_Kseg->setFromTriplets(Kseg->begin(), Kseg->end());
 	}
-	if (m_mesh[iC]->contains2D())
-	{
+	if (m_mesh[iC]->contains2D()){
 		m_Msurf = new Eigen::SparseMatrix<T> (nN, nN);
 		m_Msurf->setFromTriplets(Msurf->begin(), Msurf->end());
 		m_Ksurf = new Eigen::SparseMatrix<T> (nN, nN);
 		m_Ksurf->setFromTriplets(Ksurf->begin(), Ksurf->end());
 	}
-	if (m_mesh[iC]->contains3D())
-	{
+	if (m_mesh[iC]->contains3D()){
 		m_Mvol = new Eigen::SparseMatrix<T>(nN, nN);
 		m_Mvol->setFromTriplets(Mvol->begin(), Mvol->end());
 		m_Kvol = new Eigen::SparseMatrix<T>(nN, nN);
 		m_Kvol->setFromTriplets(Kvol->begin(), Kvol->end());
 	}
 	
-
 	// check que le volume est correct 
 	if (m_mesh[iC]->contains1D())
 	{
@@ -1001,7 +970,15 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMat
 	vtkfile << "LOOKUP_TABLE default" << endl; 
 	// vtkfile << data << endl;
 	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> dataFloat;
-	dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.cwiseAbs().template cast<float>());
+	if (dataName.find("real")!=std::string::npos){
+		dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.real().template cast<float>());
+	}
+	else if (dataName.find("imag")!=std::string::npos){
+		dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.imag().template cast<float>());
+	}
+	else {// default behaviour is to export the absolute value (module)
+		dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.cwiseAbs().template cast<float>());		
+	}
 	addToVtkFile(vtkfile, dataFloat);
 	return true;
 }
