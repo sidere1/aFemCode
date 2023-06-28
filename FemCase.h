@@ -21,8 +21,8 @@
         ( std::ostringstream() << std::dec << x ) ).str()
 
 #include <Eigen/Sparse>
-typedef Eigen::SparseMatrix<double> SpMatXd;
-typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
+// typedef Eigen::SparseMatrix<double> SpMatXd;
+// typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
 // ces typedef ne sont aps utilisés normalement... 
 
 // using namespace Eigen; // c'est pas ouf d'avoir un namespace dans un .h.... 
@@ -505,8 +505,9 @@ template <typename T>
 bool FemCase<T>::performResolution()
 {
 	// check for any couplings, perform coupling. 
-	// 
-	// if no coupling and harmonic resolution : 
+	// check for physics type 
+	// depending on the physics, goes to a specific solver : performAcResolution, preformStaticResolution, etc. 
+	// ex acResolution : 
 		// loop over the frequencies 
 		// construction de fLinSys avec la fréquence courante 
 		// résolution du systeme 
@@ -536,30 +537,24 @@ bool FemCase<T>::performResolution()
 		// loop over the frequencies
 		for(unsigned int iFreq = 2; iFreq < frequencies.size(); iFreq ++) 
 		{
+			// computing solution for the current frequency 
 			values.clear();
 			k = 2*3.1415926*frequencies[iFreq]/m_setup[0].getC();
 			*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf);
 			delete linSys;
 			linSys = new fLinSys<T>(*currentSys, *m_Fsurf);
 			cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << endl;
-			
-			//cout << endl << endl << endl ;
 			linSys->solve();
-			// cout << endl << endl << endl ;
-			//cout << linSys->getSolution()(1,0) << endl;
+			// exporting results 
 			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
 			{
-				//values.push_back(iMic);
 				values.push_back(linSys->getSolution().coeff(mics[iMic],0));
 			}
-			// writing mic pressure and vtk field for the first segment 
 			writeMicValues(frequencies[iFreq], values);
 			dataName.str("");
 			dataName << "sol_f_" << abs(frequencies[iFreq]);
-			// cout << dataName.str() << endl; 
 			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 			firstTime = false;
-			//writeVtkMesh(vtkfilename, "sol_f_"+(string)abs(frequencies[iFreq]), linSys->getSolution().submat(0,nNodes-1, 0,0));
 		}
 	}
 	return true;
@@ -608,7 +603,7 @@ bool FemCase<T>::buildKM()
 	int nb(0); // number of lines in the gradient matrix
 	T detJac(0);
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> one(nN, 1);
-	one = Eigen::MatrixXd::Constant(nN, 1, 1); // chuis pas sûr 
+	one = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::Constant(nN, 1, 1); // chuis pas sûr 
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> check(1,1);
 
 	// pointers on gauss points tables and shape functions, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 

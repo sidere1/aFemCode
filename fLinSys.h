@@ -24,12 +24,8 @@ public:
 	~fLinSys();
 	bool fillMatrix();
 	bool printMatrix();
-	//bool buildLU();
-	//bool printLU();
 	bool solve();
 	int getSize();
-	//Eigen::SparseMatrix<T> getL();
-	//Eigen::SparseMatrix<T> getU();
 	Eigen::SparseMatrix<T> getSolution();
 	bool isSymmetric();
 	bool getSymmetric();
@@ -46,11 +42,6 @@ private:
 	Eigen::SparseMatrix<T> m_u;
 	Eigen::SparseMatrix<T> m_rhs;
 	Eigen::SparseMatrix<T> m_solution;
-	//vector<vector<double>> m_mat;
-	//vector<vector<double>> m_l;
-	//vector<vector<double>> m_u;
-	//vector<vector<double>> m_rhs;
-	//vector<vector<double>> m_solution;
 };
 
 

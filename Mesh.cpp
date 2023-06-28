@@ -474,9 +474,9 @@ bool Mesh::isBeginEnd(string line)
 
 bool Mesh::calculateVolume() 
 {
-    double vol(0);
-    double surf(0);
-    double dist(0);
+    float vol(0);
+    float surf(0);
+    float dist(0);
     for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
     {
 		// il faudrait faire un tri entre éléments de surface / longueur / volume ! 
@@ -505,23 +505,6 @@ bool Mesh::calculateVolume()
     return true;
 }
 
-//double Mesh::calculateArea() const 
-//{
-//    double area(0);
-//    int count(0) ; 
-//    double plus;
-//    for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
-//    {
-//        plus = m_elements[elem].calculateArea();
-//        area = area + plus;
-//        if (plus != 0) 
-//        {
-//            count++;
-//        }
-//    }
-//    // cout << count << " elements taken into account for the surface" << endl;
-//    return area;   
-//}
 
 
 int Mesh::getElementNumber() const

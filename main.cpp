@@ -28,6 +28,9 @@ int main(int argc, char** argv)
 	string setupFile (argv[1]);
 	cout << "Reading setup file " << argv[1] << endl; 
 	
+	// FemCase<double> fc(setupFile.c_str());
+	// FemCase<float> fc(setupFile.c_str());
+	// FemCase<complex<float>> fc(setupFile.c_str()); 
 	FemCase<complex<double>> fc(setupFile.c_str());
 	if (!fc.isLoaded())
 	{

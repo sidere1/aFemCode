@@ -35,7 +35,6 @@ public:
     int typeAssign(int nbOfNodes);
     bool isBeginEnd(std::string line);
     bool calculateVolume() ;
-    //double calculateArea() const; // included in calculateVolume
     int getElementNumber() const;
     int getNodesNumber() const;
 
@@ -60,9 +59,9 @@ private:
     std::string m_error;
 	unsigned int m_nN;
 	unsigned int m_nE;
-	double m_dist;
-	double m_surf; 
-	double m_vol;
+	float m_dist;
+	float m_surf; 
+	float m_vol;
 	bool m_1D;
 	bool m_2D;
 	bool m_3D;
