@@ -90,7 +90,7 @@ OUTPUT_DIRECTORY       =
 # Minimum value: 0, maximum value: 8, default value: 8.
 # This tag requires that the tag CREATE_SUBDIRS is set to YES.
 
-CREATE_SUBDIRS_LEVEL   = 8
+#CREATE_SUBDIRS_LEVEL   = 8
 
 # If the ALLOW_UNICODE_NAMES tag is set to YES, doxygen will allow non-ASCII
 # characters to appear in the names of generated files. If set to NO, non-ASCII
@@ -629,7 +629,8 @@ INTERNAL_DOCS          = YES
 # Possible values are: SYSTEM, NO and YES.
 # The default value is: SYSTEM.
 
-CASE_SENSE_NAMES       = SYSTEM
+CASE_SENSE_NAMES       = YES
+#CASE_SENSE_NAMES       = SYSTEM
 
 # If the HIDE_SCOPE_NAMES tag is set to NO then doxygen will show members with
 # their full class and namespace scopes in the documentation. If set to YES, the
@@ -1123,7 +1124,7 @@ USE_MDFILE_AS_MAINPAGE =
 # be processed before the automatic comment starts.
 # Minimum value: 7, maximum value: 10000, default value: 72.
 
-FORTRAN_COMMENT_AFTER  = 72
+#FORTRAN_COMMENT_AFTER  = 72
 
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
@@ -1336,7 +1337,7 @@ HTML_EXTRA_FILES       =
 # The default value is: AUTO_LIGHT.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_COLORSTYLE        = AUTO_LIGHT
+#HTML_COLORSTYLE        = AUTO_LIGHT
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
@@ -1428,7 +1429,7 @@ DOCSET_FEEDNAME        = "Doxygen generated docs"
 # (such as a company or product suite) can be grouped.
 # This tag requires that the tag GENERATE_DOCSET is set to YES.
 
-DOCSET_FEEDURL         =
+#DOCSET_FEEDURL         =
 
 # This tag specifies a string that should uniquely identify the documentation
 # set bundle. This should be a reverse domain-name style string, e.g.
@@ -1525,7 +1526,7 @@ TOC_EXPAND             = NO
 # protocol see https://www.sitemaps.org
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-SITEMAP_URL            =
+#SITEMAP_URL            =
 
 # If the GENERATE_QHP tag is set to YES and both QHP_NAMESPACE and
 # QHP_VIRTUAL_FOLDER are set, an additional index file will be generated that
@@ -1649,7 +1650,7 @@ GENERATE_TREEVIEW      = NO
 # The default value is: NO.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-FULL_SIDEBAR           = NO
+#FULL_SIDEBAR           = NO
 
 # The ENUM_VALUES_PER_LINE tag can be used to set the number of enum values that
 # doxygen will group on one line in the generated HTML documentation.
@@ -1680,7 +1681,7 @@ EXT_LINKS_IN_WINDOW    = NO
 # The default value is: YES.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-OBFUSCATE_EMAILS       = YES
+#OBFUSCATE_EMAILS       = YES
 
 # If the HTML_FORMULA_FORMAT option is set to svg, doxygen will use the pdf2svg
 # tool (see https://github.com/dawbarton/pdf2svg) or inkscape (see
@@ -1728,7 +1729,7 @@ USE_MATHJAX            = YES
 # The default value is: MathJax_2.
 # This tag requires that the tag USE_MATHJAX is set to YES.
 
-MATHJAX_VERSION        = MathJax_2
+# MATHJAX_VERSION        = MathJax_2
 
 # When MathJax is enabled you can set the default output format to be used for
 # the MathJax output. For more details about the output format see MathJax
@@ -2420,7 +2421,7 @@ DOT_NUM_THREADS        = 0
 # The default value is: fontname=Helvetica,fontsize=10.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_COMMON_ATTR        = "fontname=Helvetica,fontsize=10"
+#DOT_COMMON_ATTR        = "fontname=Helvetica,fontsize=10"
 
 # DOT_EDGE_ATTR is concatenated with DOT_COMMON_ATTR. For elegant style you can
 # add 'arrowhead=open, arrowtail=open, arrowsize=0.5'. <a
@@ -2429,7 +2430,7 @@ DOT_COMMON_ATTR        = "fontname=Helvetica,fontsize=10"
 # The default value is: labelfontname=Helvetica,labelfontsize=10.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_EDGE_ATTR          = "labelfontname=Helvetica,labelfontsize=10"
+#DOT_EDGE_ATTR          = "labelfontname=Helvetica,labelfontsize=10"
 
 # DOT_NODE_ATTR is concatenated with DOT_COMMON_ATTR. For view without boxes
 # around nodes set 'shape=plain' or 'shape=plaintext' <a
@@ -2437,7 +2438,7 @@ DOT_EDGE_ATTR          = "labelfontname=Helvetica,labelfontsize=10"
 # The default value is: shape=box,height=0.2,width=0.4.
 # This tag requires that the tag HAVE_DOT is set to YES.
 
-DOT_NODE_ATTR          = "shape=box,height=0.2,width=0.4"
+#DOT_NODE_ATTR          = "shape=box,height=0.2,width=0.4"
 
 # You can set the path where dot can find font specified with fontname in
 # DOT_COMMON_ATTR and others dot attributes.
@@ -2589,7 +2590,7 @@ DIRECTORY_GRAPH        = YES
 # Minimum value: 1, maximum value: 25, default value: 1.
 # This tag requires that the tag DIRECTORY_GRAPH is set to YES.
 
-DIR_GRAPH_MAX_DEPTH    = 1
+#DIR_GRAPH_MAX_DEPTH    = 1
 
 # The DOT_IMAGE_FORMAT tag can be used to set the image format of the images
 # generated by dot. For an explanation of the image formats see the section
@@ -2722,7 +2723,7 @@ DOT_CLEANUP            = YES
 # <outfile_format> -o <outputfile> <inputfile>. The external tool should support
 # output file formats "png", "eps", "svg", and "ismap".
 
-MSCGEN_TOOL            =
+#MSCGEN_TOOL            =
 
 # The MSCFILE_DIRS tag can be used to specify one or more directories that
 # contain msc files that are included in the documentation (see the \mscfile
