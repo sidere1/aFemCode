@@ -16,8 +16,10 @@ import pathlib
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
 import subprocess
-subprocess.call('make clean', shell=True)
-subprocess.call('cd ../doxygen ; doxygen', shell=True)
+read_the_docs_build = os.environ.get('READTHEDOCS', None) == 'True'
+if read_the_docs_build:
+	subprocess.call('make clean', shell=True)
+	subprocess.call('cd ../doxygen ; doxygen', shell=True)
 
 breathe_projects = { "aFemCode": "../doxygen/xml/" }
 breathe_default_project = "aFemCode"
