@@ -37,6 +37,7 @@ prog_test
 log.info 
 log.warning
 deleted/
+tests/compEigenVsfMatrix 
 
 # documentation
 docs/_*
