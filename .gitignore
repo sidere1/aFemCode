@@ -37,3 +37,13 @@ prog_test
 log.info 
 log.warning
 deleted/
+
+# documentation
+docs/_*
+doxygen/latex
+doxygen/xml
+doxygen/html
+
+
+
+

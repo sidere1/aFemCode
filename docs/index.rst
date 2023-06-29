@@ -7,9 +7,17 @@ Welcome to aFemCode's documentation!
 ====================================
 
 .. toctree::
-   :maxdepth: 2
+   content
+   :maxdepth: 3
    :caption: Contents:
 
+**aFemCode** is a FEM code. 
+
+It was used initially only to learn cpp, and eventually to use for FSBC development
+
+.. note::
+
+   This project is under active development.
 
 
 Indices and tables
@@ -18,3 +26,7 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+
+
+

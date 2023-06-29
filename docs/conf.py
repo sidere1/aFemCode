@@ -10,10 +10,18 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+import pathlib
+sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, pathlib.Path(__file__).parents[2].resolve().as_posix())
+import subprocess
+subprocess.call('make clean', shell=True)
+subprocess.call('cd ../doxygen ; doxygen', shell=True)
 
+breathe_projects = { "aFemCode": "../doxygen/xml/" }
+breathe_default_project = "aFemCode"
+breathe_default_members = ('members', 'undoc-members', 'protected-members', 'private-members', )
 
 # -- Project information -----------------------------------------------------
 
@@ -31,13 +39,13 @@ extensions = [
 	'sphinx.ext.duration',
     'sphinx.ext.doctest',
     'sphinx.ext.autodoc',
-#    'sphinx.ext.autodoc',
-#    'sphinx.ext.doctest',
-#    'sphinx.ext.mathjax',
-#    'sphinx.ext.viewcode',
-#    'sphinx.ext.imgmath',
-#    'sphinx.ext.todo',
-#    'breathe',
+    'sphinx.ext.autodoc',
+	'sphinx.ext.autosummary',
+	'sphinx.ext.mathjax',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.imgmath',
+    'sphinx.ext.todo',
+    'breathe',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
