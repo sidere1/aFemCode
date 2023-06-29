@@ -14,7 +14,7 @@ class Mesh
 
 public:
     Mesh();
-    Mesh(std::string info, std::string warning);
+    Mesh(std::string info, std::string error);
     ~Mesh();
     bool unvImport(std::string unvFileToRead);
     int import2411(std::string unvFileToRead, int position);
