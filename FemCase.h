@@ -23,7 +23,7 @@
 /*! \brief 
 * FemCase is the base class for a run. It reads inputs, meshes, prepares the run, assembles matrices and performs the resolution.
  *         
-	A main.cpp can for instance look like 
+	A main.cpp can for instance look like:
 
 	\code
 	FemCase<complex<double>> fc(setupFile.c_str());	
