@@ -49,4 +49,3 @@ dependencies:
   - wheel=0.38.4=py311hca03da5_0
   - xz=5.4.2=h80987f9_0
   - zlib=1.2.13=h5a0b063_0
-prefix: /opt/homebrew/anaconda3/envs/sphinx_env
