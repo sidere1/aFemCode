@@ -1,7 +1,7 @@
 aFemCode is a FEM code. 
 
 It was used initially only to learn cpp, and eventually to use for FSBC development 
-
+documentation available at : https://afemcode.readthedocs.io/en/latest/content.html
 
 on construit un objet
 * FemCase
