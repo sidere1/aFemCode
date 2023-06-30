@@ -11,7 +11,7 @@ PointLoad::PointLoad()
 
 }
 
-PointLoad::PointLoad(int index, vector<double> frequencies, vector<complex<double> > spectrum, vector<int> nodesTemp)
+PointLoad::PointLoad(int index, std::vector<double> frequencies, std::vector<std::complex<double> > spectrum, std::vector<int> nodesTemp)
 {
 	m_index = index ; 
 	m_frequencies = frequencies;

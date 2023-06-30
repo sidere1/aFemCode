@@ -19,7 +19,7 @@ Mesh::Mesh()
 
 }
 
-Mesh::Mesh(string info, string error) :m_info(info), m_error(error), m_1D(false), m_2D(false), m_3D(false)
+Mesh::Mesh(std::string info, std::string error) :m_info(info), m_error(error), m_1D(false), m_2D(false), m_3D(false)
 {
 
 }

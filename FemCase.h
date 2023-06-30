@@ -1,3 +1,4 @@
+
 #ifndef DEF_FEMCASE
 #define DEF_FEMCASE
 
@@ -21,12 +22,29 @@
         ( std::ostringstream() << std::dec << x ) ).str()
 
 #include <Eigen/Sparse>
-// typedef Eigen::SparseMatrix<double> SpMatXd;
-// typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
-// ces typedef ne sont aps utilisés normalement... 
 
-// using namespace Eigen; // c'est pas ouf d'avoir un namespace dans un .h.... 
+/*! \brief 
+* FemCase is the base class for a run. It reads inputs, meshes, prepares the run, assembles matrices and performs the resolution.
+ *         
+	A main.cpp can for instance look like:
 
+	\code
+	FemCase<complex<double>> fc(setupFile.c_str());	
+	if (fc.isLoaded())	
+	{		
+		fc.displayInfo();		
+		fc.prepareComputation();		
+		fc.buildKM(); 	
+		fc.buildF();	
+		fc.performResolution();		
+	}		
+	\endcode
+
+	performResolution() solves 
+	\begin{equation} (\Delta+k^2)p=f \end{equation}
+ * 
+ * 
+*/
 template <typename T>
 class FemCase
 {
@@ -52,7 +70,7 @@ public:
 	bool displayInfo(); // for debugging purposes 
 	bool isLoaded() const;
 	bool prepareComputation(); // read meshn, renumber, compute volumes, aspect ratios, jacobs, etc. 
-	bool buildFLinSys(); // assemblage
+	// bool buildFLinSys(); // assemblage
 	bool buildKM(); 
 	bool buildF();
 	bool performCoupling(); // pour la projection - construction du systeme couple 
@@ -112,13 +130,12 @@ private:
 
 
 
-
 template <typename T>
-
 FemCase<T>::FemCase()
 {
 	m_loaded = false;
 }
+
 
 template <typename T>
 FemCase<T>::FemCase(std::string setupFile)
@@ -136,7 +153,6 @@ FemCase<T>::FemCase(std::string setupFile)
         for(int cursor = 1; cursor < 4 ; cursor++)
         {// Reading header 
             setup >> entry;
-			//cout << entry; 
         }
         
         for(int cursor = 1; cursor < 4 ; cursor++)
@@ -145,23 +161,14 @@ FemCase<T>::FemCase(std::string setupFile)
             setup >> entry;
             setup >> value;
 
-			//while (entry[1] == '/')
-			//{
-			//	setup >> entry; 
-			//	setup >> value; 
-			//}
-
             skip = setup.tellg();
 
-            //cout << "cursor : " << cursor << " ; entry " << entry  << " ; value " << value << endl; 
             skip = addAtribute(cursor, entry,value);
             
             for(int skipCursor = 0; skipCursor < skip; skipCursor++)
             {
                 getline(setup,entry);    
-                // cout << "Ignoring line " << entry << endl;
             }
-            // setup.ignore();
             if (cursor == 2) 
             {
                 writeInfo("Reading setup file");
@@ -219,13 +226,12 @@ FemCase<T>::FemCase(std::string setupFile)
 	}
 }
 
+
 template <typename T>
 FemCase<T>::~FemCase()
 {
 
 }
-
-
 
 template <typename T>
 int FemCase<T>::addAtribute(int cursor, string entry, string value) 
@@ -438,7 +444,10 @@ bool FemCase<T>::writeError(string error) const
         return false;
     }
 }
-
+/** \brief
+ * Prepares the computation
+ * this method loops over the couplings, creates the meshes, and computes basic stuff (volumes, jacobians, etc) 
+*/
 template <typename T>
 bool FemCase<T>::prepareComputation()
 {
@@ -476,29 +485,36 @@ bool FemCase<T>::displayInfo()
 	return true; 
 }
 
+/** \brief
+ * Returns truc if all usefull info are loaded correctly
+*/
 template <typename T>
 bool FemCase<T>::isLoaded() const
 {	
 	return m_loaded;
 }
 
-template <typename T>
-bool FemCase<T>::buildFLinSys()
-{
-	// loop over the couplings 
-	// construction de K M B T F 
-	switch(m_couplingType[0])
-	{
-		case 1:
-			buildKM();
-			buildF();
-			break;
-		default: 
-			cout << "coupling type " << m_couplingType[0] << " not implemented" << endl; 
-			return false; 
-	}
-	return true;
-}
+/** \brief
+ * Prepares the computation
+ * this method loops over the couplings, creates the meshes, and computes basic stuff (volumes, jacobians, etc) 
+*/
+// template <typename T>
+// bool FemCase<T>::buildFLinSys()
+// {
+// 	// loop over the couplings 
+// 	// construction de K M B T F 
+// 	switch(m_couplingType[0])
+// 	{
+// 		case 1:
+// 			buildKM();
+// 			buildF();
+// 			break;
+// 		default: 
+// 			cout << "coupling type " << m_couplingType[0] << " not implemented" << endl; 
+// 			return false; 
+// 	}
+// 	return true;
+// }
 
 
 template <typename T>
@@ -566,7 +582,18 @@ bool FemCase<T>::performResolution()
 	return true;
 }
 
-
+/** \brief
+ * Assembles the mass and stiffness matrices for 1D 2D and 3D elements
+ * 
+ * // au programme : 
+	// loop over the couplings A CODER 
+	//	 	loop over the elements to know which matrices must be initialized (et quand on bossera en sparse, pour faire un assemblage fictif et determiner la taille des matrices)
+	//	 	loop over the elements
+	//	 			check element type 
+	//	 			compute elementary matrices K and M  
+	//	 			assemble in main matrices 
+	//	 	check if everything is alright (volume compared to theory)
+*/
 template <typename T>
 bool FemCase<T>::buildKM()
 {
@@ -1042,6 +1069,10 @@ bool FemCase<T>::addToVtkFile( ostream &out, Eigen::Matrix<float, Eigen::Dynamic
 
 // Assembly functions 
 
+/** \brief
+ * return gauss points and weights for a specified element type 
+ * 
+*/
 template <typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getGauss(int element, int order)
 {
@@ -1149,7 +1180,10 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getGauss(int eleme
 	return gp;
 }
 
-
+/** \brief
+ * returns the shape function matrices for a given element type 
+ * 
+*/
 template <typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getN(int element, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gp)
 {
@@ -1209,6 +1243,10 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getN(int element, 
 	return N;
 }
 
+/** \brief
+ * returns the gradient matrices for a given element type 
+ * 
+*/
 template <typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getB(int element, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> gp)
 {
@@ -1272,7 +1310,10 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>* FemCase<T>::getB(int element, 
 	return B;
 }
 
-
+/** \brief
+ * returns the shape function matrices for a specific element, given the jacobian matrix and the gradient matrix
+ * 
+*/
 template <typename T>
 Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> FemCase<T>::computeFemB(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Jac, Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> Bref) const
 {
@@ -1340,11 +1381,15 @@ Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> FemCase<T>::computeFemB(Eigen::
 }
 
 
+
+/** \brief
+ * swaps the lines of a vector 
+ * reorganizes the lines of the vector according to perm. 
+*/
 template <typename T>
 vector<int> FemCase<T>::swapLines(vector<int> v, vector<int> perm) const
 {
-	// reorganizes the lines of a vector v. 
-	
+
 	if (perm.size()!= v.size())
 	{
 		cout << "perm.size() = " << perm.size() << " and v.size() = " << v.size() << endl;

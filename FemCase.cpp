@@ -1,3 +1,7 @@
+/*
+Blablabla
+*/
+
 #include <iostream>
 #include <vector>
 #include <cassert>
@@ -8,7 +12,7 @@
 #include "Mesh.h"
 #include "Node.h"
 #include "PointLoad.h"
-#include "FemCase.h"
+//#include "FemCase.h"
 #include "fLinSys.h"
  
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;

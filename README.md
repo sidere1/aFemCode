@@ -1,7 +1,7 @@
-aFemCode, a FEM code. 
+aFemCode is a FEM code. 
 
-built initially only to learn cpp, and eventually to use for FSBC development 
-
+It was used initially only to learn cpp, and eventually to use for FSBC development 
+documentation available at : https://afemcode.readthedocs.io/en/latest/content.html
 
 on construit un objet
 * FemCase
@@ -53,17 +53,3 @@ remarques :
 * la fonction Element::computeAspectRatio n'est pas écrite, il faut la remplir et mettre un warning si l'élément n'est pas supporté.
 
 
-
-
-----------------------
-**A FAIRE**
-
-* friends, l'amitié...
-* continuer / finir le second mooc 
-* passer fMatrix en template <typename T> !! Pour pouvoir mettre des complexes et des entiers  
-* dans fLinSys, mettre des pointeurs sur les matrices plutot... 
-* remplacer tous les assert par une meilleure gestion des erreurs pour faciliter le debugage 
-* coder l'overload << pour fMatrix ;) 
-* getGauss, N B, etc : static ?? 
-* pour pouvoir calculer le determinant en trace(L)x trace(U), il faudrait mettre la facto en méthode de fMatrix et pas en méthode de fLinSys ! 
-* un writeResults appelé à chaque itération, avec : un writeEnsight, un writeLatexRes, qui sorte les résultats de m_currentSys

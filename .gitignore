@@ -40,3 +40,14 @@ prog_test
 log.info 
 log.warning
 deleted/
+tests/compEigenVsfMatrix 
+
+# documentation
+docs/_*
+doxygen/latex
+doxygen/xml
+doxygen/html
+
+
+
+
