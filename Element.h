@@ -2,9 +2,9 @@
 #define DEF_ELEMENT
 
 #include <vector>
-
+#include <Eigen/Dense>
 #include"Node.h"
-#include "fMatrix.h"
+// #include "fMatrix.h"
 
 class Element
 {
@@ -28,7 +28,8 @@ public:
 	float getVolume() const;
 	int getnN() const;
 	std::vector<int> getNodesIds() const;
-	fMatrix<float> getCoordinates() const;
+	// fMatrix<float> getCoordinates() const;
+	Eigen::Matrix<float, Eigen::Dynamic, 3> getCoordinates() const;
 private:
     // int m_type;
     int m_index;

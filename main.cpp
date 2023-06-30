@@ -13,15 +13,15 @@ Main file
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 
-#include "fMatrix.h"
+// #include "fMatrix.h"
 #include "FemCase.h"
 
 
 using namespace std;
 //using Eigen::MatrixXd;
 //using Eigen::VectorXd;
-typedef Eigen::SparseMatrix<double> SpMatXd;
-typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
+// typedef Eigen::SparseMatrix<double> SpMatXd;
+// typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;
 
 int main(int argc, char** argv)
 {
@@ -32,7 +32,10 @@ int main(int argc, char** argv)
 	string setupFile (argv[1]);
 	cout << "Reading setup file " << argv[1] << endl; 
 	
-	FemCase<double> fc(setupFile.c_str());
+	// FemCase<double> fc(setupFile.c_str());
+	// FemCase<float> fc(setupFile.c_str());
+	// FemCase<complex<float>> fc(setupFile.c_str()); 
+	FemCase<complex<double>> fc(setupFile.c_str());
 	if (!fc.isLoaded())
 	{
 		cout << "Femcase not loaded correctly" << endl;

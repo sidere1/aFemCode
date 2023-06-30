@@ -7,7 +7,7 @@
 #include "Node.h"
 #include "Mesh.h"
 
-//#define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
+#define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 #define SSTR( x ) static_cast< std::ostringstream & >( \
         ( std::ostringstream() << std::dec << x ) ).str()
 
@@ -309,7 +309,8 @@ bool Mesh::printCoordinates() const
     return true; 
 }
 
-fMatrix<int> Mesh::getConnectivities() const
+Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConnectivities() const
+// fMatrix<int> Mesh::getConnectivities() const
 {
 	// return a matrix with the connectivities
 	int maxNElem(0);
@@ -319,7 +320,8 @@ fMatrix<int> Mesh::getConnectivities() const
 		if(m_elements[i].getnN() > maxNElem)
 			maxNElem = m_elements[i].getnN();
 	}
-	fMatrix<int> conec(m_nE, maxNElem);    
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_nE, maxNElem);    
+	// fMatrix<int> conec(m_nE, maxNElem);    
 	for(unsigned int iE = 0; iE < m_nE ; iE++)
 	{
 		nodes = m_elements[iE].getNodesIds();
@@ -330,7 +332,8 @@ fMatrix<int> Mesh::getConnectivities() const
 	}
 	return conec; 
 }
-fMatrix<int> Mesh::getConecAndNN() const
+Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
+// fMatrix<int> Mesh::getConecAndNN() const
 {
 	// return a matrix with the connectivities, for VTK file 
 	// the first row indicates the number of nodes for the corresponding element
@@ -346,7 +349,8 @@ fMatrix<int> Mesh::getConecAndNN() const
 		if(m_elements[i].getnN() > maxNElem)
 			maxNElem = m_elements[i].getnN();
 	}
-	fMatrix<int> conec(m_nE, maxNElem+1);    
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_nE, maxNElem+1);    
+	// fMatrix<int> conec(m_nE, maxNElem+1);    
 	for(unsigned int iE = 0; iE < m_nE ; iE++)
 	{
 		n = m_elements[iE].getNodesIds();
@@ -372,11 +376,13 @@ fMatrix<int> Mesh::getConecAndNN() const
 	}
 	return conec; 
 }
-fMatrix<int> Mesh::getElemTypesVtk() const
+Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getElemTypesVtk() const
+// fMatrix<int> Mesh::getElemTypesVtk() const
 {
 	// return a row vector with the elements types for vtk file
 	
-	fMatrix<int> elemTypes(m_nE, 1);    
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemTypes(m_nE, 1);    
+	// fMatrix<int> elemTypes(m_nE, 1);    
 	for(unsigned int iE = 0; iE < m_nE ; iE++)
 	{
 		//see https://examples.vtk.org/site/VTKFileFormats/
@@ -399,10 +405,12 @@ fMatrix<int> Mesh::getElemTypesVtk() const
 	return elemTypes; 
 }
 
-fMatrix<float> Mesh::getCoordinates() const
+Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> Mesh::getCoordinates() const
+// fMatrix<float> Mesh::getCoordinates() const
 {
 	// return a matrix with the coordinates 
-	fMatrix<float> coord(m_nN, 3);
+	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord(m_nN, 3);
+	// fMatrix<float> coord(m_nN, 3);
 	for(unsigned int iNode = 0; iNode < m_nN ; iNode++)
 	{
 		coord(iNode, 0) = m_nodes[iNode].getX();
@@ -466,9 +474,9 @@ bool Mesh::isBeginEnd(string line)
 
 bool Mesh::calculateVolume() 
 {
-    double vol(0);
-    double surf(0);
-    double dist(0);
+    float vol(0);
+    float surf(0);
+    float dist(0);
     for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
     {
 		// il faudrait faire un tri entre éléments de surface / longueur / volume ! 
@@ -497,23 +505,6 @@ bool Mesh::calculateVolume()
     return true;
 }
 
-//double Mesh::calculateArea() const 
-//{
-//    double area(0);
-//    int count(0) ; 
-//    double plus;
-//    for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
-//    {
-//        plus = m_elements[elem].calculateArea();
-//        area = area + plus;
-//        if (plus != 0) 
-//        {
-//            count++;
-//        }
-//    }
-//    // cout << count << " elements taken into account for the surface" << endl;
-//    return area;   
-//}
 
 
 int Mesh::getElementNumber() const

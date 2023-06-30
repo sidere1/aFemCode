@@ -9,7 +9,9 @@ using namespace std;
 
 Element::Element() :  m_index(1)//, m_numberOfNodes(3)
 {
-
+	m_physicalProperty = 0;
+	m_materialProperty = 0;
+	m_color = 0;
 }
 
 Element::Element(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes): m_index(index),m_feDescriptor(feDescriptor), m_physicalProperty(physicalProperty), m_materialProperty(materialProperty), m_color(color),  m_numberOfNodes(numberOfNodes)
@@ -54,17 +56,17 @@ bool Element::is3D() const
 }
 bool Element::calculateVolume() 
 {
-	double volume(0);
+	float volume(0);
 	switch (m_feDescriptor)
 	{
 		case 22: // SE3. On considere qu'il est compose de deux segments 
 		{
-			double Aa;
-			double Ab;
-			double Ac;
-			double Ba;
-			double Bb;
-			double Bc;
+			float Aa;
+			float Ab;
+			float Ac;
+			float Ba;
+			float Bb;
+			float Bc;
 			
 			Aa = m_nodes[1]->getX()-m_nodes[0]->getX();
 			Ab = m_nodes[1]->getY()-m_nodes[0]->getY();
@@ -81,12 +83,12 @@ bool Element::calculateVolume()
 
 		case 41: // T3
 		{
-			double Aa;
-			double Ab;
-			double Ac;
-			double Ba;
-			double Bb;
-			double Bc;
+			float Aa;
+			float Ab;
+			float Ac;
+			float Ba;
+			float Bb;
+			float Bc;
 			
 			Aa = m_nodes[1]->getX()-m_nodes[0]->getX();
 			Ab = m_nodes[1]->getY()-m_nodes[0]->getY();
@@ -102,12 +104,12 @@ bool Element::calculateVolume()
 
 		case 42: // T6
 		{// fait salement, on considère que les éléments sont plats et réguliers, mais au moins l'ordre de grandeur est la. On pourrait le decouper en 4 triangles reguliers ?  
-			double Aa;
-			double Ab;
-			double Ac;
-			double Ba;
-			double Bb;
-			double Bc;
+			float Aa;
+			float Ab;
+			float Ac;
+			float Ba;
+			float Bb;
+			float Bc;
 			
 			Aa = m_nodes[2]->getX()-m_nodes[0]->getX();
 			Ab = m_nodes[2]->getY()-m_nodes[0]->getY();
@@ -123,12 +125,12 @@ bool Element::calculateVolume()
 
 		case 94: // quadrangle lineaire
 		{ // malin : partir de la diagonale, commune aux deux triangles du quadrangle ! Smart, non ? 
-			double Aa;
-			double Ab;
-			double Ac;
-			double Ba;
-			double Bb;
-			double Bc;
+			float Aa;
+			float Ab;
+			float Ac;
+			float Ba;
+			float Bb;
+			float Bc;
 			
 			Aa = m_nodes[1]->getX()-m_nodes[0]->getX();
 			Ab = m_nodes[1]->getY()-m_nodes[0]->getY();
@@ -152,15 +154,15 @@ bool Element::calculateVolume()
 		}
 		case 111: // T4
 		{
-			double Aa;
-			double Ab;
-			double Ac;
-			double Ba;
-			double Bb;
-			double Bc;
-			double Ca;
-			double Cb;
-			double Cc;
+			float Aa;
+			float Ab;
+			float Ac;
+			float Ba;
+			float Bb;
+			float Bc;
+			float Ca;
+			float Cb;
+			float Cc;
 
 			Aa = m_nodes[1]->getX()-m_nodes[0]->getX();
 			Ab = m_nodes[1]->getY()-m_nodes[0]->getY();
@@ -179,15 +181,15 @@ bool Element::calculateVolume()
 
 		case 115: // ??? 
 		{
-			double Aa;
-			double Ab;
-			double Ac;
-			double Ba;
-			double Bb;
-			double Bc;
-			double Ca;
-			double Cb;
-			double Cc;
+			float Aa;
+			float Ab;
+			float Ac;
+			float Ba;
+			float Bb;
+			float Bc;
+			float Ca;
+			float Cb;
+			float Cc;
 			
 			Aa = m_nodes[1]->getX()-m_nodes[0]->getX();
 			Ab = m_nodes[1]->getY()-m_nodes[0]->getY();
@@ -212,72 +214,6 @@ bool Element::calculateVolume()
 	return true;
 }
 
-//double Element::calculateArea() const 
-//{
-//	double surface ;
-//	switch (m_feDescriptor)
-//	{
-//		case 111:
-//			return 0;
-//			break;
-//		
-//		case 41:
-//		{
-//			double Aa;
-//			double Ab;
-//			double Ac;
-//			double Ba;
-//			double Bb;
-//			double Bc;
-//			
-//			Aa = m_nodes[1]->getX()-m_nodes[0]->getX();
-//			Ab = m_nodes[1]->getY()-m_nodes[0]->getY();
-//			Ac = m_nodes[1]->getZ()-m_nodes[0]->getZ();
-//			Ba = m_nodes[2]->getX()-m_nodes[0]->getX();
-//			Bb = m_nodes[2]->getY()-m_nodes[0]->getY();
-//			Bc = m_nodes[2]->getZ()-m_nodes[0]->getZ();
-//
-//			surface = sqrt(pow(Ab*Bc-Ac*Bb,2)+pow(Ba*Ac-Bc*Aa,2)+pow(Aa*Bb-Ab*Ba,2));
-//			return surface*1/2;
-//			break;
-//		}
-//
-//		case 94:
-//		{ // malin : partir de la diagonale, commune aux deux triangles du quadrangle ! Smart, non ? 
-//			double Aa;
-//			double Ab;
-//			double Ac;
-//			double Ba;
-//			double Bb;
-//			double Bc;
-//			
-//			Aa = m_nodes[1]->getX()-m_nodes[0]->getX();
-//			Ab = m_nodes[1]->getY()-m_nodes[0]->getY();
-//			Ac = m_nodes[1]->getZ()-m_nodes[0]->getZ();
-//			Ba = m_nodes[2]->getX()-m_nodes[0]->getX();
-//			Bb = m_nodes[2]->getY()-m_nodes[0]->getY();
-//			Bc = m_nodes[2]->getZ()-m_nodes[0]->getZ();
-//
-//			surface = sqrt(pow(Ab*Bc-Ac*Bb,2)+pow(Ba*Ac-Bc*Aa,2)+pow(Aa*Bb-Ab*Ba,2));
-//			
-//			Aa = m_nodes[3]->getX()-m_nodes[0]->getX();
-//			Ab = m_nodes[3]->getY()-m_nodes[0]->getY();
-//			Ac = m_nodes[3]->getZ()-m_nodes[0]->getZ();
-//			// Ba = m_nodes[2]->getX()-m_nodes[0]->getX();
-//			// Bb = m_nodes[2]->getY()-m_nodes[0]->getY();
-//			// Bc = m_nodes[2]->getZ()-m_nodes[0]->getZ();
-//
-//			surface = surface + sqrt(pow(Ab*Bc-Ac*Bb,2)+pow(Ba*Ac-Bc*Aa,2)+pow(Aa*Bb-Ab*Ba,2));
-//			return surface*1/2;
-//			break;
-//		}
-//	
-//		default:
-//			return 0;
-//			break;
-//	}
-//	return 0;
-//}
 
 bool Element::checkElem() const 
 {
@@ -418,10 +354,12 @@ vector<int> Element::getNodesIds() const
 	}
 	return nodes;
 }
-fMatrix<float> Element::getCoordinates() const
+// fMatrix<float> Element::getCoordinates() const
+Eigen::Matrix<float, Eigen::Dynamic, 3> Element::getCoordinates() const
 {
-	fMatrix<float> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
-   	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
+	// fMatrix<float> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
+   	Eigen::Matrix<float, Eigen::Dynamic, 3> coord((unsigned int)m_numberOfNodes, (unsigned int)3);
+	for (int iNode = 0; iNode < m_numberOfNodes ; iNode++)
 	{
 		coord((unsigned int)iNode, 0) = m_nodes[iNode]->getX();
 		coord((unsigned int)iNode, 1) = m_nodes[iNode]->getY();

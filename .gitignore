@@ -33,6 +33,9 @@
 prog
 prog_test
 
+# saloperies de Mac 
+.DS_Store
+
 # mon ptit bordel 
 log.info 
 log.warning
