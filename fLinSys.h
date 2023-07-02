@@ -29,6 +29,8 @@ public:
 	Eigen::SparseMatrix<T> getSolution();
 	bool isSymmetric();
 	bool getSymmetric();
+	bool isHermitian();
+	bool getHermitian();
 
 private: 
 	T const m_eps;
@@ -36,7 +38,8 @@ private:
 	int m_nRhs;
 	bool m_luDone;
 	bool m_solved;
-	int m_sym;
+	int m_sym;// 0 if not known yet, 2 if symmetric, 1 if not. 
+	int m_herm;// idem for hermitian : 0 if not known, 2 if hermitian, 1 if not. 
 	Eigen::SparseMatrix<T> m_mat;
 	Eigen::SparseMatrix<T> m_l;
 	Eigen::SparseMatrix<T> m_u;
@@ -143,7 +146,8 @@ bool fLinSys<T>::solve()
 	// it is possible to improve the choice of the solver... 	
 	// doc http://www.eigen.tuxfamily.org/dox/group__TopicSparseSystems.html#TutorialSparseSolverConcept 	
 	// ajouter la loop over the rhs 
-	if(!isSymmetric())
+	if(!isHermitian())
+	//if(true)
 	{
 		cout << "Using LU" << endl;
 		Eigen::SparseLU<Eigen::SparseMatrix<T>, Eigen::COLAMDOrdering<int>> solver;
@@ -207,6 +211,39 @@ bool fLinSys<T>::getSymmetric()
 		return false;
 	}
 	if(m_sym == 2)
+	{
+		return true;
+	}
+	cout << "Aucune raison d'arriver la......" << endl;
+	WHEREAMI
+	return true;
+}
+
+template<typename T>
+bool fLinSys<T>::isHermitian()
+{
+	if (true)
+	if (abs((m_mat-Eigen::SparseMatrix<T>(m_mat.adjoint())).sum()) < 10*abs(m_eps)) // en complexe, m_eps est complexe aussi... 
+	{
+		m_herm=2;
+		return true;
+	}
+	m_herm=1;
+	return false;
+}
+
+template<typename T>
+bool fLinSys<T>::getHermitian()
+{
+	if(m_herm == 0)
+	{
+		return isHermitian();
+	}
+	if(m_herm == 1)
+	{
+		return false;
+	}
+	if(m_herm == 2)
 	{
 		return true;
 	}

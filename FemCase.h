@@ -559,11 +559,16 @@ bool FemCase<T>::performResolution()
 			// computing solution for the current frequency 
 			values.clear();
 			k = 2*pi*frequencies[iFreq]/m_setup[0].getC();
-			*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf)+i*k*(*m_Mseg);
+			*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf)-i*k*(*m_Mseg);
+			//*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf);
 			delete linSys;
+			
+			
 			linSys = new fLinSys<T>(*currentSys, *m_Fsurf);
 			cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << endl;
 			linSys->solve();
+			
+			
 			// exporting results 
 			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
 			{
@@ -577,6 +582,10 @@ bool FemCase<T>::performResolution()
 			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 			dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
 			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			
+			//cout << endl << linSys->getSolution() << endl << endl;
+			//cout << endl << currentSys->block(0,0,10,10) << endl << endl;
+			//return 0;
 		}
 	}
 	return true;
@@ -883,7 +892,7 @@ bool FemCase<T>::buildF()
 
 
 	std::vector<Eigen::Triplet<T>> coefficients;
-	coefficients.push_back(Eigen::Triplet<T>(254,0,1));
+	coefficients.push_back(Eigen::Triplet<T>(0,0,1));
 
 	m_Fvol->setFromTriplets(coefficients.begin(), coefficients.end());
 	m_Fsurf->setFromTriplets(coefficients.begin(), coefficients.end());
