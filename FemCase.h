@@ -18,8 +18,8 @@
 
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
-#define SSTR( x ) static_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
+//#define SSTR( x ) static_cast< std::ostringstream & >( \
+//        ( std::ostringstream() << std::dec << x ) ).str()
 
 #include <Eigen/Sparse>
 
@@ -546,10 +546,14 @@ bool FemCase<T>::performResolution()
 	writeMicValuesHeader();	
 	vector<T> values;
 
-	string vtkfilename("res.vtk");
-	ostringstream dataName;
-	writeVtkMesh(vtkfilename);
+	bool writeVtkOnce(true);
+	ostringstream vtkfilename;
+	if(writeVtkOnce){
+		vtkfilename << "pressure_allFreq.vtk";
+		writeVtkMesh(vtkfilename.str());
+	}
 	bool firstTime(true);
+	ostringstream dataName;
 
 	if (m_couplingType[0] == 1) // ou autre chose pour de la vibration harmonique par exemple ? 
 	{
@@ -560,32 +564,28 @@ bool FemCase<T>::performResolution()
 			values.clear();
 			k = 2*pi*frequencies[iFreq]/m_setup[0].getC();
 			*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf)-i*k*(*m_Mseg);
-			//*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf);
 			delete linSys;
-			
-			
 			linSys = new fLinSys<T>(*currentSys, *m_Fsurf);
 			cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << endl;
 			linSys->solve();
-			
-			
 			// exporting results 
 			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
 			{
 				values.push_back(linSys->getSolution().coeff(mics[iMic],0));
 			}
 			writeMicValues(frequencies[iFreq], values);
+			if(!writeVtkOnce){
+				vtkfilename.str(""); vtkfilename << "pressure_f_" << abs(frequencies[iFreq]) << ".vtk";
+				writeVtkMesh(vtkfilename.str());
+				firstTime=true;
+			}
 			dataName.str(""); dataName << "sol_abs_f_" << abs(frequencies[iFreq]);
-			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 			firstTime = false;
 			dataName.str(""); dataName << "sol_real_f_" << real(frequencies[iFreq]);
-			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 			dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
-			writeVtkData(vtkfilename, dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
-			
-			//cout << endl << linSys->getSolution() << endl << endl;
-			//cout << endl << currentSys->block(0,0,10,10) << endl << endl;
-			//return 0;
+			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 		}
 	}
 	return true;
@@ -892,7 +892,7 @@ bool FemCase<T>::buildF()
 
 
 	std::vector<Eigen::Triplet<T>> coefficients;
-	coefficients.push_back(Eigen::Triplet<T>(0,0,1));
+	coefficients.push_back(Eigen::Triplet<T>(254,0,1));
 
 	m_Fvol->setFromTriplets(coefficients.begin(), coefficients.end());
 	m_Fsurf->setFromTriplets(coefficients.begin(), coefficients.end());
