@@ -2,9 +2,9 @@
 #ifndef DEF_FEMCASE
 #define DEF_FEMCASE
 
-#include "Mesh.h"
-#include "Node.h"
-#include "PointLoad.h"
+//#include "Mesh.h" // already included via Setup.h
+//#include "Node.h"//idem 
+//#include "PointLoad.h"
 #include <fstream>
 #include <iostream>
 #include <cassert>

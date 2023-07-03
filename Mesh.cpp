@@ -3,8 +3,8 @@
 #include <sstream>
 #include <iostream>
 
-#include "Element.h"
-#include "Node.h"
+//#include "Element.h"// already included via Mesh.h
+//#include "Node.h" // already included via Mesh.h
 #include "Mesh.h"
 
 #define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
