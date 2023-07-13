@@ -18,8 +18,6 @@
 
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
-//#define SSTR( x ) static_cast< std::ostringstream & >( \
-//        ( std::ostringstream() << std::dec << x ) ).str()
 
 #include <Eigen/Sparse>
 
@@ -546,7 +544,7 @@ bool FemCase<T>::performResolution()
 	writeMicValuesHeader();	
 	vector<T> values;
 
-	bool writeVtkOnce(true);
+	bool writeVtkOnce(false);
 	ostringstream vtkfilename;
 	if(writeVtkOnce){
 		vtkfilename << "pressure_allFreq.vtk";
@@ -978,6 +976,7 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 	addToVtkFile(vtkfile, coord);
 	vtkfile << "CELLS " << nElem << " " << nTot << endl;
 	// vtkfile << conec << endl ;
+	cout << conec << endl;
 	addToVtkFile(vtkfile, conec);
 	vtkfile << "CELL_TYPES " << nElem << endl;
 	// vtkfile << elemType << endl ;
