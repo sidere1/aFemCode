@@ -349,7 +349,8 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
 		if(m_elements[i].getnN() > maxNElem)
 			maxNElem = m_elements[i].getnN();
 	}
-	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_nE, maxNElem+1);    
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_nE, maxNElem+1);
+	conec.setZero();	
 	// fMatrix<int> conec(m_nE, maxNElem+1);    
 	for(unsigned int iE = 0; iE < m_nE ; iE++)
 	{
