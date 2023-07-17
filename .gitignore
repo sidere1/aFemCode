@@ -41,6 +41,8 @@ log.info
 log.warning
 deleted/
 tests/compEigenVsfMatrix 
+sphinx_env_pip
+doxygen/Doxyfile_previous
 
 # documentation
 docs/_*
