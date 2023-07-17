@@ -147,9 +147,8 @@ bool fLinSys<T>::solve()
 	// doc http://www.eigen.tuxfamily.org/dox/group__TopicSparseSystems.html#TutorialSparseSolverConcept 	
 	// ajouter la loop over the rhs 
 	if(!isHermitian())
-	//if(true)
 	{
-		cout << "Using LU" << endl;
+		//cout << "Using LU" << endl;
 		Eigen::SparseLU<Eigen::SparseMatrix<T>, Eigen::COLAMDOrdering<int>> solver;
 		solver.analyzePattern(m_mat);
 		solver.factorize(m_mat);
@@ -164,7 +163,7 @@ bool fLinSys<T>::solve()
 	}
 	else
 	{
-		cout << "Using LDLT" << endl;
+		//cout << "Using LDLT" << endl;
 		Eigen::SimplicialLDLT<Eigen::SparseMatrix<T>> solver;
 		solver.compute(m_mat);
 		if(solver.info()!=Eigen::Success) 
