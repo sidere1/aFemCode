@@ -15,6 +15,7 @@ Main file
 
 // #include "fMatrix.h"
 #include "FemCase.h"
+#include "AcousticFemCase.h"
 
 
 using namespace std;
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
 	// FemCase<double> fc(setupFile.c_str());
 	// FemCase<float> fc(setupFile.c_str());
 	// FemCase<complex<float>> fc(setupFile.c_str()); 
-	FemCase<complex<double>> fc(setupFile.c_str());
+	AcousticFemCase<complex<double>> fc(setupFile.c_str());
 	if (!fc.isLoaded())
 	{
 		cout << "Femcase not loaded correctly" << endl;

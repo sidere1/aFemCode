@@ -40,6 +40,8 @@
 
 	performResolution() solves 
 	\begin{equation} (\Delta+k^2)p=f \end{equation}
+
+	the template <T> allows to use double and complex<double> equally 
  * 
  * 
 */
@@ -99,7 +101,7 @@ public:
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> swapLines(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m, vector<int> perm) const;
 	T computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m) const;
 
-private:
+protected:
 	bool m_loaded;
 	std::string m_info;
     std::string m_error;
@@ -174,11 +176,6 @@ FemCase<T>::FemCase(std::string setupFile)
             
         }
 
-        //writeInfo("Reading Mesh");
-        //m_mesh = Mesh(m_info, m_error);
-        //m_mesh.unvImport(getMeshFile());
-        //writeInfo("Ok\n\n");
-
 		// verifying that we are at a correct location and that all required folders exist
 		auto pos1 = m_mainSetup.find_last_of('/');
 		char myChar = m_mainSetup[pos1];
@@ -200,7 +197,7 @@ FemCase<T>::FemCase(std::string setupFile)
 		if (status == 0)
 		{}// just to get rid of a warning
 
-		// creating the setups 
+		// creating the setups. The m_setupFile, m_nCoupling, m_meshFile, m_mesh, m_setup, m_couplingType have already been loaded
 		for(int i = 0; i < m_nCoupling ; i++)
 		{
 			cout << "Reading coupling " << i << m_path + "setup/" + m_setupFile[i] << endl;
@@ -288,7 +285,6 @@ int FemCase<T>::addAtribute(int cursor, string entry, string value)
                 if ((atoi(value.c_str()) < 1000) && (atoi(value.c_str()) > 0)) // 1000 : arbitrary maximum value for m_nCoupling
                 {
                     m_nCoupling = atoi(value.c_str());
-					m_meshFile.resize(m_nCoupling);
 					m_meshFile.resize(m_nCoupling);
 					m_mesh.resize(m_nCoupling);
 					m_setup.resize(m_nCoupling);
@@ -527,7 +523,7 @@ bool FemCase<T>::performResolution()
 		// résolution du systeme 
 		// storage of the result 
 
-	const complex<double> i(0.0,1.0);
+	const complex<double> i(0.0,1.0); // pas complex<T> ? chuis surpris ! 
 	const double pi(3.1415926);	
 
 	assert(m_nCoupling == 1 && "Not allowed yet. Don't hesitate to develop it !");
@@ -577,12 +573,18 @@ bool FemCase<T>::performResolution()
 				writeVtkMesh(vtkfilename.str());
 				firstTime=true;
 			}
-			dataName.str(""); dataName << "sol_abs_f_" << abs(frequencies[iFreq]);
+
+			if(writeVtkOnce){dataName.str(""); dataName << "sol_abs_f_" << abs(frequencies[iFreq]);}
+			else{dataName.str(""); dataName << "sol_abs";}
 			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 			firstTime = false;
-			dataName.str(""); dataName << "sol_real_f_" << real(frequencies[iFreq]);
+			if(writeVtkOnce){dataName.str(""); dataName << "sol_real_f_" << abs(frequencies[iFreq]);}
+			else{dataName.str(""); dataName << "sol_real";}
+			//dataName.str(""); dataName << "sol_real_f_" << real(frequencies[iFreq]);
 			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
-			dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
+			if(writeVtkOnce){dataName.str(""); dataName << "sol_imag_f_" << abs(frequencies[iFreq]);}
+			else{dataName.str(""); dataName << "sol_imag";}
+			//dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
 			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
 		}
 	}
@@ -976,7 +978,7 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 	addToVtkFile(vtkfile, coord);
 	vtkfile << "CELLS " << nElem << " " << nTot << endl;
 	// vtkfile << conec << endl ;
-	cout << conec << endl;
+	// cout << conec << endl;
 	addToVtkFile(vtkfile, conec);
 	vtkfile << "CELL_TYPES " << nElem << endl;
 	// vtkfile << elemType << endl ;
