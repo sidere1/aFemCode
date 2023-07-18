@@ -1,6 +1,6 @@
 
-#ifndef DEF_ACOUSTICFEMCASE
-#define DEF_ACOUSTICFEMCASE
+#ifndef DEF_ACOUSTICROTATINGFEMCASE
+#define DEF_ACOUSTICROTATINGFEMCASE
 
 //#include "Mesh.h" // already included via Setup.h
 //#include "Node.h"//idem 
@@ -22,47 +22,52 @@
 #include <Eigen/Sparse>
 
 /*! \brief 
-* AcousticFemCase is the base class for an acoustic run, and inherits from FemCase 
+* AcousticRotatingFemCase is the base class for an acoustic run, and inherits from FemCase 
  * 
  * 
 */
 template <typename T>
-class AcousticFemCase: public FemCase<T> 
+class AcousticRotatingFemCase: public FemCase<T> 
 {
 public:
-    AcousticFemCase();
-    AcousticFemCase(std::string setupFile);
-    ~AcousticFemCase();
+    AcousticRotatingFemCase();
+    AcousticRotatingFemCase(std::string setupFile);
+    ~AcousticRotatingFemCase();
 
 	bool buildF();
 	bool performResolution(); // solve 
 
 protected:
+	int m_eta;
+	int m_N;
+	int m_L;
+	int C;
+
+
 };
 
 template <typename T>
-AcousticFemCase<T>::AcousticFemCase()
+AcousticRotatingFemCase<T>::AcousticRotatingFemCase()
 {
 	this->m_loaded = false;
 }
 
 template <typename T>
-AcousticFemCase<T>::AcousticFemCase(std::string setupFile): FemCase<T>(setupFile)
+AcousticRotatingFemCase<T>::AcousticRotatingFemCase(std::string setupFile): FemCase<T>(setupFile)
 {
+	assert m_nCoupling == 2; // ou plus si on veut mettre plusieurs zones tournantes 
 }
 
 
 template <typename T>
-AcousticFemCase<T>::~AcousticFemCase()
+AcousticRotatingFemCase<T>::~AcousticRotatingFemCase()
 {
 
 }
 
 template <typename T>
-bool AcousticFemCase<T>::performResolution()
+bool AcousticRotatingFemCase<T>::performResolution()
 {
-	WHEREAMI
-	int iC(0); // normally, in this class there should be only one coupling 
 	const complex<double> i(0.0,1.0); // pas complex<T> ? chuis surpris ! 
 	const double pi(3.1415926);	
 
@@ -72,7 +77,7 @@ bool AcousticFemCase<T>::performResolution()
 	double k(0);
 	int nNodes(this->m_mesh[0]->getNodesNumber());
 	vector<double> frequencies(this->m_setup[0].getFrequencies());
-	this->currentSys[iC] = new Eigen::SparseMatrix<T>(nNodes, nNodes);
+	this->currentSys = new Eigen::SparseMatrix<T>(nNodes, nNodes);
 
 	// preparing results 
 	vector<int> mics = this->m_setup[0].getMics();
@@ -97,9 +102,9 @@ bool AcousticFemCase<T>::performResolution()
 			// computing solution for the current frequency 
 			values.clear();
 			k = 2*pi*frequencies[iFreq]/this->m_setup[0].getC();
-			*this->currentSys[iC] = *this->m_Ksurf[iC]+(-1)*(k*k)*(*this->m_Msurf[iC])-i*k*(*this->m_Mseg[iC]);
+			*this->currentSys = *this->m_Ksurf+(-1)*(k*k)*(*this->m_Msurf)-i*k*(*this->m_Mseg);
 			delete linSys;
-			linSys = new fLinSys<T>(*this->currentSys[iC], *this->m_Fsurf[iC]);
+			linSys = new fLinSys<T>(*this->currentSys, *this->m_Fsurf);
 			cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << endl;
 			linSys->solve();
 			// exporting results 
@@ -133,21 +138,20 @@ bool AcousticFemCase<T>::performResolution()
 
 
 template <typename T>
-bool AcousticFemCase<T>::buildF()
+bool AcousticRotatingFemCase<T>::buildF()
 {
-	size_t iC(0); // there should be only one coupling in this class 
 	int nN(this->m_mesh[0]->getNodesNumber()); 
-	this->m_Fvol[iC] = new Eigen::SparseMatrix<T>(nN,1);
-	this->m_Fsurf[iC] = new Eigen::SparseMatrix<T>(nN,1);
-	this->m_Fseg[iC] = new Eigen::SparseMatrix<T>(nN,1);
+	this->m_Fvol = new Eigen::SparseMatrix<T>(nN,1);
+	this->m_Fsurf = new Eigen::SparseMatrix<T>(nN,1);
+	this->m_Fseg = new Eigen::SparseMatrix<T>(nN,1);
 
 
 	std::vector<Eigen::Triplet<T>> coefficients;
 	coefficients.push_back(Eigen::Triplet<T>(254,0,1));
 
-	this->m_Fvol[iC]->setFromTriplets(coefficients.begin(), coefficients.end());
-	this->m_Fsurf[iC]->setFromTriplets(coefficients.begin(), coefficients.end());
-	this->m_Fseg[iC]->setFromTriplets(coefficients.begin(), coefficients.end());
+	this->m_Fvol->setFromTriplets(coefficients.begin(), coefficients.end());
+	this->m_Fsurf->setFromTriplets(coefficients.begin(), coefficients.end());
+	this->m_Fseg->setFromTriplets(coefficients.begin(), coefficients.end());
 
 	// (*m_Fvol)(254,0) = 1;
 	// (*m_Fsurf)(254,0) = 1;

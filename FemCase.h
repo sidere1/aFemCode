@@ -105,7 +105,7 @@ protected:
 	bool m_loaded;
 	std::string m_info;
     std::string m_error;
-	int m_nCoupling;
+	size_t m_nCoupling;
     std::string m_mainSetup;
 	std::vector<std::string> m_meshFile; 
 	std::vector<Mesh*> m_mesh; 
@@ -115,16 +115,16 @@ protected:
 	std::string m_path;
 	// tout ça dans une Class storedResults ?
 	// pour plusieurs couplings : un vecteur de storedResults ?  
-	Eigen::SparseMatrix<T> *m_Kvol;
-	Eigen::SparseMatrix<T> *m_Ksurf;
-	Eigen::SparseMatrix<T> *m_Kseg;
-	Eigen::SparseMatrix<T> *m_Mvol;
-	Eigen::SparseMatrix<T> *m_Msurf;
-	Eigen::SparseMatrix<T> *m_Mseg;
-	Eigen::SparseMatrix<T> *m_Fvol;
-	Eigen::SparseMatrix<T> *m_Fsurf;
-	Eigen::SparseMatrix<T> *m_Fseg;
-	Eigen::SparseMatrix<T> *currentSys;
+	std::vector<Eigen::SparseMatrix<T>*> m_Kvol;
+	std::vector<Eigen::SparseMatrix<T>*> m_Ksurf;
+	std::vector<Eigen::SparseMatrix<T>*> m_Kseg;
+	std::vector<Eigen::SparseMatrix<T>*> m_Mvol;
+	std::vector<Eigen::SparseMatrix<T>*> m_Msurf;
+	std::vector<Eigen::SparseMatrix<T>*> m_Mseg;
+	std::vector<Eigen::SparseMatrix<T>*> m_Fvol;
+	std::vector<Eigen::SparseMatrix<T>*> m_Fsurf;
+	std::vector<Eigen::SparseMatrix<T>*> m_Fseg;
+	std::vector<Eigen::SparseMatrix<T>*> currentSys;
 };
 
 
@@ -198,7 +198,7 @@ FemCase<T>::FemCase(std::string setupFile)
 		{}// just to get rid of a warning
 
 		// creating the setups. The m_setupFile, m_nCoupling, m_meshFile, m_mesh, m_setup, m_couplingType have already been loaded
-		for(int i = 0; i < m_nCoupling ; i++)
+		for(size_t i = 0; i < m_nCoupling ; i++)
 		{
 			cout << "Reading coupling " << i << m_path + "setup/" + m_setupFile[i] << endl;
 			cout << m_path;
@@ -300,7 +300,7 @@ int FemCase<T>::addAtribute(int cursor, string entry, string value)
 							//cout << "discarded " << entry << endl;
 						}
 						countAim = m_nCoupling;
-						for(int i = 0; i < m_nCoupling ; i++)
+						for(size_t i = 0; i < m_nCoupling ; i++)
 						{
 							setupFile >> entry;
 							//cout << "type " << entry << endl;
@@ -451,7 +451,7 @@ bool FemCase<T>::prepareComputation()
 		// compute volumes, aspect ratios, jacobians 
 	
 	Mesh *m;
-   	for(int i = 0; i < m_nCoupling; i++)
+   	for(size_t i = 0; i < m_nCoupling; i++)
 	{
 		// creating mesh 
 		m = new Mesh(m_info, m_error);
@@ -471,7 +471,7 @@ bool FemCase<T>::displayInfo()
 {
 	cout << endl << "case composed of " << m_nCoupling << " couplings" << endl; 
 	cout << "path : " << m_path << endl;  
-	for (int i = 0; i < m_nCoupling; i++)
+	for (size_t i = 0; i < m_nCoupling; i++)
 	{
 		cout << i+1 << " : " << m_meshFile[i] << " ; " << m_setupFile[i] << " ; type " << m_couplingType[i] << endl;
 		m_setup[i].displayInfo();	
@@ -523,71 +523,71 @@ bool FemCase<T>::performResolution()
 		// résolution du systeme 
 		// storage of the result 
 
-	const complex<double> i(0.0,1.0); // pas complex<T> ? chuis surpris ! 
-	const double pi(3.1415926);	
+	// const complex<double> i(0.0,1.0); // pas complex<T> ? chuis surpris ! 
+	// const double pi(3.1415926);	
 
-	assert(m_nCoupling == 1 && "Not allowed yet. Don't hesitate to develop it !");
-	fLinSys<T> *linSys;
-	linSys = new fLinSys<T>(0,0);
-	double k(0);
-	int nNodes(m_mesh[0]->getNodesNumber());
-	vector<double> frequencies(m_setup[0].getFrequencies());
-	currentSys = new Eigen::SparseMatrix<T>(nNodes, nNodes);
+	// assert(m_nCoupling == 1 && "Not allowed yet. Don't hesitate to develop it !");
+	// fLinSys<T> *linSys;
+	// linSys = new fLinSys<T>(0,0);
+	// double k(0);
+	// int nNodes(m_mesh[0]->getNodesNumber());
+	// vector<double> frequencies(m_setup[0].getFrequencies());
+	// currentSys = new Eigen::SparseMatrix<T>(nNodes, nNodes);
 
-	// preparing results 
-	vector<int> mics = m_setup[0].getMics();
-	unsigned int nMics(mics.size());
-	writeMicValuesHeader();	
-	vector<T> values;
+	// // preparing results 
+	// vector<int> mics = m_setup[0].getMics();
+	// unsigned int nMics(mics.size());
+	// writeMicValuesHeader();	
+	// vector<T> values;
 
-	bool writeVtkOnce(false);
-	ostringstream vtkfilename;
-	if(writeVtkOnce){
-		vtkfilename << "pressure_allFreq.vtk";
-		writeVtkMesh(vtkfilename.str());
-	}
-	bool firstTime(true);
-	ostringstream dataName;
+	// bool writeVtkOnce(false);
+	// ostringstream vtkfilename;
+	// if(writeVtkOnce){
+	// 	vtkfilename << "pressure_allFreq.vtk";
+	// 	writeVtkMesh(vtkfilename.str());
+	// }
+	// bool firstTime(true);
+	// ostringstream dataName;
 
-	if (m_couplingType[0] == 1) // ou autre chose pour de la vibration harmonique par exemple ? 
-	{
-		// loop over the frequencies
-		for(unsigned int iFreq = 2; iFreq < frequencies.size(); iFreq ++) 
-		{
-			// computing solution for the current frequency 
-			values.clear();
-			k = 2*pi*frequencies[iFreq]/m_setup[0].getC();
-			*currentSys = *m_Ksurf+(-1)*(k*k)*(*m_Msurf)-i*k*(*m_Mseg);
-			delete linSys;
-			linSys = new fLinSys<T>(*currentSys, *m_Fsurf);
-			cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << endl;
-			linSys->solve();
-			// exporting results 
-			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
-			{
-				values.push_back(linSys->getSolution().coeff(mics[iMic],0));
-			}
-			writeMicValues(frequencies[iFreq], values);
-			if(!writeVtkOnce){
-				vtkfilename.str(""); vtkfilename << "pressure_f_" << abs(frequencies[iFreq]) << ".vtk";
-				writeVtkMesh(vtkfilename.str());
-				firstTime=true;
-			}
+	// if (m_couplingType[0] == 1) // ou autre chose pour de la vibration harmonique par exemple ? 
+	// {
+	// 	// loop over the frequencies
+	// 	for(unsigned int iFreq = 2; iFreq < frequencies.size(); iFreq ++) 
+	// 	{
+	// 		// computing solution for the current frequency 
+	// 		values.clear();
+	// 		k = 2*pi*frequencies[iFreq]/m_setup[0].getC();
+	// 		*currentSys = *m_Ksurf[iC]+(-1)*(k*k)*(*m_Msurf[iC])-i*k*(*m_Mseg[iC]);
+	// 		delete linSys;
+	// 		linSys = new fLinSys<T>(*currentSys, *m_Fsurf[iC]);
+	// 		cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << endl;
+	// 		linSys->solve();
+	// 		// exporting results 
+	// 		for(unsigned int iMic = 0; iMic < nMics ; iMic++)
+	// 		{
+	// 			values.push_back(linSys->getSolution().coeff(mics[iMic],0));
+	// 		}
+	// 		writeMicValues(frequencies[iFreq], values);
+	// 		if(!writeVtkOnce){
+	// 			vtkfilename.str(""); vtkfilename << "pressure_f_" << abs(frequencies[iFreq]) << ".vtk";
+	// 			writeVtkMesh(vtkfilename.str());
+	// 			firstTime=true;
+	// 		}
 
-			if(writeVtkOnce){dataName.str(""); dataName << "sol_abs_f_" << abs(frequencies[iFreq]);}
-			else{dataName.str(""); dataName << "sol_abs";}
-			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
-			firstTime = false;
-			if(writeVtkOnce){dataName.str(""); dataName << "sol_real_f_" << abs(frequencies[iFreq]);}
-			else{dataName.str(""); dataName << "sol_real";}
-			//dataName.str(""); dataName << "sol_real_f_" << real(frequencies[iFreq]);
-			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
-			if(writeVtkOnce){dataName.str(""); dataName << "sol_imag_f_" << abs(frequencies[iFreq]);}
-			else{dataName.str(""); dataName << "sol_imag";}
-			//dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
-			writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
-		}
-	}
+	// 		if(writeVtkOnce){dataName.str(""); dataName << "sol_abs_f_" << abs(frequencies[iFreq]);}
+	// 		else{dataName.str(""); dataName << "sol_abs";}
+	// 		writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+	// 		firstTime = false;
+	// 		if(writeVtkOnce){dataName.str(""); dataName << "sol_real_f_" << abs(frequencies[iFreq]);}
+	// 		else{dataName.str(""); dataName << "sol_real";}
+	// 		//dataName.str(""); dataName << "sol_real_f_" << real(frequencies[iFreq]);
+	// 		writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+	// 		if(writeVtkOnce){dataName.str(""); dataName << "sol_imag_f_" << abs(frequencies[iFreq]);}
+	// 		else{dataName.str(""); dataName << "sol_imag";}
+	// 		//dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
+	// 		writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+	// 	}
+	// }
 	return true;
 }
 
@@ -606,301 +606,301 @@ bool FemCase<T>::performResolution()
 template <typename T>
 bool FemCase<T>::buildKM()
 {
-	// au programme : 
-	// loop over the couplings A CODER 
-
-
-	// variable initialisation
-	int iC(0);// index of coupling => should be replaced by a loop, fixed at 0 for now 
-	int nN(m_mesh[iC]->getNodesNumber());
-	int nE(m_mesh[iC]->getElementNumber());
-	int countSeg(0);// counts the number of segment elements
-	int countSurf(0);// .. surface elements 
-	int countVol(0);// .. volume elements 
-	int globalI(0);
-	int globalJ(0);
-	Element elem;// current element
-	string message("");
-	vector<int> perm;
-	std::vector<Eigen::Triplet<T> > *currentK; 
-	std::vector<Eigen::Triplet<T> > *currentM; 
-	std::vector<Eigen::Triplet<T> > *Kseg; 
-	std::vector<Eigen::Triplet<T> > *Mseg; 
-	std::vector<Eigen::Triplet<T> > *Ksurf; 
-	std::vector<Eigen::Triplet<T> > *Msurf; 
-	std::vector<Eigen::Triplet<T> > *Kvol; 
-	std::vector<Eigen::Triplet<T> > *Mvol; 
-	
-
-   	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Ke; Ke = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>; 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Me; Me = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
-	int np(0); // number of nodes in the current element
-	int gw(0); // index of the column containing the weights 
-	int ngp(0); // number of gauss points
-	int nb(0); // number of lines in the gradient matrix
-	T detJac(0);
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> one(nN, 1);
-	one = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::Constant(nN, 1, 1); // chuis pas sûr 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> check(1,1);
-
-	// pointers on gauss points tables and shape functions, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_se3 = getGauss(22, 5);
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_t6 = getGauss(42, 4);
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N_se3 = getN(22, *gp_se3);
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N_t6 = getN(42, *gp_t6);
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_se3 = getB(22, *gp_se3);	
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_t6 = getB(42, *gp_t6);	
-	
-	// cout << endl << "gp_se3 : " << *gp_se3;
-	// cout << endl << "gp_t6 : " << *gp_t6;
-	// cout << endl << "N_se3 : " << *N_se3;
-	// cout << endl << "N_t6 : " << *N_t6;
-	// cout << endl << "B_se3 : " << *B_se3;
-	// cout << endl << "B_t6 : " << *B_t6;
-
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp;// gauss points and weights for current element 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N;// shape functions for current element 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Ng; Ng = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);// shape functions for current gauss point. Submat of *N
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B; // idem for gradient matrix
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Bg; Bg = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Bref; Bref = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *JacG; JacG = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
-	
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *coord; coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
-	vector<int> *nodes; nodes = new vector<int>;
-
-	message = "Beginning assembly"; 
-	cout << message << endl; 
-	writeInfo(message);
-	
-	// matrix initialisation, as well as gauss points and shape functions 
-	if (m_mesh[iC]->contains1D()){
-		Mseg = new std::vector<Eigen::Triplet<T>>;
-		Kseg = new std::vector<Eigen::Triplet<T>>;
-		Kseg->reserve(nN);
-		Mseg->reserve(nN);
-	}
-	if (m_mesh[iC]->contains2D()){
-		Msurf = new std::vector<Eigen::Triplet<T>>;
-		Ksurf = new std::vector<Eigen::Triplet<T>>;
-		Ksurf->reserve(nN);
-		Msurf->reserve(nN);
-	}
-	if (m_mesh[iC]->contains3D()){
-		Mvol = new std::vector<Eigen::Triplet<T>>;
-		Kvol = new std::vector<Eigen::Triplet<T>>;
-		Kvol->reserve(nN);
-		Mvol->reserve(nN);
-	}
-	if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) {
-		cout << "your mesh hasn't been prepared correctly" << endl;
-	}
-	
-	for(int iE = 0; iE < nE; iE++)
+	WHEREAMI
+	for (size_t iC = 0; iC < m_nCoupling ; iC++)
 	{
-		elem = m_mesh[iC]->getElement(iE);
-		np = elem.getnN(); // nombre de noeuds 
-		delete coord;
-		delete nodes;
-		coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np,3);
-		nodes = new vector<int>; 
-		*coord = elem.getCoordinates().cast<T>();
-		*nodes = elem.getNodesIds();
-		if (elem.is1D()){
-			countSeg++;
-			currentK = Kseg;
-			currentM = Mseg;
-			switch (elem.getFeDescriptor()){
-				case 22:
-					gp = gp_se3;
-					N = N_se3;
-					B = B_se3;
-					perm = {0,1,2}; // unv to aster format. Avec des SE3 l'interet est limite, j'avoue... 
-					*coord = swapLines(*coord, perm);
-					*nodes = swapLines(*nodes, perm); 
-					break;
-				default:
-					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
-			}
+		// variable initialisation
+		int nN(m_mesh[iC]->getNodesNumber());
+		int nE(m_mesh[iC]->getElementNumber());
+		int countSeg(0);// counts the number of segment elements
+		int countSurf(0);// .. surface elements 
+		int countVol(0);// .. volume elements 
+		int globalI(0);
+		int globalJ(0);
+		Element elem;// current element
+		string message("");
+		vector<int> perm;
+		std::vector<Eigen::Triplet<T> > *currentK; 
+		std::vector<Eigen::Triplet<T> > *currentM; 
+		std::vector<Eigen::Triplet<T> > *Kseg; 
+		std::vector<Eigen::Triplet<T> > *Mseg; 
+		std::vector<Eigen::Triplet<T> > *Ksurf; 
+		std::vector<Eigen::Triplet<T> > *Msurf; 
+		std::vector<Eigen::Triplet<T> > *Kvol; 
+		std::vector<Eigen::Triplet<T> > *Mvol; 
+		
+
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Ke; Ke = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>; 
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Me; Me = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>;
+		int np(0); // number of nodes in the current element
+		int gw(0); // index of the column containing the weights 
+		int ngp(0); // number of gauss points
+		int nb(0); // number of lines in the gradient matrix
+		T detJac(0);
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> one(nN, 1);
+		one = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::Constant(nN, 1, 1); // chuis pas sûr 
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> check(1,1);
+WHEREAMI
+		// pointers on gauss points tables and shape functions, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_se3 = getGauss(22, 5);
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_t6 = getGauss(42, 4);
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N_se3 = getN(22, *gp_se3);
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N_t6 = getN(42, *gp_t6);
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_se3 = getB(22, *gp_se3);	
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B_t6 = getB(42, *gp_t6);	
+		
+		// cout << endl << "gp_se3 : " << *gp_se3;
+		// cout << endl << "gp_t6 : " << *gp_t6;
+		// cout << endl << "N_se3 : " << *N_se3;
+		// cout << endl << "N_t6 : " << *N_t6;
+		// cout << endl << "B_se3 : " << *B_se3;
+		// cout << endl << "B_t6 : " << *B_t6;
+
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp;// gauss points and weights for current element 
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *N;// shape functions for current element 
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Ng; Ng = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);// shape functions for current gauss point. Submat of *N
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *B; // idem for gradient matrix
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Bg; Bg = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *Bref; Bref = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *JacG; JacG = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
+		
+		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *coord; coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1,1);
+		vector<int> *nodes; nodes = new vector<int>;
+
+		message = "Beginning assembly"; 
+		cout << message << endl; 
+		writeInfo(message);
+		WHEREAMI
+		// matrix initialisation, as well as gauss points and shape functions 
+		if (m_mesh[iC]->contains1D()){
+			Mseg = new std::vector<Eigen::Triplet<T>>;
+			Kseg = new std::vector<Eigen::Triplet<T>>;
+			Kseg->reserve(nN);
+			Mseg->reserve(nN);
 		}
-		else if (elem.is2D()){
-			countSurf++;
-			currentK = Ksurf;
-			currentM = Msurf;
-			switch (elem.getFeDescriptor()){
-				case 42:
-					gp = gp_t6;
-					N = N_t6;
-					B = B_t6;
-					perm = {0,2,4,1,3,5}; // 42 unv to T6 aster format 
-					*coord = swapLines(*coord, perm);
-					*nodes = swapLines(*nodes, perm); 
-					break;
-				default:
-					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
-			}
+		if (m_mesh[iC]->contains2D()){
+			Msurf = new std::vector<Eigen::Triplet<T>>;
+			Ksurf = new std::vector<Eigen::Triplet<T>>;
+			Ksurf->reserve(nN);
+			Msurf->reserve(nN);
 		}
-		else if(elem.is3D()){
-			countVol++;
-			currentK = Kvol;
-			currentM = Mvol;
-			switch (elem.getFeDescriptor()){
-				case 125462: // T10
-					perm = {0,2,4,9,1,3,5,6,7,8}; // unv ?? to T10 aster format 
-					break;
-				default:
-					cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
-			}
+		if (m_mesh[iC]->contains3D()){
+			Mvol = new std::vector<Eigen::Triplet<T>>;
+			Kvol = new std::vector<Eigen::Triplet<T>>;
+			Kvol->reserve(nN);
+			Mvol->reserve(nN);
 		}
-		else{
-			message = "Incoherent mesh, make sure it has been prepared correctly. The current element is neither 1D, 2D or not 3D";
-			cout << message << endl; 
-			writeError(message);
+		if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) {
+			cout << "your mesh hasn't been prepared correctly" << endl;
 		}
-		gw = gp->cols()-1;// index of the column containing the weights  
-		ngp = gp->rows();// number of gauss points
-		nb = B->rows()/ngp; // number of lines in the gradient matrix : number of coordinates according to which the shape functions are derived 
-		// reminder : np : number of nodes on the current element 
-		delete(Ke);
-		delete(Me);
-		delete(Bg);
-		delete(Bref);
-		delete(Ng);
-		delete(JacG);
-		Ke = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np, np);
-		Me = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np, np);
-		Bg = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(nb, np);
-		Bref = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(nb, np);
-		Ng = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1, np);
-		JacG = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np,np);
-		Ke->setZero();
-		Me->setZero();
-		Bg->setZero();
-		Bref->setZero();
-		Ng->setZero();
-		JacG->setZero();
-		for (int iG = 0; iG < ngp; iG++)
+		WHEREAMI
+		for(int iE = 0; iE < nE; iE++)
 		{
-			*Bref = B->block(nb*iG, 0, nb, np);
-			*Ng = N->block(iG, 0, 1, np);
-			*JacG = (*Bref)**coord;
-			detJac = computeFemDetJac(*JacG);
-			*Bg = computeFemB(*JacG, *Bref);
-			*Ke = *Ke + detJac*(*gp).coeff(iG, gw)*(Bg->transpose())**Bg; 
-			*Me = *Me + detJac*(*gp).coeff(iG, gw)*Ng->transpose()**Ng;
-			//if(iE == 148)
-			//{
-			//	cout << "Element " << iE << ", gauss point " << iG << endl;
-			//	cout << "detJac = " << detJac << endl;
-			//	cout << "gp = " << (*gp)(iG, gw) << endl;
-			//	cout << "JacG= " << *JacG << endl;
-			//	cout << "Bref = " << *Bref << endl;
-			//	cout << "Bg = " << *Bg << endl;
-			//	cout << "Bg^T*Bg = " << (Bg->t()**Bg) << endl;
-			//}
-		}
-		assert(Ke->rows() == Me->rows()); 
-		assert(Ke->cols() == Me->cols());
-		for (unsigned int i = 0 ; i < Ke->rows() ; i++)
-		{
-			globalI = (*nodes)[i]-1;
-			for (unsigned int j = 0; j < Ke->cols() ; j++ )
+			elem = m_mesh[iC]->getElement(iE);
+			np = elem.getnN(); // nombre de noeuds 
+			delete coord;
+			delete nodes;
+			coord = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np,3);
+			nodes = new vector<int>; 
+			*coord = elem.getCoordinates().cast<T>();
+			*nodes = elem.getNodesIds();
+			if (elem.is1D()){
+				countSeg++;
+				currentK = Kseg;
+				currentM = Mseg;
+				switch (elem.getFeDescriptor()){
+					case 22:
+						gp = gp_se3;
+						N = N_se3;
+						B = B_se3;
+						perm = {0,1,2}; // unv to aster format. Avec des SE3 l'interet est limite, j'avoue... 
+						*coord = swapLines(*coord, perm);
+						*nodes = swapLines(*nodes, perm); 
+						break;
+					default:
+						cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
+				}
+			}
+			else if (elem.is2D()){
+				countSurf++;
+				currentK = Ksurf;
+				currentM = Msurf;
+				switch (elem.getFeDescriptor()){
+					case 42:
+						gp = gp_t6;
+						N = N_t6;
+						B = B_t6;
+						perm = {0,2,4,1,3,5}; // 42 unv to T6 aster format 
+						*coord = swapLines(*coord, perm);
+						*nodes = swapLines(*nodes, perm); 
+						break;
+					default:
+						cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
+				}
+			}
+			else if(elem.is3D()){
+				countVol++;
+				currentK = Kvol;
+				currentM = Mvol;
+				switch (elem.getFeDescriptor()){
+					case 125462: // T10
+						perm = {0,2,4,9,1,3,5,6,7,8}; // unv ?? to T10 aster format 
+						break;
+					default:
+						cout << "Unsupported element in FemCase<T>::buildKM, type" << elem.getFeDescriptor() << endl;
+				}
+			}
+			else{
+				message = "Incoherent mesh, make sure it has been prepared correctly. The current element is neither 1D, 2D or not 3D";
+				cout << message << endl; 
+				writeError(message);
+			}
+			gw = gp->cols()-1;// index of the column containing the weights  
+			ngp = gp->rows();// number of gauss points
+			nb = B->rows()/ngp; // number of lines in the gradient matrix : number of coordinates according to which the shape functions are derived 
+			// reminder : np : number of nodes on the current element 
+			delete(Ke);
+			delete(Me);
+			delete(Bg);
+			delete(Bref);
+			delete(Ng);
+			delete(JacG);
+			Ke = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np, np);
+			Me = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np, np);
+			Bg = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(nb, np);
+			Bref = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(nb, np);
+			Ng = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(1, np);
+			JacG = new Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>(np,np);
+			Ke->setZero();
+			Me->setZero();
+			Bg->setZero();
+			Bref->setZero();
+			Ng->setZero();
+			JacG->setZero();
+			WHEREAMI
+			for (int iG = 0; iG < ngp; iG++)
 			{
-				globalJ = (*nodes)[j]-1;
-				currentK->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Ke).coeff(i,j))); // version sparse
-				currentM->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Me).coeff(i,j)));
-				// if(isnan((*Me)(i,j))) // en complexe il n'y a pas de isnan possible... 
-				// {
-				// 	cout << "Found a nan in Me, element " << iE << endl << *Me << endl;
-				// 	return false; 	
-				// }
-				// if(isnan((*Ke)(i,j)))
-				// {
-				// 	cout << "Found a nan in Ke, element " << iE << endl << *Ke << endl;
-				// 	return false;	
-				// }
+				*Bref = B->block(nb*iG, 0, nb, np);
+				*Ng = N->block(iG, 0, 1, np);
+				*JacG = (*Bref)**coord;
+				detJac = computeFemDetJac(*JacG);
+				*Bg = computeFemB(*JacG, *Bref);
+				*Ke = *Ke + detJac*(*gp).coeff(iG, gw)*(Bg->transpose())**Bg; 
+				*Me = *Me + detJac*(*gp).coeff(iG, gw)*Ng->transpose()**Ng;
+				//if(iE == 148)
+				//{
+				//	cout << "Element " << iE << ", gauss point " << iG << endl;
+				//	cout << "detJac = " << detJac << endl;
+				//	cout << "gp = " << (*gp)(iG, gw) << endl;
+				//	cout << "JacG= " << *JacG << endl;
+				//	cout << "Bref = " << *Bref << endl;
+				//	cout << "Bg = " << *Bg << endl;
+				//	cout << "Bg^T*Bg = " << (Bg->t()**Bg) << endl;
+				//}
 			}
+			assert(Ke->rows() == Me->rows()); 
+			assert(Ke->cols() == Me->cols());
+			WHEREAMI
+			for (unsigned int i = 0 ; i < Ke->rows() ; i++)
+			{
+				globalI = (*nodes)[i]-1;
+				for (unsigned int j = 0; j < Ke->cols() ; j++ )
+				{
+					globalJ = (*nodes)[j]-1;
+					currentK->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Ke).coeff(i,j))); // version sparse
+					currentM->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Me).coeff(i,j)));
+					// if(isnan((*Me)(i,j))) // en complexe il n'y a pas de isnan possible... 
+					// {
+					// 	cout << "Found a nan in Me, element " << iE << endl << *Me << endl;
+					// 	return false; 	
+					// }
+					// if(isnan((*Ke)(i,j)))
+					// {
+					// 	cout << "Found a nan in Ke, element " << iE << endl << *Ke << endl;
+					// 	return false;	
+					// }
+				}
+			}
+			// stop to check current matrices 
+			//if(elem.getFeDescriptor() == 42)
+			//{
+			//	cout << "Me : " << endl;
+			//	Me->print();
+			//	cout << "Ke : " << endl;
+			//	Ke->print();
+			//	cout << "coord : " << endl;
+			//	coord->print();
+			//	cout << "Nodes : " ;
+			//	for(int i = 0; i<np ; i++)
+			//	{
+			//		cout << (*nodes)[i] << " ";
+			//	}	
+			//	return true;
+			//}
+		}	
+		WHEREAMI
+		// Finally, building matrices from triplets 
+		if (m_mesh[iC]->contains1D()){
+			m_Mseg[iC] = new Eigen::SparseMatrix<T> (nN, nN);
+			m_Mseg[iC]->setFromTriplets(Mseg->begin(), Mseg->end());
+			m_Kseg[iC] = new Eigen::SparseMatrix<T> (nN, nN);
+			m_Kseg[iC]->setFromTriplets(Kseg->begin(), Kseg->end());
 		}
-		// stop to check current matrices 
-		//if(elem.getFeDescriptor() == 42)
-		//{
-		//	cout << "Me : " << endl;
-		//	Me->print();
-		//	cout << "Ke : " << endl;
-		//	Ke->print();
-		//	cout << "coord : " << endl;
-		//	coord->print();
-		//	cout << "Nodes : " ;
-		//	for(int i = 0; i<np ; i++)
-		//	{
-		//		cout << (*nodes)[i] << " ";
-		//	}	
-		//	return true;
-		//}
-	}	
+		if (m_mesh[iC]->contains2D()){
+			m_Msurf[iC] = new Eigen::SparseMatrix<T> (nN, nN);
+			m_Msurf[iC]->setFromTriplets(Msurf->begin(), Msurf->end());
+			m_Ksurf[iC] = new Eigen::SparseMatrix<T> (nN, nN);
+			m_Ksurf[iC]->setFromTriplets(Ksurf->begin(), Ksurf->end());
+		}
+		if (m_mesh[iC]->contains3D()){
+			m_Mvol[iC] = new Eigen::SparseMatrix<T>(nN, nN);
+			m_Mvol[iC]->setFromTriplets(Mvol->begin(), Mvol->end());
+			m_Kvol[iC] = new Eigen::SparseMatrix<T>(nN, nN);
+			m_Kvol[iC]->setFromTriplets(Kvol->begin(), Kvol->end());
+		}
+		WHEREAMI
+		// check que le volume est correct 
+		if (m_mesh[iC]->contains1D())
+		{
+			check = one.transpose()**m_Mseg[iC]*one;
+			cout << "Total distance computed from M " << check << endl;
+		}
+		if (m_mesh[iC]->contains2D())
+		{
+			check = one.transpose()**m_Msurf[iC]*one;
+			cout << "Total surface computed from M " << check << endl;
+		}
+		if (m_mesh[iC]->contains3D())
+		{
+			check = one.transpose()**m_Mvol[iC]*one;
+			cout << "Total volume computed from M " << check << endl;
+		}
+		cout << "Assembly finished sucessfully, with " << countSeg << " segment elements, " << countSurf << " surface elements, and " << countVol << " volume elements." << endl;
 
-	// Finally, building matrices from triplets 
-	if (m_mesh[iC]->contains1D()){
-		m_Mseg = new Eigen::SparseMatrix<T> (nN, nN);
-		m_Mseg->setFromTriplets(Mseg->begin(), Mseg->end());
-		m_Kseg = new Eigen::SparseMatrix<T> (nN, nN);
-		m_Kseg->setFromTriplets(Kseg->begin(), Kseg->end());
+		//cout << "Msurf : " << endl << m_Msurf->submat(0,10,0,10);
+		//cout << "Ksurf : " << endl << m_Ksurf->submat(0,10,0,10);
 	}
-	if (m_mesh[iC]->contains2D()){
-		m_Msurf = new Eigen::SparseMatrix<T> (nN, nN);
-		m_Msurf->setFromTriplets(Msurf->begin(), Msurf->end());
-		m_Ksurf = new Eigen::SparseMatrix<T> (nN, nN);
-		m_Ksurf->setFromTriplets(Ksurf->begin(), Ksurf->end());
-	}
-	if (m_mesh[iC]->contains3D()){
-		m_Mvol = new Eigen::SparseMatrix<T>(nN, nN);
-		m_Mvol->setFromTriplets(Mvol->begin(), Mvol->end());
-		m_Kvol = new Eigen::SparseMatrix<T>(nN, nN);
-		m_Kvol->setFromTriplets(Kvol->begin(), Kvol->end());
-	}
-	
-	// check que le volume est correct 
-	if (m_mesh[iC]->contains1D())
-	{
-		check = one.transpose()**m_Mseg*one;
-		cout << "Total distance computed from M " << check << endl;
-	}
-	if (m_mesh[iC]->contains2D())
-	{
-		check = one.transpose()**m_Msurf*one;
-		cout << "Total surface computed from M " << check << endl;
-	}
-	if (m_mesh[iC]->contains3D())
-	{
-		check = one.transpose()**m_Mvol*one;
-		cout << "Total volume computed from M " << check << endl;
-	}
-	cout << "Assembly finished sucessfully, with " << countSeg << " segment elements, " << countSurf << " surface elements, and " << countVol << " volume elements." << endl;
-
-	//cout << "Msurf : " << endl << m_Msurf->submat(0,10,0,10);
-	//cout << "Ksurf : " << endl << m_Ksurf->submat(0,10,0,10);
 	return true; 
 }
 
 template <typename T>
 bool FemCase<T>::buildF()
 {
-	int nN(m_mesh[0]->getNodesNumber()); 
-	m_Fvol = new Eigen::SparseMatrix<T>(nN,1);
-	m_Fsurf = new Eigen::SparseMatrix<T>(nN,1);
-	m_Fseg = new Eigen::SparseMatrix<T>(nN,1);
+	for(size_t iC = 0; iC < m_nCoupling ; iC++)
+	{
+		int nN(m_mesh[0]->getNodesNumber()); 
+		m_Fvol[iC] = new Eigen::SparseMatrix<T>(nN,1);
+		m_Fsurf[iC] = new Eigen::SparseMatrix<T>(nN,1);
+		m_Fseg[iC] = new Eigen::SparseMatrix<T>(nN,1);
 
 
-	std::vector<Eigen::Triplet<T>> coefficients;
-	coefficients.push_back(Eigen::Triplet<T>(254,0,1));
+		std::vector<Eigen::Triplet<T>> coefficients;
+		coefficients.push_back(Eigen::Triplet<T>(254,0,1));
 
-	m_Fvol->setFromTriplets(coefficients.begin(), coefficients.end());
-	m_Fsurf->setFromTriplets(coefficients.begin(), coefficients.end());
-	m_Fseg->setFromTriplets(coefficients.begin(), coefficients.end());
-
-	// (*m_Fvol)(254,0) = 1;
-	// (*m_Fsurf)(254,0) = 1;
-	// (*m_Fseg)(254,0) = 1;
+		m_Fvol[iC]->setFromTriplets(coefficients.begin(), coefficients.end());
+		m_Fsurf[iC]->setFromTriplets(coefficients.begin(), coefficients.end());
+		m_Fseg[iC]->setFromTriplets(coefficients.begin(), coefficients.end());
+	}
 	return true; 
 }
 
