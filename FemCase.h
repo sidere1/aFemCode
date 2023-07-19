@@ -115,16 +115,16 @@ protected:
 	std::string m_path;
 	// tout ça dans une Class storedResults ?
 	// pour plusieurs couplings : un vecteur de storedResults ?  
-	std::vector<Eigen::SparseMatrix<T>*> m_Kvol;
-	std::vector<Eigen::SparseMatrix<T>*> m_Ksurf;
-	std::vector<Eigen::SparseMatrix<T>*> m_Kseg;
-	std::vector<Eigen::SparseMatrix<T>*> m_Mvol;
-	std::vector<Eigen::SparseMatrix<T>*> m_Msurf;
-	std::vector<Eigen::SparseMatrix<T>*> m_Mseg;
-	std::vector<Eigen::SparseMatrix<T>*> m_Fvol;
-	std::vector<Eigen::SparseMatrix<T>*> m_Fsurf;
-	std::vector<Eigen::SparseMatrix<T>*> m_Fseg;
-	std::vector<Eigen::SparseMatrix<T>*> currentSys;
+	std::vector<Eigen::SparseMatrix<T> *> m_Kvol;
+	std::vector<Eigen::SparseMatrix<T> *> m_Ksurf;
+	std::vector<Eigen::SparseMatrix<T> *> m_Kseg;
+	std::vector<Eigen::SparseMatrix<T> *> m_Mvol;
+	std::vector<Eigen::SparseMatrix<T> *> m_Msurf;
+	std::vector<Eigen::SparseMatrix<T> *> m_Mseg;
+	std::vector<Eigen::SparseMatrix<T> *> m_Fvol;
+	std::vector<Eigen::SparseMatrix<T> *> m_Fsurf;
+	std::vector<Eigen::SparseMatrix<T> *> m_Fseg;
+	std::vector<Eigen::SparseMatrix<T> *> currentSys;
 };
 
 
@@ -461,6 +461,16 @@ bool FemCase<T>::prepareComputation()
 		// IL FAUDRAIT FAIRE UNE METHODE mesh.read() QUI DETERMINERAIT SON TYPE (unv...), L'IMPORTERAIT ET LE PREPARERAIT
 		m_mesh[i]->computeAspectRatio();
 		m_mesh[i]->calculateVolume();
+		m_Kvol.resize(m_nCoupling);
+		m_Ksurf.resize(m_nCoupling);
+		m_Kseg.resize(m_nCoupling);
+		m_Mvol.resize(m_nCoupling);
+		m_Msurf.resize(m_nCoupling);
+		m_Mseg.resize(m_nCoupling);
+		m_Fvol.resize(m_nCoupling);
+		m_Fsurf.resize(m_nCoupling);
+		m_Fseg.resize(m_nCoupling);
+		currentSys.resize(m_nCoupling);
 	}
 
 	return true; 
@@ -606,7 +616,6 @@ bool FemCase<T>::performResolution()
 template <typename T>
 bool FemCase<T>::buildKM()
 {
-	WHEREAMI
 	for (size_t iC = 0; iC < m_nCoupling ; iC++)
 	{
 		// variable initialisation
@@ -640,7 +649,7 @@ bool FemCase<T>::buildKM()
 		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> one(nN, 1);
 		one = Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic>::Constant(nN, 1, 1); // chuis pas sûr 
 		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> check(1,1);
-WHEREAMI
+
 		// pointers on gauss points tables and shape functions, for all possible elements. In the element loop, depending on the element type, the correct pointer will be set 
 		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_se3 = getGauss(22, 5);
 		Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *gp_t6 = getGauss(42, 4);
@@ -670,7 +679,6 @@ WHEREAMI
 		message = "Beginning assembly"; 
 		cout << message << endl; 
 		writeInfo(message);
-		WHEREAMI
 		// matrix initialisation, as well as gauss points and shape functions 
 		if (m_mesh[iC]->contains1D()){
 			Mseg = new std::vector<Eigen::Triplet<T>>;
@@ -693,7 +701,6 @@ WHEREAMI
 		if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) {
 			cout << "your mesh hasn't been prepared correctly" << endl;
 		}
-		WHEREAMI
 		for(int iE = 0; iE < nE; iE++)
 		{
 			elem = m_mesh[iC]->getElement(iE);
@@ -777,7 +784,6 @@ WHEREAMI
 			Bref->setZero();
 			Ng->setZero();
 			JacG->setZero();
-			WHEREAMI
 			for (int iG = 0; iG < ngp; iG++)
 			{
 				*Bref = B->block(nb*iG, 0, nb, np);
@@ -800,7 +806,6 @@ WHEREAMI
 			}
 			assert(Ke->rows() == Me->rows()); 
 			assert(Ke->cols() == Me->cols());
-			WHEREAMI
 			for (unsigned int i = 0 ; i < Ke->rows() ; i++)
 			{
 				globalI = (*nodes)[i]-1;
@@ -838,10 +843,14 @@ WHEREAMI
 			//	return true;
 			//}
 		}	
-		WHEREAMI
 		// Finally, building matrices from triplets 
 		if (m_mesh[iC]->contains1D()){
-			m_Mseg[iC] = new Eigen::SparseMatrix<T> (nN, nN);
+			Eigen::SparseMatrix<T> *tset = new Eigen::SparseMatrix<T> (nN, nN);
+			WHEREAMI
+			cout << m_Mseg[iC] << endl;
+			WHEREAMI
+			m_Mseg[iC] = tset;
+			WHEREAMI
 			m_Mseg[iC]->setFromTriplets(Mseg->begin(), Mseg->end());
 			m_Kseg[iC] = new Eigen::SparseMatrix<T> (nN, nN);
 			m_Kseg[iC]->setFromTriplets(Kseg->begin(), Kseg->end());
@@ -858,7 +867,6 @@ WHEREAMI
 			m_Kvol[iC] = new Eigen::SparseMatrix<T>(nN, nN);
 			m_Kvol[iC]->setFromTriplets(Kvol->begin(), Kvol->end());
 		}
-		WHEREAMI
 		// check que le volume est correct 
 		if (m_mesh[iC]->contains1D())
 		{

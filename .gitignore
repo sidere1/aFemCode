@@ -43,6 +43,7 @@ deleted/
 tests/compEigenVsfMatrix 
 sphinx_env_pip
 doxygen/Doxyfile_previous
+.vscode/
 
 # documentation
 docs/_*
