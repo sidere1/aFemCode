@@ -22,14 +22,14 @@ public:
     bool checkElem() const ;
     bool getDisplay() const ; 
     int getIndex() const;
-    bool setIndex(int newIndex) const;
+    bool setIndex(int newIndex) ;
     int getFeDescriptor() const;
 	bool computeAspectRatio();
 	int getAspectRatio() const;
 	float getVolume() const;
 	int getnN() const;
 	std::vector<int> getNodesIds() const;
-	// bool setNodesIds() const;
+	bool replaceNodes(std::vector<Node*> newNodes);
 	// fMatrix<float> getCoordinates() const;
 	Eigen::Matrix<float, Eigen::Dynamic, 3> getCoordinates() const;
 private:

@@ -289,7 +289,7 @@ int Element::getIndex() const
 {
 	return m_index;
 }
-bool Element::setIndex(int newIndex) const
+bool Element::setIndex(int newIndex) 
 {
 	m_index = newIndex;
 	return true;
@@ -376,5 +376,10 @@ Eigen::Matrix<float, Eigen::Dynamic, 3> Element::getCoordinates() const
 
 
 
-
+bool Element::replaceNodes(std::vector<Node*> newNodes)
+{
+	m_nodes.clear();
+	m_nodes = newNodes;
+	return true;
+}
 
