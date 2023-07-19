@@ -74,7 +74,7 @@ public:
 	bool buildKM(); 
 	bool buildF();
 	bool performCoupling(); // pour la projection - construction du systeme couple 
-	bool performResolution(); // solve 
+	virtual bool performResolution(); // solve 
 
 	// Assembly functions 
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> *getGauss(int element, int order);
@@ -846,11 +846,8 @@ bool FemCase<T>::buildKM()
 		// Finally, building matrices from triplets 
 		if (m_mesh[iC]->contains1D()){
 			Eigen::SparseMatrix<T> *tset = new Eigen::SparseMatrix<T> (nN, nN);
-			WHEREAMI
 			cout << m_Mseg[iC] << endl;
-			WHEREAMI
 			m_Mseg[iC] = tset;
-			WHEREAMI
 			m_Mseg[iC]->setFromTriplets(Mseg->begin(), Mseg->end());
 			m_Kseg[iC] = new Eigen::SparseMatrix<T> (nN, nN);
 			m_Kseg[iC]->setFromTriplets(Kseg->begin(), Kseg->end());

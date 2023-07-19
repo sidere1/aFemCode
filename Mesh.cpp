@@ -24,6 +24,46 @@ Mesh::Mesh(std::string info, std::string error) :m_info(info), m_error(error), m
 
 }
 
+Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D(false), m_2D(false), m_3D(false)
+{
+    // this constructor builds a mesh by concatenating two ones 
+
+    unsigned int nN1 = m1.getNodesNumber();
+    unsigned int nN2 = m2.getNodesNumber(); 
+    unsigned int nE1 = m1.getElementNumber();
+    unsigned int nE2 = m2.getElementNumber(); 
+
+    // concatenate nodes 
+    m_nodes = m1.getNodes();
+    std::vector<Node> nodes2 = m2.getNodes();
+    m_nodes.insert(m_nodes.end(), nodes2.begin(), nodes2.end());
+
+
+
+    // concatenate elements and update connectivity 
+    m_elements = m1.getElements();
+    std::vector<Node> elements2 = m2.getElements();
+    m_elements.insert(m_elements.end(), elements2.begin(), elements2.end());
+    for (unsigned int iElem = nE1; iElem < nE1+nE2 ; iElem++)
+    {
+        m_elements[iElem].setIndex(m_elements[iNode].getIndex()+nE1);
+        m_elements[iElem].offsetNodes(nE1);
+        // normalement, le tableau de noeuds c'est un tableau de pointeurs sur des Elements, 
+    }
+    // update ids of the nodes 
+    for (unsigned int iNode = nN1; iNode < nN1+nN2 ; iNode++)
+    {
+        m_nodes[iNode].setIndex(m_nodes[iNode].getIndex()+nN1);
+    }
+
+
+    // check que la taille des tableaux sont bien cohérentes ? 
+    m_nN = m_nodes.size();
+	m_nE = m_elements.size();	
+    calculateVolume();
+    computeAspectRatio();
+}
+
 Mesh::~Mesh()
 {
 
@@ -31,7 +71,6 @@ Mesh::~Mesh()
 
 bool Mesh::unvImport(string unvFileToRead )
 {
-    // int number;
     int position;
     int unvBlock;
     string line;
@@ -449,10 +488,6 @@ int Mesh::typeAssign(int nbOfNodes)
             return 112;
             break;
         
-        // case 8: // NEVER..................
-        //     return 121;
-        //     break;
-
         default:
             return 0;
 
@@ -519,8 +554,15 @@ int Mesh::getNodesNumber() const
     //return m_nodes.size();
     return m_nN;
 }
+std::vector<Node> Mesh::getNodes() const
+{
+    return m_nodes;
+}
 
-
+std::vector<Element> Mesh::getElements() const
+{
+    return m_elements;
+}
 
 
 

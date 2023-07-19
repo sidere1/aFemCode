@@ -23,7 +23,7 @@
 
 /*! \brief 
 * AcousticFemCase is the base class for an acoustic run, and inherits from FemCase 
- * 
+ * in the setup file, it is good practice to put first the largest domain (containing the most nodes). But it should work either way. 
  * 
 */
 template <typename T>
@@ -35,7 +35,7 @@ public:
     ~AcousticFemCase();
 
 	bool buildF();
-	bool performResolution(); // solve 
+	virtual bool performResolution(); // solve 
 
 protected:
 };
@@ -61,7 +61,6 @@ AcousticFemCase<T>::~AcousticFemCase()
 template <typename T>
 bool AcousticFemCase<T>::performResolution()
 {
-	WHEREAMI
 	int iC(0); // normally, in this class there should be only one coupling 
 	const complex<double> i(0.0,1.0); // pas complex<T> ? chuis surpris ! 
 	const double pi(3.1415926);	

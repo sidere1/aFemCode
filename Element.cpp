@@ -289,6 +289,12 @@ int Element::getIndex() const
 {
 	return m_index;
 }
+bool Element::setIndex(int newIndex) const
+{
+	m_index = newIndex;
+	return true;
+}
+
 
 int Element::getFeDescriptor() const
 {

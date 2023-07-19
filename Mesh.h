@@ -15,6 +15,8 @@ class Mesh
 public:
     Mesh();
     Mesh(std::string info, std::string error);
+    Mesh(Mesh m1, Mesh m2);
+
     ~Mesh();
     bool unvImport(std::string unvFileToRead);
     int import2411(std::string unvFileToRead, int position);
@@ -22,21 +24,20 @@ public:
     bool addNode(int index, float x, float y, float z);
     bool addElement(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
 	Element getElement(unsigned int index) const;
+	std::vector<Element> getElements() const;
     bool printConnectivities() const;
     bool printCoordinates() const;
     Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> getConnectivities() const;
     Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> getConecAndNN() const;
     Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> getCoordinates() const;
 	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> getElemTypesVtk() const;
-    // fMatrix<int> getConnectivities() const;
-    // fMatrix<int> getConecAndNN() const;
-    // fMatrix<float> getCoordinates() const;
-	// fMatrix<int> getElemTypesVtk() const;
+    
     int typeAssign(int nbOfNodes);
     bool isBeginEnd(std::string line);
     bool calculateVolume() ;
     int getElementNumber() const;
     int getNodesNumber() const;
+    std::vector<Node> getNodes() const;
 
     bool setInfo(std::string value);
     std::string getInfo() const;

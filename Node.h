@@ -10,6 +10,7 @@ public:
     Node(int index, float x, float y, float z, int groupId);
     ~Node();
     int getIndex();
+    bool setIndex(int newId);
     bool getDisplay() const;
     float getX() const;
     float getY() const;

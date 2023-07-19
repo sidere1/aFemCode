@@ -40,6 +40,11 @@ int Node::getIndex()
 {
     return m_id;
 }
+bool Node::setIndex(int newId)
+{
+    m_id = newId; 
+    return true;
+}
 
 bool Node::getDisplay() const
 {
