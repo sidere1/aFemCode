@@ -1,0 +1,61 @@
+####################################################
+################FEMSolveurInputFile#################
+####################################################
+
+info                cases/info.log 
+errors              cases/errors.log 
+3D                  true 
+meshFile            cases/square_bigMesh_noBeams.unv
+nodal               true 
+frequencies         20 
+1                   100 
+2                   150 
+3                   200 
+4                   250 
+5                   300 
+6                   350 
+7                   400 
+8                   450 
+9                   500 
+10                  550 
+11                  600 
+12                  650 
+13                  700 
+14                  750 
+15                  800 
+16                  850 
+17                  900 
+18                  950 
+19                  1000 
+20                  1050 
+micros              1                 
+1                   152                                 
+loads                cases/loadFile.femload                                                  
+rho 
+c 
+
+####################################################
+#############HowToBuildASolverInputFile#############
+####################################################
+
+Be careful, nothing else after those lines !! Comments should be put back at the end of the document.  
+These infos must respect the following order : 
+
+
+info                path to a file in which basic infos will be written as ell as execution errors  
+errors              path to a file in which errors will be written
+3D                  true if the case is 3D. Otherwise please developp it. Thank you. 
+meshFile            path to the file containing the mesh                 : cases/square_bigMesh_noBeams.unv targetMesh_tetra.unv 
+modal               true non négociable. false => résolution modale. Yapuka le coder... 
+frequencies         number of frequencies in the following list                        // nombre de fréquences (pour le spectre de résolution et pour la source, on peut pas encore avoir des spectres différents. Fadra prévior un calcul d'interpolation. )
+1                   100         //frequency number    numeric value ATTENTION IL FAUT METTRE DES POINTS À LA PLACE DES VIRGULES  
+2                   150
+3                   200
+...
+other option : 
+frequencies         cases/freq.femfrq
+micros              nombre de micros 
+1                   152         // numéro du micro   numéro du noeud le portant
+loads                cases/source1.femload                   // numéro du noeud porteur de la source    nom du fichier qui contient le spectre                                  
+
+// Mesh, 3D, freq, micros, loadCases, algo, sources, paramètre supplémentaire ?? , nodal/modal 

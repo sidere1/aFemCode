@@ -1,0 +1,17 @@
+####################################################
+################FEMSolveurInputFile#################
+####################################################
+
+info                results/info.log 
+errors              results/errors.log 
+coupling 			1
+1					harmonic 			insideAc			inside.unv
+2					harmonic 			outsideAc			outside.unv
+
+
+
+#####################################################
+#coupling : nombre de couplages (nombre de fichiers setup/maillages à lire 
+#1 : une seule physique 
+#puis liste numérotée des physiques. harmonic pour de l'acoustique simple  / timedomain / FSBC / vibroac ... puis nom du fichier de paramètres 
+

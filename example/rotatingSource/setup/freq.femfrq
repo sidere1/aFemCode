@@ -1,0 +1,116 @@
+####################################################
+################FEMSolveurInputFile#################
+####################################################
+
+loads                2
+frequencies         20                      
+1                   100 
+2  150 3  200 4  250 5  300 6  350 7  400 8  450 9  500 10 550 11 600 12 650 13 700 14 750 15 800 16 850 17 900 18 950 19 1000 20 1050 
+sources 
+src1
+1       45
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+src2 
+2                   54  59
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+
+
+####################################################
+################HowToBuildASLoadFile################
+####################################################
+
+These infos must respect the following order : 
+loads                3                      // number of loads 
+src1                                        // name of the first load 
+src2                                        // en vrai on s'en fout, c'est juste pour pouvoir checker visuellement dans le fichier texte 
+src3                                        // ...
+frequencies         20                      // these must be the same as the ones in the setup file. No interpolation implemented yet. 
+16                  850 
+17                  900 
+18                  950 
+19                  1000 
+20                  1050 
+sources
+src1               
+2                   54      56 // pour chaque source,le premier paramètre donne le nombre de noeuds sur laquelle elle est appliquée, puis la liste des noeuds
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+src2
+1                   58
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+1   0
+
