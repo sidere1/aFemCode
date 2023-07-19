@@ -38,17 +38,33 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
     std::vector<Node> nodes2 = m2.getNodes();
     m_nodes.insert(m_nodes.end(), nodes2.begin(), nodes2.end());
 
-
-
     // concatenate elements and update connectivity 
     m_elements = m1.getElements();
     std::vector<Node> elements2 = m2.getElements();
     m_elements.insert(m_elements.end(), elements2.begin(), elements2.end());
+    Element currentEl; 
+    std::vector<Node*> currentNodes;
+    int previousId(0);
     for (unsigned int iElem = nE1; iElem < nE1+nE2 ; iElem++)
     {
-        m_elements[iElem].setIndex(m_elements[iNode].getIndex()+nE1);
-        m_elements[iElem].offsetNodes(nE1);
+        previousId = iElem - nE1;
+        currentNodes.clear(); // on supprime les pointeurs sur les noeuds, pas les noeuds ! 
+        nNodes 
+        feDescriptor 
+        physicalProperty 
+        materialProperty 
+        color 
+        numberOfNodes
+        for (int iNode = 0; iNode < numberOfNodes; iNode++)
+        {
+            id 
+            currentNodes.push_back(&m_nodes[id-1]);
+        }
+        // nodesTemp.push_back(&m_nodes[nodeIndexTemp-1]);
+        currentEl = Element(iElem, currentNodes, feDescriptor, physicalProperty, materialProperty, color, numberOfNodes);
+        m_elements[iElem] = currentEl;
         // normalement, le tableau de noeuds c'est un tableau de pointeurs sur des Elements, 
+        // sinon on copie colle les éléments, et on update juste les pointeurs, non ? 
     }
     // update ids of the nodes 
     for (unsigned int iNode = nN1; iNode < nN1+nN2 ; iNode++)
