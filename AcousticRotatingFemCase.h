@@ -43,6 +43,7 @@ protected:
 	int m_N;
 	int m_L;
 	int C;
+	int m_Omega;
 	Eigen::SparseMatrix<T> m_coupledSystem; 
 	Eigen::SparseMatrix<T> m_PhiR; 
 	Eigen::SparseMatrix<T> m_PhiF; 

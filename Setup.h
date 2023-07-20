@@ -13,7 +13,7 @@ public:
     Setup(std::string setupFile, std::string path);
     ~Setup();
 
-    int addAtribute(int cursor, std::string entry, std::string value);
+    // int addAtribute(int cursor, std::string entry, std::string value);
     bool set3D(bool dim);
 
     bool setInfo(std::string value);
@@ -24,32 +24,32 @@ public:
     std::string getError() const;
     bool writeError(std::string error) const;
 
-    //bool setMeshFile(std::string meshFile);
-    //std::string getMeshFile();
-
     bool readFrequencies(std::string fileToRead, int end);
     bool readMicros(std::string fileToRead, int end);
     bool readLoads(std::string fileToRead);//, int end);
+
+    virtual int addAtribute(int cursor, std::string entry, std::string value){return 0;};
+
     
 	bool displayFrequencies();
     std::vector<double> getFrequencies();
     std::vector<int> getMics();
 	double getC();
 
-	bool displayInfo();
+	virtual bool displayInfo();
 	bool isLoaded();
-    //bool buildH();
-    //bool printH() const;
+    
 
-
-    //bool writeResults();
-    //bool performAcoustic3DNodalResolution() const;
-
-private:
+protected:
+    // general 
     std::string m_setupFile;
 	std::string m_path;
 	bool m_loaded;
-	//Mesh m_mesh;
+    std::string m_info;
+    std::string m_error;
+    
+
+    // Acoustics 
     std::vector<double> m_frequencies;
     std::vector<Node> m_micros;// pointeur sur des noeuds ? pas utilise
     std::vector<int> m_microsIndex;
@@ -60,17 +60,20 @@ private:
     bool timeOverMemory;
     double m_rho;
 	double m_c;
-	
-	std::string m_info;
-    std::string m_error;
-    //std::string m_meshFile;
-    //Eigen::MatrixXd m_H;
-    //Eigen::SparseMatrix<double> m_HSparse;
+    size_t m_couplingType; 
 
-    // Mesh, 3D, freq, micros, loadCases, algo, sources, paramètre supplémentaire, nodal/modal 
-    // Objet flux pour les erreurs, logs en tout genre, etc, qu'on peut passer en paramètre aux différents objets dessous 
-    // voire 2 flux, un pour les logs, un pour les erreurs. Eventuellement les deux sont les mêmes.   
-    // un mode verbose pour savoir si ce flux va vers cout pour débugger ou vers un fichier au cas où  
+    // FSBC 
+    size_t m_axis;
+    size_t m_eta;
+    size_t m_C;
+    size_t m_N;
+    size_t m_L;
+    float m_radius;
+    float m_Omega;
+
+    //
+	
+	
 
 };
 

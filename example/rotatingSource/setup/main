@@ -5,8 +5,8 @@
 info                results/info.log 
 errors              results/errors.log 
 coupling 			1
-1					harmonic 			insideAc			inside.unv
-2					harmonic 			outsideAc			outside.unv
+1					fsbc 				outsideAc			ext_finer.unv
+2					fsbc				insideAc			int_finer.unv
 
 
 
