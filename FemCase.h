@@ -2,25 +2,21 @@
 #ifndef DEF_FEMCASE
 #define DEF_FEMCASE
 
-//#include "Mesh.h" // already included via Setup.h
-//#include "Node.h"//idem 
-//#include "PointLoad.h"
+#include <Eigen/Sparse>
+#include <vector> 
+#include <complex>
+
 #include <fstream>
 #include <iostream>
 #include <cassert>
 #include <sys/stat.h>
-// #include "Setup.h" // included from AcousticSetup
+
+// #include "Setup.h" // included from the daughter classes 
 #include "AcousticSetup.h"
-//#include "Eigen::SparseMatrix.h"
-#include <Eigen/Sparse>
-#include <vector> 
-#include <complex>
+#include "AcousticRotatingSetup.h"
 #include "fLinSys.h"
-// #include "H5Cpp.h"
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
-
-#include <Eigen/Sparse>
 
 /*! \brief 
 * FemCase is the base class for a run. It reads inputs, meshes, prepares the run, assembles matrices and performs the resolution.
@@ -201,20 +197,18 @@ FemCase<T>::FemCase(std::string setupFile)
 		// creating the setups. The m_setupFile, m_nCoupling, m_meshFile, m_mesh, m_setup, m_couplingType have already been loaded
 		for(size_t i = 0; i < m_nCoupling ; i++)
 		{
-			cout << "Reading coupling " << i << m_path + "setup/" + m_setupFile[i] << endl;
-			cout << m_path;
-			// if (m_couplingType[i] == 1)
-			// 	typedef AcousticSetup setup_type;
-			// else if (m_couplingType[i] == 2)
-			// 	typedef AcousticSetup setup_type;
-			// else 
-			// 	typedef AcousticSetup setup_type;
-
+			cout << "Reading coupling " << i << " in file " << m_path + "setup/" + m_setupFile[i] << endl;
 			Setup *s(0);
 			if (m_couplingType[i] == 1)
+			{
+				// cout << "helloooooooooooooooooooooooo" << std::endl << std::endl; 
 				s = new AcousticSetup(m_path + "setup/" + m_setupFile[i], m_path);
+			}
 			else if (m_couplingType[i] == 2)
-				s = new AcousticSetup(m_path + "setup/" + m_setupFile[i], m_path);
+			{
+				// cout << "YEEEEEEEEEEEEEEEEEEEEEEEEES" << std::endl << std::endl; 
+				s = new AcousticRotatingSetup(m_path + "setup/" + m_setupFile[i], m_path);
+			}	
 			else 
 				s = new AcousticSetup(m_path + "setup/" + m_setupFile[i], m_path);
 			
@@ -224,7 +218,8 @@ FemCase<T>::FemCase(std::string setupFile)
 			}
 			else
 			{
-				cout << "In FemCase.h, your setup file has not been loaded correctly";
+				cout << "In FemCase.h, setup " << i << " has not been loaded correctly";
+				WHEREAMI
 				m_loaded = false;
 			} 
 		}
@@ -309,14 +304,17 @@ int FemCase<T>::addAtribute(int cursor, string entry, string value)
 					ifstream setupFile(m_mainSetup.c_str());
 					if (setupFile)
 					{
-						for (int i = 0; i < 10; i++)
+						for (int i = 0; i < 9; i++)
 						{
 							setupFile >> entry;
-							//cout << "discarded " << entry << endl;
+							// cout << "discarded " << entry << endl;
 						}
 						countAim = m_nCoupling;
 						for(size_t i = 0; i < m_nCoupling ; i++)
 						{
+							setupFile >> entry; // this should be the index of the coupling 
+							if ((size_t)(atoi(entry.c_str())) != i+1)
+								std::cout << "check your setup file, I found " << entry << " instead of " << i << " (not critical) " << std::endl;
 							setupFile >> entry;
 							//en-dessous de 10, acoustique. entre 11 et 20, élasticité ? 
 						   	if(entry == "harmonic")	

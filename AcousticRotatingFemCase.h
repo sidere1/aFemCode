@@ -16,9 +16,7 @@
 #include <complex>
 #include "fLinSys.h"
 #include "FemCase.h"
-
-#define WHEREAMI std::cout << std::endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << std::endl << std::endl;
-
+#include <cassert>
 #include <Eigen/Sparse>
 
 /*! \brief 
@@ -58,7 +56,11 @@ AcousticRotatingFemCase<T>::AcousticRotatingFemCase()
 template <typename T>
 AcousticRotatingFemCase<T>::AcousticRotatingFemCase(std::string setupFile): FemCase<T>(setupFile)
 {
-	assert m_nCoupling == 2; // ou plus si on veut mettre plusieurs zones tournantes 
+	if (this->m_nCoupling != 2)
+	{
+		std::cout << "You should not be using " << this->m_nCoupling << " in a coupled rotating FSBC case" << std::endl; 
+	}
+	assert(this->m_nCoupling == 2); // ou plus si on veut mettre plusieurs zones tournantes 
 }
 
 
@@ -77,10 +79,10 @@ bool AcousticRotatingFemCase<T>::performResolution()
 	size_t nNInside(0);
 	size_t nNOutside(0);
 	vector<double> frequencies(this->m_setup[0]->getFrequencies());
-	nF = frequencies.size();
-	for(size_t iC = 0; iC < this->m_nCoupling : iC ++)
+	size_t nF = frequencies.size();
+	for(size_t iC = 0; iC < this->m_nCoupling ; iC ++)
 	{
-		totalNodesNumber+=m_mesh[iC].getNodesNodesNumber();
+		totalNodesNumber+=this->m_mesh[iC]->getNodesNumber();
 		if (this->m_setup[0]->getFrequencies().size() != nF)
 		{
 			std::cout << "MAIS N IMPORTE QUOI TOI, D OU TU METS PAS LES MEMES FREQUENCES PARTOUT" << std::endl;
@@ -88,11 +90,11 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		}
 	}
 	
-	size_t nF(0);
 	std::cout << "Building a system of " << totalNodesNumber << "ddl by " << nF << "frequencies" << std::endl;
 
-	m_coupledSystem.resize(nF*this->totalNodesNumber)
-	for(size_t iC = 0; iC < this->m_nCoupling : iC ++)
+	m_coupledSystem = Eigen::SparseMatrix<T>(nF*totalNodesNumber, nF*totalNodesNumber);
+
+	for(size_t iC = 0; iC < this->m_nCoupling ; iC ++)
 	{
 		fLinSys<T> *linSys;
 		linSys = new fLinSys<T>(0,0);

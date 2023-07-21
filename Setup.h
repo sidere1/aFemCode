@@ -28,6 +28,9 @@ public:
     bool readMicros(std::string fileToRead, int end);
     bool readLoads(std::string fileToRead);//, int end);
 
+    bool readRotatingParams(std::string fileToRead);
+
+
     // virtual int addAtribute(){return 0;};
     virtual int addAtribute(int cursor, std::string entry, std::string value) = 0;
 
@@ -71,6 +74,7 @@ protected:
     size_t m_L;
     float m_radius;
     float m_Omega;
+    bool m_rotating;
 
     //
 	

@@ -1,21 +1,21 @@
 #include <iostream>
 
-#include "AcousticSetup.h"
+#include "AcousticRotatingSetup.h"
 #include "Node.h"
 #include "PointLoad.h"
  
+#define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
+
 
 using namespace std;
 
-
-AcousticSetup::AcousticSetup()
+AcousticRotatingSetup::AcousticRotatingSetup()
 {}
 
 
-AcousticSetup::AcousticSetup(std::string setupFile, std::string path)
+AcousticRotatingSetup::AcousticRotatingSetup(std::string setupFile, std::string path)
 {
     this->m_path = path;
-    //opening the setup file 
     string entry;
     string value;
     int skip;
@@ -28,7 +28,7 @@ AcousticSetup::AcousticSetup(std::string setupFile, std::string path)
             setup >> entry;
         }
         
-        for(int cursor = 1; cursor < 8 ; cursor++)
+        for(int cursor = 1; cursor < 10 ; cursor++)
         {// Reading parameters
 
             setup >> entry;
@@ -36,7 +36,7 @@ AcousticSetup::AcousticSetup(std::string setupFile, std::string path)
 
             skip = setup.tellg();
 
-            //cout << "entry " << entry  << " ; value " << value << endl << endl; 
+            // cout << "entry " << entry  << " ; value " << value << endl << endl; 
             skip = addAtribute(cursor, entry,value);
             
             for(int skipCursor = 0; skipCursor < skip; skipCursor++)
@@ -61,10 +61,10 @@ AcousticSetup::AcousticSetup(std::string setupFile, std::string path)
 	}
 }
 
-AcousticSetup::~AcousticSetup()
+AcousticRotatingSetup::~AcousticRotatingSetup()
 {}
 
-int AcousticSetup::addAtribute(int cursor, string entry, string value) 
+int AcousticRotatingSetup::addAtribute(int cursor, string entry, string value) 
 {// we return the number of line that should be skipped 
     //string message;
     stringstream msg;
@@ -133,6 +133,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
                 //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; ////////////////À PROPAGER DANS LES PRÉCÉDENTS ////////////////
                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
                 writeError(msg.str());
+                std::cout << msg.str() << std::endl;
                 break;
             }
             else
@@ -149,7 +150,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
                     readFrequencies(m_setupFile,countAim);    
                     if (countAim != m_frequencies.size())
                     {
-                        cout << "erreur cheloue AcousticSetup.cpp ligne " << __LINE__ << endl;
+                        cout << "erreur cheloue AcousticRotatingSetup.cpp ligne " << __LINE__ << endl;
                     }    
                     // getFrequencies();                                
                     return countAim+1;
@@ -170,6 +171,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
                 //writeError(message);
                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
                 writeError(msg.str());
+                std::cout << msg.str() << std::endl;
                 break;
             }
             else
@@ -188,7 +190,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
                     ///////////// IL FAUDRAIT CHECKER QUE LA CONVERSION A BIEN MARCHÉ /////////////////////////
                     if (countAim != m_microsIndex.size())
                     {
-                        cout << "erreur cheloue AcousticSetup.cpp ligne " << __LINE__ << endl;
+                        cout << "erreur cheloue AcousticRotatingSetup.cpp ligne " << __LINE__ << endl;
                     }    
                     return countAim+1;
                 }
@@ -207,6 +209,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
                 //writeError(message);
                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
                 writeError(msg.str());
+                std::cout << msg.str() << std::endl;
                 break;
             }
             else
@@ -219,6 +222,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
                 else
                 {
                     msg << "Expected a filename with .femload extension";
+                    std::cout << msg.str() << std::endl;
                     writeError(msg.str());
                     return 0;
                 }
@@ -235,6 +239,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
                 //cout << message << endl; 
 				//writeError(message);
                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
+                std::cout << msg.str() << std::endl;
                 writeError(msg.str());
                 break;
             }
@@ -255,6 +260,7 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
 				//writeError(message);
                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
                 writeError(msg.str());
+                std::cout << msg.str() << std::endl;
                 break;
             }
             else
@@ -263,7 +269,57 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
             }
 			break;
         }     
-    
+        case 8 :
+        {
+            checkEntry = "rotationParams";
+            // cout << "Entry vaut " << entry << " et checkEntry " << checkEntry << endl;             
+            if (entry.compare(checkEntry) != 0) 
+            {
+                //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; ////////////////À PROPAGER DANS LES PRÉCÉDENTS ////////////////
+                msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
+                writeError(msg.str());
+                std::cout << msg.str() << std::endl;
+                break;
+            }
+            else
+            {
+                if (value.size() > 7 && value.compare(value.size()-7,7,".femRot") == 0)  
+                {
+                    readRotatingParams(m_path + value);    
+                    return 0;
+                }
+                else
+                {
+                    cout << "Could not load the rotating parameters. They should be included in a .femRot file" << endl;
+                }
+            }
+            break;
+        } 
+        case 9 :
+        {
+            if (entry != "rotating") 
+            {
+                msg << "Please check your setup file. Found" << entry <<" instead of rotating.";
+                writeError(msg.str());
+				cout << msg.str() << endl;
+                break;
+            }
+            else
+            {
+                if (value == "true") 
+                {
+                    m_rotating = true;
+                    return 0;
+                }
+                else
+                {
+                    m_rotating = false; 
+                    return 0;
+                }                
+            }
+            break;
+        }
+        // when adding an entry, dont forget to update the number of entries to be read in the for loop of the constructor 
         default:
             msg << "Entry " << entry << " was not expected here.";
             writeError(msg.str());
@@ -275,14 +331,23 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
 
 }
 
-bool AcousticSetup::displayInfo()
+bool AcousticRotatingSetup::displayInfo()
 {
-	cout << "Définition de l'AcousticSetup " << endl;
+	cout << "Définition de l'AcousticRotatingSetup " << endl;
     cout << m_frequencies.size() << " frequencies" << endl; 
 	cout << m_microsIndex.size() << " micros " << endl;  
 	cout << m_loads.size() << " loads " << endl;  
 	cout << "rho " << m_rho << endl;  
 	cout << "c" << m_c << endl; 
+	cout << "Rotating parameters" << endl; 
+    cout << "Omega" << m_Omega << endl; 
+	cout << "eta" << m_eta << endl; 
+	cout << "C" << m_C << endl; 
+	cout << "N" << m_N << endl; 
+	cout << "L" << m_L << endl; 
+	cout << "axis" << m_axis << endl; 
+	cout << "rotating" << m_rotating << endl; 
+	cout << "radius" << m_radius << endl; 
    	cout << endl;
 	return true; 
 }

@@ -1,291 +1,20 @@
 #include <iostream>
-
-
 #include "Setup.h"
-//#include "Mesh.h"//already included via Setup.h 
 #include "Node.h"
 #include "PointLoad.h"
-// #include <cmath>
  
 
 using namespace std;
-// using Eigen::MatrixXf;
-// using Eigen::VectorXf;
 
 
-#define SSTR( x ) static_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
+#define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 
 
 Setup::Setup()
-{
-
-}
-
-// Setup::Setup(std::string setupFile, std::string path):m_path(path)
-// {
-//     //opening the setup file 
-//     string entry;
-//     string value;
-//     int skip;
-//     m_setupFile = setupFile;
-//     ifstream setup(setupFile.c_str());
-//     if (setup) 
-//     {
-//         for(int cursor = 1; cursor < 4 ; cursor++)
-//         {// Reading header 
-//             setup >> entry;
-//         }
-        
-//         for(int cursor = 1; cursor < 8 ; cursor++)
-//         {// Reading parameters
-
-//             setup >> entry;
-//             setup >> value;
-
-//             skip = setup.tellg();
-
-//             //cout << "entry " << entry  << " ; value " << value << endl << endl; 
-//             skip = addAtribute(cursor, entry,value);
-            
-//             for(int skipCursor = 0; skipCursor < skip; skipCursor++)
-//             {
-//                 getline(setup,entry);    
-//                 // cout << "Ignoring line " << entry << endl;
-//             }
-//             // setup.ignore();
-//             if (cursor == 2) 
-//             {
-//                 writeInfo("Reading setup file");
-//             }
-            
-//         }
-//         // il faudrait faire un check : en fonction du couplingType, que tous les champs ont bien été chargés correctement. 
-//         m_loaded = true; 
-//     }
-//     else
-//     {
-//         cout << "Your setup file hasn't been found or opened" << endl;    
-//     	m_loaded = false;
-// 	}
-// }
+{}
 
 Setup::~Setup()
-{
-
-}
-
-
-// int Setup::addAtribute(int cursor, string entry, string value) 
-// {// we return the number of line that should be skipped 
-//     //string message;
-//     stringstream msg;
-// 	string checkEntry;
-//     // int count;
-//     unsigned int countAim;
-//     switch (cursor)
-//     {
-//         case 1 :
-//         {
-//             if (entry != "3D") 
-//             {
-//                 cout << "Please check your setup file. Found " << entry << " instead of 3D." << endl;
-//                 break;
-//             }
-//             else
-//             {
-//                 if (value == "true") 
-//                 {
-//                     set3D(true);
-//                     return 0;
-
-//                 }
-//                 else
-//                 {
-//                     set3D(false);
-//                     return 0;
-//                 }
-//             }
-//             break;
-//         }
-
-//         case 2 :
-//         {
-//             if (entry != "nodal") 
-//             {
-//                 msg << "Please check your setup file. Found" << entry <<" instead of nodal.";
-//                 writeError(msg.str());
-// 				cout << msg.str() << endl;
-//                 break;
-//             }
-//             else
-//             {
-//                 if (value == "true") 
-//                 {
-//                     m_nodal = true;
-//                     return 0;
-//                 }
-//                 else
-//                 {
-//                     m_nodal = false ; 
-//                     writeError("Par contre là je suis pas hyper d'accord, le mode modal est pas encore hyper implémenté.");
-//                     return 0;
-//                 }                
-//             }
-//             break;
-//         }
-
-//         case 3 :
-//         {
-//             checkEntry = "frequencies";
-//             // cout << "Entry vaut " << entry << " et checkEntry " << checkEntry << endl;             
-
-//             if (entry.compare(checkEntry) != 0) 
-//             {
-//                 //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; ////////////////À PROPAGER DANS LES PRÉCÉDENTS ////////////////
-//                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
-//                 writeError(msg.str());
-//                 break;
-//             }
-//             else
-//             {
-//                 if (value.size() > 7 && value.compare(value.size()-7,7,".femfrq") == 0)  
-//                 {
-//                     readFrequencies(m_path + value,0);    
-//                     return 0;
-//                 }
-//                 else
-//                 {
-//                     countAim = atoi(value.c_str());
-//                     ///////////// IL FAUDRAIT CHECKER QUE LA CONVERSION A BIEN MARCHÉ /////////////////////////
-//                     readFrequencies(m_setupFile,countAim);    
-//                     if (countAim != m_frequencies.size())
-//                     {
-//                         cout << "erreur cheloue Setup.cpp ligne " << __LINE__ << endl;
-//                     }    
-//                     // getFrequencies();                                
-//                     return countAim+1;
-//                 }
-//             }
-//             break;
-//         } 
-
-//         case 4 :
-//         {
-//             checkEntry = "micros";
-//             // cout << "Entry vaut " << entry << " et checkEntry " << checkEntry << endl;             
-
-//             if (entry.compare(checkEntry) != 0) 
-//             {
-//                 //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; 
-//                 //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-//                 //writeError(message);
-//                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
-//                 writeError(msg.str());
-//                 break;
-//             }
-//             else
-//             {
-//                 if (value.size() > 7 && value.compare(value.size()-7,7,".femmic") == 0)  
-//                 {
-//                     readMicros(value,0);    
-//                     return 0;
-//                 }
-//                 else
-//                 {
-//                     countAim = atoi(value.c_str());
-//                     readMicros(m_setupFile,countAim);    
-
-//                     // cout << "countaim vaut " << countAim << " et m_microsIndexs.size "<< m_microsIndex.size() << endl;
-//                     ///////////// IL FAUDRAIT CHECKER QUE LA CONVERSION A BIEN MARCHÉ /////////////////////////
-//                     if (countAim != m_microsIndex.size())
-//                     {
-//                         cout << "erreur cheloue Setup.cpp ligne " << __LINE__ << endl;
-//                     }    
-//                     return countAim+1;
-//                 }
-//             }
-//             break;
-//         }     
-
-//         case 5 :
-//         {
-//             checkEntry = "loads";
-
-//             if (entry.compare(checkEntry) != 0) 
-//             {
-//                 //cout << "Please check your setup file. Found " << entry << " instead of " << checkEntry << endl; 
-//                 //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-//                 //writeError(message);
-//                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
-//                 writeError(msg.str());
-//                 break;
-//             }
-//             else
-//             {
-//                 if (value.size() > 7 && value.compare(value.size()-8,8,".femload") == 0)  
-//                 {
-//                     readLoads(m_path + value);    
-//                     return 0;
-//                 }
-//                 else
-//                 {
-//                     msg << "Expected a filename with .femload extension";
-//                     writeError(msg.str());
-//                     return 0;
-//                 }
-//             }
-//             break;
-//         }     
-//         case 6 :
-//         {
-//             checkEntry = "rho";
-
-//             if (entry.compare(checkEntry) != 0) 
-//             {
-//                 //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-//                 //cout << message << endl; 
-// 				//writeError(message);
-//                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
-//                 writeError(msg.str());
-//                 break;
-//             }
-//             else
-//             {
-// 				m_rho = stod(value.c_str());
-//             }
-// 			break;
-//         }     
-//         case 7 :
-//         {
-//             checkEntry = "c";
-
-//             if (entry.compare(checkEntry) != 0) 
-//             {
-//                 //message = string("Please check your setup file. Found") + entry + string( " instead of ") + checkEntry;
-//                 //cout << message << endl; 
-// 				//writeError(message);
-//                 msg << "Please check your setup file. Found" << entry << " instead of " << checkEntry;
-//                 writeError(msg.str());
-//                 break;
-//             }
-//             else
-//             {
-// 				m_c = stod(value.c_str());
-//             }
-// 			break;
-//         }     
-    
-//         default:
-//             msg << "Entry " << entry << " was not expected here.";
-//             writeError(msg.str());
-// 			cout << msg.str() << endl;
-//             return  0;
-//             break;
-//     }
-//     return 0;
-
-// }
+{}
 
 
 bool Setup::set3D(bool dim)
@@ -553,6 +282,58 @@ bool Setup::readLoads(string fileToRead)//, int end)
         return false;
     }
 }
+
+
+
+bool Setup::readRotatingParams(string fileToRead)
+{
+    ifstream paramFile(fileToRead.c_str());
+    unsigned int index(0);
+    string devNull;
+
+    writeInfo("Reading microphones");
+
+    if (paramFile) 
+    {
+        do
+        {//reading header 
+            paramFile >> devNull ;
+            index++;
+            // cout << index << " ignoring " << devNull << endl;
+        }while(devNull.compare("Omega") != 0 && index < 10);
+
+        if (index == 10)
+        {// checking that the last loop went well
+            writeError("Please check the structure of your .femRot file");
+        }
+        WHEREAMI
+        paramFile >> m_Omega;
+        paramFile >> devNull; // axis 
+        paramFile >> m_axis;
+        paramFile >> devNull; // radius 
+        paramFile >> m_radius;
+        paramFile >> devNull; // eta 
+        paramFile >> m_eta;
+        paramFile >> devNull; // C 
+        paramFile >> m_C;
+        paramFile >> devNull; // N 
+        paramFile >> m_N;
+        paramFile >> devNull; // L 
+        paramFile >> m_L;
+        cout << "Omega : " << m_Omega << endl;
+        cout << "Axis : " << m_axis << endl;
+        
+        writeInfo("  rotating params -> Ok");
+        return true;
+    }
+    else
+    {
+        cout << "Your rotating parameter file " << fileToRead << " hasn't been found or opened" << endl;    
+        writeError("I did'nt manage to read the rotating parameters \n\n");
+        return false;
+    }
+}
+
 
 bool Setup::displayFrequencies()
 {

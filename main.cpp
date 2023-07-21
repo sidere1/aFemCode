@@ -17,6 +17,7 @@ Build an object femcase, performs stuff with it.
 // #include "fMatrix.h"
 #include "FemCase.h"
 #include "AcousticFemCase.h"
+#include "AcousticRotatingFemCase.h"
 
 using namespace std;
 //using Eigen::MatrixXd;
@@ -51,11 +52,9 @@ int main(int argc, char** argv)
 	cout << endl << "Done " << endl << endl;
 
 
-	Eigen::Matrix3d a;
-	a << 1,2,3,
-		4,5,6,
-		7,8,9;
-	cout << a;
+
+	AcousticRotatingFemCase<complex<double>> fcr("/home/silouane/Documents/C++/aFemCode/example/rotatingSource/setup/main");
+	fcr.displayInfo();
 	
 	// const H5std_string FILE_NAME("deleted/data.h5");
 	// const H5std_string DATASET_NAME("res");
