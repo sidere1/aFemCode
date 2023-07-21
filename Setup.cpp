@@ -22,53 +22,53 @@ Setup::Setup()
 
 }
 
-Setup::Setup(std::string setupFile, std::string path):m_path(path)
-{
-    //opening the setup file 
-    string entry;
-    string value;
-    int skip;
-    m_setupFile = setupFile;
-    ifstream setup(setupFile.c_str());
-    if (setup) 
-    {
-        for(int cursor = 1; cursor < 4 ; cursor++)
-        {// Reading header 
-            setup >> entry;
-        }
+// Setup::Setup(std::string setupFile, std::string path):m_path(path)
+// {
+//     //opening the setup file 
+//     string entry;
+//     string value;
+//     int skip;
+//     m_setupFile = setupFile;
+//     ifstream setup(setupFile.c_str());
+//     if (setup) 
+//     {
+//         for(int cursor = 1; cursor < 4 ; cursor++)
+//         {// Reading header 
+//             setup >> entry;
+//         }
         
-        for(int cursor = 1; cursor < 8 ; cursor++)
-        {// Reading parameters
+//         for(int cursor = 1; cursor < 8 ; cursor++)
+//         {// Reading parameters
 
-            setup >> entry;
-            setup >> value;
+//             setup >> entry;
+//             setup >> value;
 
-            skip = setup.tellg();
+//             skip = setup.tellg();
 
-            //cout << "entry " << entry  << " ; value " << value << endl << endl; 
-            skip = addAtribute(cursor, entry,value);
+//             //cout << "entry " << entry  << " ; value " << value << endl << endl; 
+//             skip = addAtribute(cursor, entry,value);
             
-            for(int skipCursor = 0; skipCursor < skip; skipCursor++)
-            {
-                getline(setup,entry);    
-                // cout << "Ignoring line " << entry << endl;
-            }
-            // setup.ignore();
-            if (cursor == 2) 
-            {
-                writeInfo("Reading setup file");
-            }
+//             for(int skipCursor = 0; skipCursor < skip; skipCursor++)
+//             {
+//                 getline(setup,entry);    
+//                 // cout << "Ignoring line " << entry << endl;
+//             }
+//             // setup.ignore();
+//             if (cursor == 2) 
+//             {
+//                 writeInfo("Reading setup file");
+//             }
             
-        }
-        // il faudrait faire un check : en fonction du couplingType, que tous les champs ont bien été chargés correctement. 
-        m_loaded = true; 
-    }
-    else
-    {
-        cout << "Your setup file hasn't been found or opened" << endl;    
-    	m_loaded = false;
-	}
-}
+//         }
+//         // il faudrait faire un check : en fonction du couplingType, que tous les champs ont bien été chargés correctement. 
+//         m_loaded = true; 
+//     }
+//     else
+//     {
+//         cout << "Your setup file hasn't been found or opened" << endl;    
+//     	m_loaded = false;
+// 	}
+// }
 
 Setup::~Setup()
 {

@@ -76,12 +76,12 @@ bool AcousticRotatingFemCase<T>::performResolution()
 	size_t totalNodesNumber(0);
 	size_t nNInside(0);
 	size_t nNOutside(0);
-	vector<double> frequencies(this->m_setup[0].getFrequencies());
+	vector<double> frequencies(this->m_setup[0]->getFrequencies());
 	nF = frequencies.size();
 	for(size_t iC = 0; iC < this->m_nCoupling : iC ++)
 	{
 		totalNodesNumber+=m_mesh[iC].getNodesNodesNumber();
-		if (this->m_setup[0].getFrequencies().size() != nF)
+		if (this->m_setup[0]->getFrequencies().size() != nF)
 		{
 			std::cout << "MAIS N IMPORTE QUOI TOI, D OU TU METS PAS LES MEMES FREQUENCES PARTOUT" << std::endl;
 			return false; 
@@ -102,7 +102,7 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		this->currentSys[iC] = new Eigen::SparseMatrix<T>(nNodes, nNodes);
 
 		// preparing results 
-		vector<int> mics = this->m_setup[0].getMics();
+		vector<int> mics = this->m_setup[0]->getMics();
 		unsigned int nMics(mics.size());
 		this->writeMicValuesHeader();	
 		vector<T> values;
@@ -123,7 +123,7 @@ bool AcousticRotatingFemCase<T>::performResolution()
 			{
 				// computing solution for the current frequency 
 				values.clear();
-				k = 2*pi*frequencies[iFreq]/this->m_setup[0].getC();
+				k = 2*pi*frequencies[iFreq]/this->m_setup[0]->getC();
 				*this->currentSys[iC] = *this->m_Ksurf[iC]+(-1)*(k*k)*(*this->m_Msurf[iC])-i*k*(*this->m_Mseg[iC]);
 				delete linSys;
 				linSys = new fLinSys<T>(*this->currentSys[iC], *this->m_Fsurf[iC]);

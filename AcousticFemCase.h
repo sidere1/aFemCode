@@ -70,11 +70,11 @@ bool AcousticFemCase<T>::performResolution()
 	linSys = new fLinSys<T>(0,0);
 	double k(0);
 	int nNodes(this->m_mesh[0]->getNodesNumber());
-	vector<double> frequencies(this->m_setup[0].getFrequencies());
+	vector<double> frequencies(this->m_setup[0]->getFrequencies());
 	this->currentSys[iC] = new Eigen::SparseMatrix<T>(nNodes, nNodes);
 
 	// preparing results 
-	vector<int> mics = this->m_setup[0].getMics();
+	vector<int> mics = this->m_setup[0]->getMics();
 	unsigned int nMics(mics.size());
 	this->writeMicValuesHeader();	
 	vector<T> values;
@@ -95,7 +95,7 @@ bool AcousticFemCase<T>::performResolution()
 		{
 			// computing solution for the current frequency 
 			values.clear();
-			k = 2*pi*frequencies[iFreq]/this->m_setup[0].getC();
+			k = 2*pi*frequencies[iFreq]/this->m_setup[0]->getC();
 			*this->currentSys[iC] = *this->m_Ksurf[iC]+(-1)*(k*k)*(*this->m_Msurf[iC])-i*k*(*this->m_Mseg[iC]);
 			delete linSys;
 			linSys = new fLinSys<T>(*this->currentSys[iC], *this->m_Fsurf[iC]);

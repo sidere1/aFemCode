@@ -109,9 +109,9 @@ protected:
 	size_t m_nCoupling;
     std::string m_mainSetup;
 	std::vector<std::string> m_meshFile; 
-	std::vector<Mesh*> m_mesh; 
+	std::vector<Mesh*> m_mesh; // pointers to avoir useless copy of large classes
 	std::vector<std::string> m_setupFile; 
-	std::vector<Setup> m_setup; 
+	std::vector<Setup*> m_setup; // pointers to allow easy polymorphism 
 	std::vector<int> m_couplingType; // 1 : harmonic acoustics, 2 : time acoustics, ... 
 	std::string m_path;
 	// tout ça dans une Class storedResults ?
@@ -203,14 +203,22 @@ FemCase<T>::FemCase(std::string setupFile)
 		{
 			cout << "Reading coupling " << i << m_path + "setup/" + m_setupFile[i] << endl;
 			cout << m_path;
-			using setup_type = Setup;
-			if (m_couplingType[i] == 1)
-				using setup_type = AcousticSetup;
-			else if (m_couplingType[i] == 2)
-				using setup_type = AcousticSetup;
+			// if (m_couplingType[i] == 1)
+			// 	typedef AcousticSetup setup_type;
+			// else if (m_couplingType[i] == 2)
+			// 	typedef AcousticSetup setup_type;
+			// else 
+			// 	typedef AcousticSetup setup_type;
 
-			setup_type s(m_path + "setup/" + m_setupFile[i], m_path);
-			if (s.isLoaded())
+			Setup *s(0);
+			if (m_couplingType[i] == 1)
+				s = new AcousticSetup(m_path + "setup/" + m_setupFile[i], m_path);
+			else if (m_couplingType[i] == 2)
+				s = new AcousticSetup(m_path + "setup/" + m_setupFile[i], m_path);
+			else 
+				s = new AcousticSetup(m_path + "setup/" + m_setupFile[i], m_path);
+			
+			if (s->isLoaded())
 			{
 				m_setup[i] = s;
 			}
@@ -494,7 +502,7 @@ bool FemCase<T>::displayInfo()
 	for (size_t i = 0; i < m_nCoupling; i++)
 	{
 		cout << i+1 << " : " << m_meshFile[i] << " ; " << m_setupFile[i] << " ; type " << m_couplingType[i] << endl;
-		(&m_setup[i])->displayInfo();	
+		m_setup[i]->displayInfo();	
 	}
 	return true; 
 }
@@ -859,9 +867,9 @@ bool FemCase<T>::writeMicValuesHeader()
 	}
 	micValues << "frequencies ";
 	// micValues << "frequencies		";
-	for(unsigned int iMic = 0; iMic < m_setup[0].getMics().size() ; iMic ++)
+	for(unsigned int iMic = 0; iMic < m_setup[0]->getMics().size() ; iMic ++)
 	{
-		micValues << m_setup[0].getMics()[iMic] << " ";
+		micValues << m_setup[0]->getMics()[iMic] << " ";
 		// micValues << m_setup[0].getMics()[iMic] << "		";
 	}
 	micValues << endl;
@@ -877,14 +885,14 @@ bool FemCase<T>::writeMicValues(double f, vector<T> values)
 		cout << "Could not open result/micValues file" << endl;
 		return false;
 	}
-	if(values.size() != m_setup[0].getMics().size())
+	if(values.size() != m_setup[0]->getMics().size())
 	{
 		cout << "incoherence between values and mics number" << endl;
 		return false;
 	}
 	micValues << f << " ";
 	// micValues << f << "		";
-	for(unsigned int iMic = 0; iMic < m_setup[0].getMics().size() ; iMic ++)
+	for(unsigned int iMic = 0; iMic < m_setup[0]->getMics().size() ; iMic ++)
 	{
 		micValues << abs(values[iMic]) << " ";
 		// si plusieurs segments, il faut rajouter une boucle là...

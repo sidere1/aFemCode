@@ -16,8 +16,55 @@ using namespace std;
 AcousticSetup::AcousticSetup()
 {}
 
-AcousticSetup::AcousticSetup(std::string setupFile, std::string path):Setup(setupFile, path)
-{}
+
+AcousticSetup::AcousticSetup(std::string setupFile, std::string path)
+{
+    this->m_path = path;
+    //opening the setup file 
+    string entry;
+    string value;
+    int skip;
+    m_setupFile = setupFile;
+    ifstream setup(setupFile.c_str());
+    if (setup) 
+    {
+        for(int cursor = 1; cursor < 4 ; cursor++)
+        {// Reading header 
+            setup >> entry;
+        }
+        
+        for(int cursor = 1; cursor < 8 ; cursor++)
+        {// Reading parameters
+
+            setup >> entry;
+            setup >> value;
+
+            skip = setup.tellg();
+
+            //cout << "entry " << entry  << " ; value " << value << endl << endl; 
+            skip = addAtribute(cursor, entry,value);
+            
+            for(int skipCursor = 0; skipCursor < skip; skipCursor++)
+            {
+                getline(setup,entry);    
+                // cout << "Ignoring line " << entry << endl;
+            }
+            // setup.ignore();
+            if (cursor == 2) 
+            {
+                writeInfo("Reading setup file");
+            }
+            
+        }
+        // il faudrait faire un check : en fonction du couplingType, que tous les champs ont bien été chargés correctement. 
+        m_loaded = true; 
+    }
+    else
+    {
+        cout << "Your setup file hasn't been found or opened" << endl;    
+    	m_loaded = false;
+	}
+}
 
 AcousticSetup::~AcousticSetup()
 {}
@@ -235,7 +282,8 @@ int AcousticSetup::addAtribute(int cursor, string entry, string value)
 
 bool AcousticSetup::displayInfo()
 {
-	cout << m_frequencies.size() << " frequencies" << endl; 
+	cout << "Définition de l'AcousticSetup " << endl;
+    cout << m_frequencies.size() << " frequencies" << endl; 
 	cout << m_microsIndex.size() << " micros " << endl;  
 	cout << m_loads.size() << " loads " << endl;  
 	cout << "rho " << m_rho << endl;  

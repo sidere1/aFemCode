@@ -10,8 +10,8 @@ class Setup
 {
 public:
     Setup();
-    Setup(std::string setupFile, std::string path);
-    ~Setup();
+    // Setup(std::string setupFile, std::string path);
+    virtual ~Setup();
 
     // int addAtribute(int cursor, std::string entry, std::string value);
     bool set3D(bool dim);
@@ -28,7 +28,8 @@ public:
     bool readMicros(std::string fileToRead, int end);
     bool readLoads(std::string fileToRead);//, int end);
 
-    virtual int addAtribute(int cursor, std::string entry, std::string value){return 0;};
+    // virtual int addAtribute(){return 0;};
+    virtual int addAtribute(int cursor, std::string entry, std::string value) = 0;
 
     
 	bool displayFrequencies();
@@ -36,7 +37,7 @@ public:
     std::vector<int> getMics();
 	double getC();
 
-	virtual bool displayInfo();
+	virtual bool displayInfo() = 0;
 	bool isLoaded();
     
 
