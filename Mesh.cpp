@@ -39,7 +39,7 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
     for (unsigned int iNode = 0; iNode < nN2 ; iNode++)
     {
         m_nodes[iNode+nN1] = nodes2[iNode];
-        m_nodes[iNode+nN1].setIndex(iNode+nN1);
+        m_nodes[iNode+nN1].setIndex(m_nodes[iNode+nN1].getIndex()+nN1);
         // cout << "node " << iNode << " becomes " << iNode+nN1;
     }
 
