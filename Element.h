@@ -24,6 +24,11 @@ public:
     int getIndex() const;
     bool setIndex(int newIndex) ;
     int getFeDescriptor() const;
+
+    int getPhysicalProperty() const;
+    int getMaterialProperty() const;
+    int getColor() const;
+    
 	bool computeAspectRatio();
 	int getAspectRatio() const;
 	float getVolume() const;

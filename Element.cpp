@@ -33,14 +33,11 @@ Element::Element(int index, std::vector<Node*> nodes, int feDescriptor, int phys
 	{
 		m_3D = true; 
 	}
-	
 }
 
 
 Element::~Element()
-{
-
-}
+{}
 
 bool Element::is1D() const 
 {
@@ -340,6 +337,21 @@ int Element::getAspectRatio() const
 //	}
 //	return true;
 //}
+
+int Element::getPhysicalProperty() const
+{
+	return m_physicalProperty;
+}
+int Element::getMaterialProperty() const
+{
+	return m_materialProperty;
+}
+int Element::getColor() const
+{
+	return m_color;
+}
+    
+
 
 float Element::getVolume() const
 {

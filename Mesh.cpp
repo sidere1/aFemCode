@@ -8,8 +8,7 @@
 #include "Mesh.h"
 
 #define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
-#define SSTR( x ) static_cast< std::ostringstream & >( \
-        ( std::ostringstream() << std::dec << x ) ).str()
+
 
 using namespace std;
 
@@ -33,50 +32,46 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
     unsigned int nE1 = m1.getElementNumber();
     unsigned int nE2 = m2.getElementNumber(); 
 
-    // concatenate nodes 
+    // concatenate nodes and update indexes
     m_nodes = m1.getNodes();
+    m_nodes.resize(nN1+nN2);
     std::vector<Node> nodes2 = m2.getNodes();
-    m_nodes.insert(m_nodes.end(), nodes2.begin(), nodes2.end());
+    for (unsigned int iNode = 0; iNode < nN2 ; iNode++)
+    {
+        m_nodes[iNode+nN1] = nodes2[iNode];
+        m_nodes[iNode+nN1].setIndex(iNode+nN1);
+        // cout << "node " << iNode << " becomes " << iNode+nN1;
+    }
 
     // concatenate elements and update connectivity 
     m_elements = m1.getElements();
+    m_elements.resize(nE1+nE2);
     std::vector<Element> elements2 = m2.getElements();
-    m_elements.insert(m_elements.end(), elements2.begin(), elements2.end());
-    // Element currentEl; 
-    std::vector<Node*> currentNodes;
-    // int previousId(0);
-    std::vector<int> previousNodes;
-    int numberOfNodes(0);
-    for (unsigned int iElem = nE1; iElem < nE1+nE2 ; iElem++)
-    {
-        // previousId = iElem - nE1;
-        // currentNodes.clear(); // on supprime les pointeurs sur les noeuds, pas les noeuds ! 
-        // nNodes 
-        // feDescriptor 
-        // physicalProperty 
-        // materialProperty 
-        // color 
-        numberOfNodes = m_elements[iElem].getnN();
-        previousNodes.clear();
-        previousNodes = m_elements[iElem].getNodesIds();
-        for (int iNode = 0; iNode < numberOfNodes; iNode++)
-        {
-            currentNodes.push_back(&m_nodes[previousNodes[iNode]+nN1]);
-        }
-        // // nodesTemp.push_back(&m_nodes[nodeIndexTemp-1]);
-        // currentEl = Element(iElem, currentNodes, feDescriptor, physicalProperty, materialProperty, color, numberOfNodes);
-        
-        m_elements[iElem].replaceNodes(currentNodes);
-        m_elements[iElem].setIndex(m_elements[iElem].getIndex()+nE1);
-        // normalement, le tableau de noeuds c'est un tableau de pointeurs sur des Elements, 
-        // sinon on copie colle les éléments, et on update juste les pointeurs, non ? 
-    }
-    // update ids of the nodes 
-    for (unsigned int iNode = nN1; iNode < nN1+nN2 ; iNode++)
-    {
-        m_nodes[iNode].setIndex(m_nodes[iNode].getIndex()+nN1);
-    }
 
+    // trucs temporaires pour la creation de nouveaux éléments 
+    std::vector<Node*> nodes;
+    std::vector<int> previousNodes;
+    int nN(0);
+    int feD(0);
+    int phP(0);
+    int maP(0);
+    int col(0);
+    for (unsigned int iElem = 0 ; iElem < nE2 ; iElem++)
+    {
+        nodes.clear();
+        previousNodes = elements2[iElem].getNodesIds();
+        nN = elements2[iElem].getnN();
+        for (int iNode = 0; iNode < nN; iNode++)
+        {
+            // nodes.push_back(new Node(m_nodes[nodeIds[iNode]])); // MAUVAISE IDEEEEEEEEEEE
+            nodes.push_back(&m_nodes[previousNodes[iNode]+nN1-1]);
+        }
+        feD = elements2[iElem].getFeDescriptor();
+        phP = elements2[iElem].getPhysicalProperty();
+        maP = elements2[iElem].getMaterialProperty();
+        col = elements2[iElem].getColor();
+        m_elements[iElem+nE1] = Element(iElem, nodes, feD, phP, maP, col, nN);
+    }
 
     // check que la taille des tableaux sont bien cohérentes ? 
     m_nN = m_nodes.size();
@@ -123,8 +118,6 @@ bool Mesh::unvImport(string unvFileToRead )
                 if(sscanf(line.c_str(), "%i", &unvBlock) != 1)
                 {
 					msg << "The unv file does not look like it's supposed to. I expected a block number and found " << unvBlock;
-                    //message = msg.str();
-					//message = string("The unv file does not look like it is supposed to. I expected a block number, I found ") + SSTR(unvBlock); 
                     writeError(msg.str());
                     cout << msg.str();
                 }
@@ -171,11 +164,7 @@ bool Mesh::unvImport(string unvFileToRead )
     {
         // cout << "Mesh file " << unvFileToRead << " could not be openend, file " << __FILE__ << " line "  << __LINE__ << endl;
         msg << "Mesh file " << unvFileToRead << " could not be openend, file " << __FILE__  << " line " << __LINE__;
-        // message = "Mesh file " + unvFileToRead  ; 
-        // message = message + " could not be openend, file "  ; 
-        // message = message + __FILE__ ; 
-        // message = message + SSTR(__LINE__) ; 
-        //+ " could not be openend, file  " + __FILE__ + " line "  + __LINE__ ;
+        WHEREAMI
         writeError(msg.str());
 		cout << msg.str() << endl;
         return false;
@@ -264,45 +253,36 @@ int Mesh::import2412(string unvFileToRead, int position)
                 if (feDTemp <=24) 
                 {// beams are not supported yet
 					getline(importFile, line);
-					//cout << line << endl;
                 }
-                //else 
-                //{                    
-                    // cout << "type : " << typeTemp << endl;
-                    for(int j = 0; j < nbOfNodesTemp; j++)
+
+                for(int j = 0; j < nbOfNodesTemp; j++)
+                {
+                    while(line[0] == ' ') // removing the blanks
                     {
-                        while(line[0] == ' ') // removing the blanks
-                        {
-                            line = line.substr(1, line.length()-1) ;
-                        }
-                        if(sscanf(line.c_str(), "%i", &nodeIndexTemp) != 0) //reading the node id 
-                        {
-                            // cout << "noeud : " << indexTemp << endl;
-                            if (m_nodes[nodeIndexTemp-1].getIndex() != nodeIndexTemp) //DANGEROUS on regarde le rang dans le vecteur et non pas l'index réel. Alors on checke en cas de souci...
-                            {
-                                cout << "ERROR 2000, l " << __LINE__ << "node " << nodeIndexTemp << "has index " << m_nodes[nodeIndexTemp].getIndex() << endl;
-                            } 
-                            // WHEREAMI
-                            nodesTemp.push_back(&m_nodes[nodeIndexTemp-1]);
-                            // WHEREAMI
-                        }
-                        else 
-                        {
-                            cout << "ERROR 2002, l " << __LINE__ << endl;
-                        }
-                        // WHEREAMI
-                        while(line[0] != ' ' && line.length() > 0) // removing the read node from the string 
-                        {
-                            line = line.substr(1, line.length()-1) ;
-                        }
-                        // WHEREAMI
+                        line = line.substr(1, line.length()-1) ;
                     }
-					
-                    if (!addElement(indexTemp, nodesTemp, feDTemp, physPTemp, matPTemp, colorTemp, nbOfNodesTemp)) 
+                    if(sscanf(line.c_str(), "%i", &nodeIndexTemp) != 0) //reading the node id 
                     {
-                        WHEREAMI
+                        if (m_nodes[nodeIndexTemp-1].getIndex() != nodeIndexTemp) //DANGEROUS on regarde le rang dans le vecteur et non pas l'index réel. Alors on checke en cas de souci...
+                        {
+                            cout << "ERROR 2000, l " << __LINE__ << ", node " << nodeIndexTemp << "has index " << m_nodes[nodeIndexTemp].getIndex() << endl;
+                        } 
+                        nodesTemp.push_back(&m_nodes[nodeIndexTemp-1]);
                     }
-                //} c'etait un escape si on croisait un element segment                     
+                    else 
+                    {
+                        cout << "ERROR 2002, l " << __LINE__ << endl;
+                    }
+                    while(line[0] != ' ' && line.length() > 0) // removing the read node from the string 
+                    {
+                        line = line.substr(1, line.length()-1) ;
+                    }
+                }
+                
+                if (!addElement(indexTemp, nodesTemp, feDTemp, physPTemp, matPTemp, colorTemp, nbOfNodesTemp)) 
+                {
+                    WHEREAMI
+                }
             }
             else 
             {

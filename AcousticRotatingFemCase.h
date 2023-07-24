@@ -45,6 +45,7 @@ protected:
 	Eigen::SparseMatrix<T> m_coupledSystem; 
 	Eigen::SparseMatrix<T> m_PhiR; 
 	Eigen::SparseMatrix<T> m_PhiF; 
+	Mesh * m_globalMesh; 
 };
 
 template <typename T>
@@ -103,10 +104,10 @@ bool AcousticRotatingFemCase<T>::performResolution()
 	ostringstream vtkfilename;
 	// this->m_mesh[0]->displayInfo();
 	// this->m_mesh[1]->displayInfo();
-	Mesh * globalMesh = new Mesh(*(this->m_mesh[0]), *(this->m_mesh[1]));
+	m_globalMesh = new Mesh(*(this->m_mesh[0]), *(this->m_mesh[1]));
 	// globalMesh.displayInfo();
 	vtkfilename.str(""); vtkfilename << "meshesConcatenated" << ".vtk";
-	this->writeVtkMesh(vtkfilename.str(), globalMesh);
+	this->writeVtkMesh(vtkfilename.str(), m_globalMesh);
 	
 	// m_coupledSystem = Eigen::SparseMatrix<T>(nF*totalNodesNumber, nF*totalNodesNumber);
 
