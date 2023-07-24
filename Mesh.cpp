@@ -83,6 +83,7 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
 	m_nE = m_elements.size();	
     calculateVolume();
     computeAspectRatio();
+    displayInfo();
 }
 
 Mesh::~Mesh()
@@ -557,7 +558,7 @@ bool Mesh::calculateVolume()
 	m_vol = vol; 
 	m_surf = surf; 
 	m_dist = dist;
-	cout << "Distance : " << dist << endl << "Surface : " << surf << endl << "Volume : " << vol << endl;
+	// cout << "Distance : " << dist << endl << "Surface : " << surf << endl << "Volume : " << vol << endl;
    	//cout << m_1D << m_2D << m_3D << endl;	
     return true;
 }
@@ -685,4 +686,11 @@ Element Mesh::getElement(unsigned int index) const
 		writeError(message);
 	}
 	return m_elements[index];
+}
+
+bool Mesh::displayInfo() const
+{
+    cout << "Mesh contains " << m_nN << " nodes, " << m_nE << " elements. " << endl;
+    cout << "Total distance " << m_dist << ", total surface " << m_surf << ", total volume " << m_vol << endl;
+    return true;
 }

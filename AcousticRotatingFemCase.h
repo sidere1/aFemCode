@@ -58,7 +58,7 @@ AcousticRotatingFemCase<T>::AcousticRotatingFemCase(std::string setupFile): FemC
 {
 	if (this->m_nCoupling != 2)
 	{
-		std::cout << "You should not be using " << this->m_nCoupling << " in a coupled rotating FSBC case" << std::endl; 
+		std::cout << "You should not be using " << this->m_nCoupling << " coupling in a coupled rotating FSBC case" << std::endl; 
 	}
 	assert(this->m_nCoupling == 2); // ou plus si on veut mettre plusieurs zones tournantes 
 }
@@ -90,63 +90,79 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		}
 	}
 	
-	std::cout << "Building a system of " << totalNodesNumber << "ddl by " << nF << "frequencies" << std::endl;
+	// faut compter les noeuds sur l'interface inside, sur l'interface outside pour initialiser la matrice globale correctement, ainsi que les vecteurs d'indices et valeurs pour construire la matrice sparse  
+	// faut ensuite construire les matrices de projection 
+	// enfin, on passe dans la boucle sur les fréquences pour construire les systèmes globaux, projeter, et concaténer les irn jcn values. On ajoute ensuite tous les termes extra diagonaux 
+	// construire le système global à partir des trois vecteurs 
+	// pour le post-traitement, refaire une boucle en fréquence 
+	//		faire la projection inverse, exporter tous les points micros confondus et stocker les résultats pour la suite
+	// 		exporter le maillage et les données fréquentielles 
+	// 		faire la transformée inverse et exporter une animation 
+	std::cout << "Building a system of environ " << totalNodesNumber << " ddl by " << nF << " frequencies" << std::endl;
 
-	m_coupledSystem = Eigen::SparseMatrix<T>(nF*totalNodesNumber, nF*totalNodesNumber);
+	ostringstream vtkfilename;
+	// this->m_mesh[0]->displayInfo();
+	// this->m_mesh[1]->displayInfo();
+	Mesh * globalMesh = new Mesh(*(this->m_mesh[0]), *(this->m_mesh[1]));
+	// globalMesh.displayInfo();
+	vtkfilename.str(""); vtkfilename << "meshesConcatenated" << ".vtk";
+	this->writeVtkMesh(vtkfilename.str(), globalMesh);
+	
+	// m_coupledSystem = Eigen::SparseMatrix<T>(nF*totalNodesNumber, nF*totalNodesNumber);
 
-	for(size_t iC = 0; iC < this->m_nCoupling ; iC ++)
-	{
-		fLinSys<T> *linSys;
-		linSys = new fLinSys<T>(0,0);
-		double k(0);
-		int nNodes(this->m_mesh[0]->getNodesNumber());
+	// for(size_t iC = 0; iC < this->m_nCoupling ; iC ++)
+	// {
+	// 	fLinSys<T> *linSys;
+	// 	linSys = new fLinSys<T>(0,0);
+	// 	double k(0);
+	// 	int nNodes(this->m_mesh[0]->getNodesNumber());
 		
-		this->currentSys[iC] = new Eigen::SparseMatrix<T>(nNodes, nNodes);
+	// 	this->currentSys[iC] = new Eigen::SparseMatrix<T>(nNodes, nNodes);
 
-		// preparing results 
-		vector<int> mics = this->m_setup[0]->getMics();
-		unsigned int nMics(mics.size());
-		this->writeMicValuesHeader();	
-		vector<T> values;
+	// 	// preparing results 
+	// 	vector<int> mics = this->m_setup[0]->getMics();
+	// 	unsigned int nMics(mics.size());
+	// 	this->writeMicValuesHeader();	
+	// 	vector<T> values;
 
-		bool writeVtkOnce(false);
-		ostringstream vtkfilename;
-		if(writeVtkOnce){
-			vtkfilename << "pressure_allFreq.vtk";
-			this->writeVtkMesh(vtkfilename.str());
-		}
-		bool firstTime(true);
-		ostringstream dataName;
+	// 	bool writeVtkOnce(false);
+	// 	ostringstream vtkfilename;
+	// 	if(writeVtkOnce){
+	// 		vtkfilename << "pressure_allFreq.vtk";
+	// 		this->writeVtkMesh(vtkfilename.str(), attention il manque un pointeur sur le maillage);
+	// 	}
+	// 	bool firstTime(true);
+	// 	ostringstream dataName;
 
-		if (this->m_couplingType[0] == 1) // ou autre chose pour de la vibration harmonique par exemple ? 
-		{
-			// loop over the frequencies
-			for(unsigned int iFreq = 2; iFreq < nF; iFreq ++) 
-			{
-				// computing solution for the current frequency 
-				values.clear();
-				k = 2*pi*frequencies[iFreq]/this->m_setup[0]->getC();
-				*this->currentSys[iC] = *this->m_Ksurf[iC]+(-1)*(k*k)*(*this->m_Msurf[iC])-i*k*(*this->m_Mseg[iC]);
-				delete linSys;
-				linSys = new fLinSys<T>(*this->currentSys[iC], *this->m_Fsurf[iC]);
-				std::cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << std::endl;
-				linSys->solve();
-				// exporting results 
-				for(unsigned int iMic = 0; iMic < nMics ; iMic++)
-				{
-					values.push_back(linSys->getSolution().coeff(mics[iMic],0));
-				}
-				this->writeMicValues(frequencies[iFreq], values);
-				if(!writeVtkOnce){
-					vtkfilename.str(""); vtkfilename << "pressure_f_" << abs(frequencies[iFreq]) << ".vtk";
-					this->writeVtkMesh(vtkfilename.str());
-					firstTime=true;
-				}
+	// 	if (this->m_couplingType[0] == 1) // ou autre chose pour de la vibration harmonique par exemple ? 
+	// 	{
+	// 		// loop over the frequencies
+	// 		for(unsigned int iFreq = 2; iFreq < nF; iFreq ++) 
+	// 		{
+	// 			// computing solution for the current frequency 
+	// 			values.clear();
+	// 			k = 2*pi*frequencies[iFreq]/this->m_setup[0]->getC();
+	// 			*this->currentSys[iC] = *this->m_Ksurf[iC]+(-1)*(k*k)*(*this->m_Msurf[iC])-i*k*(*this->m_Mseg[iC]);
+	// 			delete linSys;
+	// 			linSys = new fLinSys<T>(*this->currentSys[iC], *this->m_Fsurf[iC]);
+	// 			std::cout << "Solving at f = " << frequencies[iFreq] << ", k = " << k << std::endl;
+	// 			linSys->solve();
+	// 			// exporting results 
+	// 			for(unsigned int iMic = 0; iMic < nMics ; iMic++)
+	// 			{
+	// 				values.push_back(linSys->getSolution().coeff(mics[iMic],0));
+	// 			}
+	// 			this->writeMicValues(frequencies[iFreq], values);
+	// 			if(!writeVtkOnce){
+	// 				vtkfilename.str(""); vtkfilename << "pressure_f_" << abs(frequencies[iFreq]) << ".vtk";
+	// 				this->writeVtkMesh(vtkfilename.str());
+	// 				firstTime=true;
+	// 			}
 
 
-			}
-		}
-	}	
+	// 		}
+	// 	}
+	// }	
 	
 	return true;
 }

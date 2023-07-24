@@ -53,8 +53,11 @@ int main(int argc, char** argv)
 
 
 
-	AcousticRotatingFemCase<complex<double>> fcr("/home/silouane/Documents/C++/aFemCode/example/rotatingSource/setup/main");
+	// AcousticRotatingFemCase<complex<double>> fcr("/home/silouane/Documents/C++/aFemCode/example/rotatingSource/setup/main");
+	AcousticRotatingFemCase<complex<double>> fcr("./example/rotatingSource/setup/main");
 	fcr.displayInfo();
+	fcr.prepareComputation();	
+	fcr.performResolution();
 	
 	// const H5std_string FILE_NAME("deleted/data.h5");
 	// const H5std_string DATASET_NAME("res");

@@ -306,7 +306,6 @@ bool Setup::readRotatingParams(string fileToRead)
         {// checking that the last loop went well
             writeError("Please check the structure of your .femRot file");
         }
-        WHEREAMI
         paramFile >> m_Omega;
         paramFile >> devNull; // axis 
         paramFile >> m_axis;

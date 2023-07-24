@@ -52,6 +52,7 @@ public:
 	bool contains1D() const;
 	bool contains2D() const;
 	bool contains3D() const;
+    bool displayInfo() const;
 
 private:
     std::vector<Node> m_nodes;

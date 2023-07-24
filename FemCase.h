@@ -87,8 +87,8 @@ public:
 	bool writeMicValues(double f, vector<T> values);
 	bool writeMicFrequencies();
 
-	bool writeVtkMesh(string filename) const;
-	bool writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data, bool firstTime) const;
+	bool writeVtkMesh(string filename, Mesh * m) const;
+	bool writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data, bool firstTime, Mesh * m) const;
 	bool addToVtkFile(ostream &out, Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const;
 	// bool addToVtkFile(ostream &out, Eigen::Matrix<unsigned int, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const;
 	bool addToVtkFile(ostream &out, Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const;
@@ -201,12 +201,10 @@ FemCase<T>::FemCase(std::string setupFile)
 			Setup *s(0);
 			if (m_couplingType[i] == 1)
 			{
-				// cout << "helloooooooooooooooooooooooo" << std::endl << std::endl; 
 				s = new AcousticSetup(m_path + "setup/" + m_setupFile[i], m_path);
 			}
 			else if (m_couplingType[i] == 2)
 			{
-				// cout << "YEEEEEEEEEEEEEEEEEEEEEEEEES" << std::endl << std::endl; 
 				s = new AcousticRotatingSetup(m_path + "setup/" + m_setupFile[i], m_path);
 			}	
 			else 
@@ -471,6 +469,7 @@ bool FemCase<T>::prepareComputation()
 	{
 		// creating mesh 
 		m = new Mesh(m_info, m_error);
+		std::cout << "Reading mesh " << m_path << "meshes/" << m_meshFile[i] << std::endl;
 		m->unvImport(m_path + "meshes/"+ m_meshFile[i]);
 		m_mesh[i] = m;
 		// computing stuff once and for all
@@ -901,7 +900,7 @@ bool FemCase<T>::writeMicValues(double f, vector<T> values)
 }
 
 template <typename T>
-bool FemCase<T>::writeVtkMesh(string filename) const
+bool FemCase<T>::writeVtkMesh(string filename, Mesh * m) const
 {
 	// cout << "Writing vtk" << endl;
 	ofstream vtkfile(m_path+"results/"+filename);
@@ -911,11 +910,11 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 		return false; 	
 	}
 
-	int nNodes(m_mesh[0]->getNodesNumber()); 
-	int nElem(m_mesh[0]->getElementNumber());
-	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord = (m_mesh[0]->getCoordinates()); // (m_mesh[0]->getCoordinates()+(float)1E-7);
-	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec = (m_mesh[0]->getConecAndNN());
-	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemType = (m_mesh[0]->getElemTypesVtk());
+	int nNodes(m->getNodesNumber()); 
+	int nElem(m->getElementNumber());
+	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord = (m->getCoordinates()); // (m->getCoordinates()+(float)1E-7);
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec = (m->getConecAndNN());
+	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemType = (m->getElemTypesVtk());
 	//int nTot(conec.submat(0,nElem-1, 0,0).sum() + nElem); // version fMatrix 
 	int nTot(conec.block(0, 0, nElem, 1).sum() + nElem); // version Eigen 
 
@@ -936,9 +935,9 @@ bool FemCase<T>::writeVtkMesh(string filename) const
 }
 
 template <typename T>
-bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data, bool firstTime) const
+bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMatrix<T> data, bool firstTime, Mesh* m) const
 {
-	int nNodes(m_mesh[0]->getNodesNumber()); 
+	int nNodes(m->getNodesNumber()); 
 
 	ofstream vtkfile(m_path+"results/"+filename, ios::app);
 	if(!vtkfile)
@@ -972,6 +971,7 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMat
 template<typename T>
 bool FemCase<T>::addToVtkFile( ostream &out, Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const
 { // as done previously in fMatrix 
+	// you might want to check whether mat has a coherent size or if paraview will crash comme une merde 
 	Eigen::MatrixXi fullMat;
 	fullMat = Eigen::MatrixXi(mat);
 	for(unsigned int i = 0 ; i < mat.rows() ; i++){

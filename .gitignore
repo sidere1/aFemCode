@@ -44,6 +44,8 @@ tests/compEigenVsfMatrix
 sphinx_env_pip
 doxygen/Doxyfile_previous
 .vscode/
+example/rotatingSource/results/ 
+
 
 # documentation
 docs/_*

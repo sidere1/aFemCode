@@ -333,21 +333,21 @@ int AcousticRotatingSetup::addAtribute(int cursor, string entry, string value)
 
 bool AcousticRotatingSetup::displayInfo()
 {
-	cout << "Définition de l'AcousticRotatingSetup " << endl;
+	// cout << "Définition de l'AcousticRotatingSetup " << endl;
     cout << m_frequencies.size() << " frequencies" << endl; 
 	cout << m_microsIndex.size() << " micros " << endl;  
 	cout << m_loads.size() << " loads " << endl;  
 	cout << "rho " << m_rho << endl;  
-	cout << "c" << m_c << endl; 
-	cout << "Rotating parameters" << endl; 
-    cout << "Omega" << m_Omega << endl; 
-	cout << "eta" << m_eta << endl; 
-	cout << "C" << m_C << endl; 
-	cout << "N" << m_N << endl; 
-	cout << "L" << m_L << endl; 
-	cout << "axis" << m_axis << endl; 
-	cout << "rotating" << m_rotating << endl; 
-	cout << "radius" << m_radius << endl; 
+	cout << "c " << m_c << endl; 
+	cout << "Rotating parameters : " << endl; 
+    cout << "Omega " << m_Omega << endl; 
+	cout << "eta " << m_eta << endl; 
+	cout << "C " << m_C << endl; 
+	cout << "N " << m_N << endl; 
+	cout << "L " << m_L << endl; 
+	cout << "axis " << m_axis << endl; 
+	cout << "rotating " << m_rotating << endl; 
+	cout << "radius " << m_radius << endl; 
    	cout << endl;
 	return true; 
 }

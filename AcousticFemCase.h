@@ -83,7 +83,7 @@ bool AcousticFemCase<T>::performResolution()
 	ostringstream vtkfilename;
 	if(writeVtkOnce){
 		vtkfilename << "pressure_allFreq.vtk";
-		this->writeVtkMesh(vtkfilename.str());
+		this->writeVtkMesh(vtkfilename.str(), this->m_mesh[0]);
 	}
 	bool firstTime(true);
 	ostringstream dataName;
@@ -109,22 +109,22 @@ bool AcousticFemCase<T>::performResolution()
 			this->writeMicValues(frequencies[iFreq], values);
 			if(!writeVtkOnce){
 				vtkfilename.str(""); vtkfilename << "pressure_f_" << abs(frequencies[iFreq]) << ".vtk";
-				this->writeVtkMesh(vtkfilename.str());
+				this->writeVtkMesh(vtkfilename.str(), this->m_mesh[0]);
 				firstTime=true;
 			}
 
 			if(writeVtkOnce){dataName.str(""); dataName << "sol_abs_f_" << abs(frequencies[iFreq]);}
 			else{dataName.str(""); dataName << "sol_abs";}
-			this->writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			this->writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime, this->m_mesh[0]);
 			firstTime = false;
 			if(writeVtkOnce){dataName.str(""); dataName << "sol_real_f_" << abs(frequencies[iFreq]);}
 			else{dataName.str(""); dataName << "sol_real";}
 			//dataName.str(""); dataName << "sol_real_f_" << real(frequencies[iFreq]);
-			this->writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			this->writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime, this->m_mesh[0]);
 			if(writeVtkOnce){dataName.str(""); dataName << "sol_imag_f_" << abs(frequencies[iFreq]);}
 			else{dataName.str(""); dataName << "sol_imag";}
 			//dataName.str(""); dataName << "sol_imag_f_" << real(frequencies[iFreq]);
-			this->writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime);
+			this->writeVtkData(vtkfilename.str(), dataName.str(), linSys->getSolution().block(0,0, nNodes, 1), firstTime, this->m_mesh[0]);
 		}
 	}
 	return true;
