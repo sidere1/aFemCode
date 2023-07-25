@@ -9,13 +9,13 @@
 #include <iostream>
 #include <cassert>
 #include <sys/stat.h>
-#include "Setup.h"
+#include "Setup.hpp"
 //#include "Eigen::SparseMatrix.h"
 #include <Eigen/Sparse>
 #include <vector> 
 #include <complex>
-#include "fLinSys.h"
-#include "FemCase.h"
+#include "fLinSys.hpp"
+#include "FemCase.hpp"
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 

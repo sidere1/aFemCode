@@ -5,7 +5,7 @@
 
 //#include "Element.h"// already included via Mesh.h
 //#include "Node.h" // already included via Mesh.h
-#include "Mesh.h"
+#include "Mesh.hpp"
 
 #define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 

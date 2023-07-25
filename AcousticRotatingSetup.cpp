@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "AcousticRotatingSetup.h"
-#include "Node.h"
-#include "PointLoad.h"
+#include "AcousticRotatingSetup.hpp"
+#include "Node.hpp"
+#include "PointLoad.hpp"
  
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 

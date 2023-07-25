@@ -9,13 +9,13 @@
 #include <iostream>
 #include <cassert>
 #include <sys/stat.h>
-#include "Setup.h"
+#include "Setup.hpp"
 //#include "Eigen::SparseMatrix.h"
 #include <Eigen/Sparse>
 #include <vector> 
 #include <complex>
-#include "fLinSys.h"
-#include "FemCase.h"
+#include "fLinSys.hpp"
+#include "FemCase.hpp"
 #include <cassert>
 #include <Eigen/Sparse>
 
@@ -91,8 +91,9 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		}
 	}
 	
-	// faut compter les noeuds sur l'interface inside, sur l'interface outside pour initialiser la matrice globale correctement, ainsi que les vecteurs d'indices et valeurs pour construire la matrice sparse  
-	// faut ensuite construire les matrices de projection 
+	// faut compter et repérer les noeuds sur l'interface inside, sur l'interface outside pour initialiser la matrice globale correctement, ainsi que les vecteurs d'indices et valeurs pour construire la matrice sparse  
+	// faut ensuite construire les matrices de projection. 
+	// on peut faire une matrice Magic qui touche tous les noeuds d'un coup, comme d'hab 
 	// enfin, on passe dans la boucle sur les fréquences pour construire les systèmes globaux, projeter, et concaténer les irn jcn values. On ajoute ensuite tous les termes extra diagonaux 
 	// construire le système global à partir des trois vecteurs 
 	// pour le post-traitement, refaire une boucle en fréquence 
