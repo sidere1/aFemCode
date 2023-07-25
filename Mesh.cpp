@@ -27,16 +27,16 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
 {
     // this constructor builds a mesh by concatenating two ones 
 
-    unsigned int nN1 = m1.getNodesNumber();
-    unsigned int nN2 = m2.getNodesNumber(); 
-    unsigned int nE1 = m1.getElementNumber();
-    unsigned int nE2 = m2.getElementNumber(); 
+    size_t nN1 = m1.getNodesNumber();
+    size_t nN2 = m2.getNodesNumber(); 
+    size_t nE1 = m1.getElementNumber();
+    size_t nE2 = m2.getElementNumber(); 
 
     // concatenate nodes and update indexes
     m_nodes = m1.getNodes();
     m_nodes.resize(nN1+nN2);
     std::vector<Node> nodes2 = m2.getNodes();
-    for (unsigned int iNode = 0; iNode < nN2 ; iNode++)
+    for (size_t iNode = 0; iNode < nN2 ; iNode++)
     {
         m_nodes[iNode+nN1] = nodes2[iNode];
         m_nodes[iNode+nN1].setIndex(m_nodes[iNode+nN1].getIndex()+nN1);
@@ -56,7 +56,7 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
     int phP(0);
     int maP(0);
     int col(0);
-    for (unsigned int iElem = 0 ; iElem < nE2 ; iElem++)
+    for (size_t iElem = 0 ; iElem < nE2 ; iElem++)
     {
         nodes.clear();
         previousNodes = elements2[iElem].getNodesIds();
@@ -331,7 +331,7 @@ bool Mesh::addElement(int index, std::vector<Node*> nodes, int feDescriptor, int
 bool Mesh::printConnectivities() const
 {
     cout << endl << "Mesh contains " << m_elements.size() << " elements : " << endl ; 
-    for(unsigned int i = 0; i < m_elements.size(); i++)
+    for(size_t i = 0; i < m_elements.size(); i++)
     {
         m_elements[i].getDisplay();
     }
@@ -342,7 +342,7 @@ bool Mesh::printCoordinates() const
 {
     cout << endl << "Coordinate table : " << endl;
     cout << "Node           x       y       z " << endl;
-    for(unsigned int i = 0; i < m_nodes.size(); i++)
+    for(size_t i = 0; i < m_nodes.size(); i++)
     {
         m_nodes[i].getDisplay();
     }
@@ -356,17 +356,17 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConnectivities() con
 	// return a matrix with the connectivities
 	int maxNElem(0);
 	vector<int> nodes;
-	for(unsigned int i = 0 ; i < m_nE ; i++)
+	for(size_t i = 0 ; i < m_nE ; i++)
 	{
 		if(m_elements[i].getnN() > maxNElem)
 			maxNElem = m_elements[i].getnN();
 	}
 	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_nE, maxNElem);    
 	// fMatrix<int> conec(m_nE, maxNElem);    
-	for(unsigned int iE = 0; iE < m_nE ; iE++)
+	for(size_t iE = 0; iE < m_nE ; iE++)
 	{
 		nodes = m_elements[iE].getNodesIds();
-		for(unsigned int iNode = 0 ; iNode < nodes.size() ; iNode++)
+		for(size_t iNode = 0 ; iNode < nodes.size() ; iNode++)
 		{
 			conec(iE, iNode) = nodes[iNode];
 		}
@@ -385,7 +385,7 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
 	vector<int> nodes;
 	vector<int> n;
 
-	for(unsigned int i = 0 ; i < m_nE ; i++)
+	for(size_t i = 0 ; i < m_nE ; i++)
 	{
 		if(m_elements[i].getnN() > maxNElem)
 			maxNElem = m_elements[i].getnN();
@@ -393,7 +393,7 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
 	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> conec(m_nE, maxNElem+1);
 	conec.setZero();	
 	// fMatrix<int> conec(m_nE, maxNElem+1);    
-	for(unsigned int iE = 0; iE < m_nE ; iE++)
+	for(size_t iE = 0; iE < m_nE ; iE++)
 	{
 		n = m_elements[iE].getNodesIds();
 		// reorganizing the nodes in order to match the vtk file format
@@ -411,7 +411,7 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
 				break;
 		}
 		conec(iE, 0) = nodes.size();
-		for(unsigned int iNode = 0 ; iNode < nodes.size() ; iNode++)
+		for(size_t iNode = 0 ; iNode < nodes.size() ; iNode++)
 		{
 			conec(iE, iNode+1) = nodes[iNode];
 		}
@@ -425,7 +425,7 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getElemTypesVtk() const
 	
 	Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> elemTypes(m_nE, 1);    
 	// fMatrix<int> elemTypes(m_nE, 1);    
-	for(unsigned int iE = 0; iE < m_nE ; iE++)
+	for(size_t iE = 0; iE < m_nE ; iE++)
 	{
 		//see https://examples.vtk.org/site/VTKFileFormats/
 		switch (m_elements[iE].getFeDescriptor())
@@ -453,7 +453,7 @@ Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> Mesh::getCoordinates() cons
 	// return a matrix with the coordinates 
 	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> coord(m_nN, 3);
 	// fMatrix<float> coord(m_nN, 3);
-	for(unsigned int iNode = 0; iNode < m_nN ; iNode++)
+	for(size_t iNode = 0; iNode < m_nN ; iNode++)
 	{
 		coord(iNode, 0) = m_nodes[iNode].getX();
 		coord(iNode, 1) = m_nodes[iNode].getY();
@@ -515,7 +515,7 @@ bool Mesh::calculateVolume()
     float vol(0);
     float surf(0);
     float dist(0);
-    for(unsigned int elem = 0; elem < m_elements.size() ; elem++)
+    for(size_t elem = 0; elem < m_elements.size() ; elem++)
     {
 		// il faudrait faire un tri entre éléments de surface / longueur / volume ! 
 		if (m_elements[elem].is1D())
@@ -630,7 +630,7 @@ bool Mesh::writeError(string error) const
 bool Mesh::computeAspectRatio()
 {
 	string message("");
-	for(unsigned int i = 0; i < m_nE; i++)
+	for(size_t i = 0; i < m_nE; i++)
 	{
 		if (!m_elements[i].computeAspectRatio())
 		{
@@ -655,7 +655,7 @@ bool Mesh::contains3D() const
 {return m_3D;}
 
 
-Element Mesh::getElement(unsigned int index) const
+Element Mesh::getElement(size_t index) const
 {
 	string message("");
 	if (index > m_nE)
