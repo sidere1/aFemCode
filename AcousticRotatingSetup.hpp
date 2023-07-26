@@ -1,10 +1,10 @@
 #ifndef DEF_ACOUSTICROTATINGSETUP
 #define DEF_ACOUSTICROTATINGSETUP
 
-#include "Mesh.hpp"
-#include "Node.hpp"
-#include "PointLoad.hpp"
-#include "fstream"
+// #include "Mesh.hpp"
+// #include "Node.hpp"
+// #include "PointLoad.hpp"
+// #include "fstream"
 #include "Setup.hpp"
 
 class AcousticRotatingSetup: public Setup 

@@ -5,19 +5,19 @@
 //#include "Mesh.h" // already included via Setup.h
 //#include "Node.h"//idem 
 //#include "PointLoad.h"
-#include <fstream>
-#include <iostream>
-#include <cassert>
-#include <sys/stat.h>
-#include "Setup.hpp"
+// #include <fstream>
+// #include <iostream>
+// #include <cassert>
+// #include <sys/stat.h>
+// #include "Setup.hpp"
 //#include "Eigen::SparseMatrix.h"
-#include <Eigen/Sparse>
-#include <vector> 
-#include <complex>
-#include "fLinSys.hpp"
+// #include <Eigen/Sparse>
+// #include <vector> 
+// #include <complex>
+// #include "fLinSys.hpp"
 #include "FemCase.hpp"
-#include <cassert>
-#include <Eigen/Sparse>
+// #include <cassert>
+// #include <Eigen/Sparse>
 
 /*! \brief 
 * AcousticRotatingFemCase is the base class for an acoustic run, and inherits from FemCase 

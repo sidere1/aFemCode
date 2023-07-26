@@ -5,17 +5,17 @@ Build an object femcase, performs stuff with it.
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 
-#include <iostream>
-#include <string>
-#include <vector>
+// #include <iostream>
+// #include <string>
+// #include <vector>
 #include <time.h>
-#include <cassert>
-#include <complex>
-#include <Eigen/Dense>
-#include <Eigen/Sparse>
+// #include <cassert>
+// #include <complex>
+// #include <Eigen/Dense>
+// #include <Eigen/Sparse>
 
 // #include "fMatrix.h"
-#include "FemCase.hpp"
+// #include "FemCase.hpp"
 #include "AcousticFemCase.hpp"
 #include "AcousticRotatingFemCase.hpp"
 

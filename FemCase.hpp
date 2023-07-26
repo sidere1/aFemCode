@@ -2,13 +2,13 @@
 #ifndef DEF_FEMCASE
 #define DEF_FEMCASE
 
-#include <Eigen/Sparse>
-#include <vector> 
-#include <complex>
+// #include <Eigen/Sparse>
+// #include <vector> 
+// #include <complex>
 
-#include <fstream>
-#include <iostream>
-#include <cassert>
+// #include <fstream>
+// #include <iostream>
+// #include <cassert>
 #include <sys/stat.h>
 
 // #include "Setup.h" // included from the daughter classes 
