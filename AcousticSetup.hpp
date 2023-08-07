@@ -1,11 +1,11 @@
 #ifndef DEF_ACOUSTICSETUP
 #define DEF_ACOUSTICSETUP
 
-#include "Mesh.h"
-#include "Node.h"
-#include "PointLoad.h"
-#include "fstream"
-#include "Setup.h"
+// #include "Mesh.hpp"
+// #include "Node.hpp"
+// #include "PointLoad.hpp"
+// #include "fstream"
+#include "Setup.hpp"
 
 class AcousticSetup: public Setup 
 {

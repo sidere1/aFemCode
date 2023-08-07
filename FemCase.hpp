@@ -2,19 +2,19 @@
 #ifndef DEF_FEMCASE
 #define DEF_FEMCASE
 
-#include <Eigen/Sparse>
-#include <vector> 
-#include <complex>
+// #include <Eigen/Sparse>
+// #include <vector> 
+// #include <complex>
 
-#include <fstream>
-#include <iostream>
-#include <cassert>
+// #include <fstream>
+// #include <iostream>
+// #include <cassert>
 #include <sys/stat.h>
 
 // #include "Setup.h" // included from the daughter classes 
-#include "AcousticSetup.h"
-#include "AcousticRotatingSetup.h"
-#include "fLinSys.h"
+#include "AcousticSetup.hpp"
+#include "AcousticRotatingSetup.hpp"
+#include "fLinSys.hpp"
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 

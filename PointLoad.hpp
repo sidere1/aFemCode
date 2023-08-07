@@ -1,7 +1,7 @@
 #ifndef DEF_LOAD
 #define DEF_LOAD
 
-#include "Node.h"
+#include "Node.hpp"
 #include <vector>
 #include <complex>
 

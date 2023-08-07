@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cmath>
 
-#include "Element.h"
-#include "Node.h"
+#include "Element.hpp"
+#include "Node.hpp"
 
 #define WHEREAMI cout << endl << "no crash until line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 using namespace std;

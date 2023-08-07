@@ -4,12 +4,9 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <vector>
+// #include <vector>
+#include"Element.hpp"
 
-#include"Element.h"
-#include"Node.h"
-//
-// À FAIRE : DANS LA CONCATÉNATION DES MAILLAGES, UPDATER LES GROUPES AUSSI 
 class Mesh
 {
 
@@ -25,7 +22,7 @@ public:
     int import2467(std::string unvFileToRead, int position);
     bool addNode(int index, float x, float y, float z);
     bool addElement(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
-	Element getElement(unsigned int index) const;
+	Element getElement(size_t index) const;
 	std::vector<Element> getElements() const;
     bool printConnectivities() const;
     bool printCoordinates() const;
@@ -61,8 +58,8 @@ private:
     std::vector<Element> m_elements;
     std::string m_info;
     std::string m_error;
-	unsigned int m_nN;
-	unsigned int m_nE;
+	size_t m_nN;
+	size_t m_nE;
 	float m_dist;
 	float m_surf; 
 	float m_vol;

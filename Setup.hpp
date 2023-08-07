@@ -1,10 +1,10 @@
 #ifndef DEF_SETUP
 #define DEF_SETUP
 
-#include "Mesh.h"
-#include "Node.h"
-#include "PointLoad.h"
-#include "fstream"
+#include "Mesh.hpp"
+// #include "Node.hpp"
+#include "PointLoad.hpp"
+// #include "fstream"
 
 class Setup
 {
