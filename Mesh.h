@@ -8,7 +8,8 @@
 
 #include"Element.h"
 #include"Node.h"
-
+//
+// À FAIRE : DANS LA CONCATÉNATION DES MAILLAGES, UPDATER LES GROUPES AUSSI 
 class Mesh
 {
 
@@ -21,6 +22,7 @@ public:
     bool unvImport(std::string unvFileToRead);
     int import2411(std::string unvFileToRead, int position);
     int import2412(std::string unvFileToRead, int position);
+    int import2467(std::string unvFileToRead, int position);
     bool addNode(int index, float x, float y, float z);
     bool addElement(int index, std::vector<Node*> nodes, int feDescriptor, int physicalProperty, int materialProperty, int color, int numberOfNodes);
 	Element getElement(unsigned int index) const;
@@ -67,6 +69,9 @@ private:
 	bool m_1D;
 	bool m_2D;
 	bool m_3D;
+    std::vector<std::string> m_groupNames;
+    std::vector<std::vector<size_t>> m_groups;
+    size_t m_nGroups;
 };
 
 #endif

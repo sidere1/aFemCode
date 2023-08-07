@@ -2,12 +2,13 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <cmath>
 
 //#include "Element.h"// already included via Mesh.h
 //#include "Node.h" // already included via Mesh.h
 #include "Mesh.h"
 
-#define WHEREAMI cout << endl << "ERROR line " << __LINE__ << " in the file " __FILE__ << endl << endl;
+#define WHEREAMI cout << endl << "No crash yet, line " << __LINE__ << " in the file " __FILE__ << endl << endl;
 
 
 using namespace std;
@@ -126,27 +127,44 @@ bool Mesh::unvImport(string unvFileToRead )
                 switch (unvBlock)
                 {
                     case (2411):
-                        // cout << "Reading nodes (block unv 2411)" << endl; 
                         writeInfo("Reading nodes (block unv 2411)") ;
                         importFile.seekg(import2411(unvFileToRead, position));
                         msg << "-> " << m_nodes.size() << " nodes read";
                         writeInfo(msg.str());
                         cout << msg.str() << endl; 
+                        msg.str("");
                         break;
 
                     case (2412):
-                        // cout << "Reading connectivities (block unv 2412)" << endl; 
                         writeInfo("Reading connectivities (block unv 2412)");
                         importFile.seekg(import2412(unvFileToRead, position));
                         msg << "-> " << m_elements.size() << " elements read";
                         writeInfo(msg.str());
                         cout << msg.str() << endl; 
+                        msg.str("");                        
+						break;
+                    
+                    case (2467):
+                        writeInfo("Reading groups (block unv 2467)");
+                        importFile.seekg(import2467(unvFileToRead, position));
+                        if (m_groupNames.size() > 1)
+                            msg << "-> " << m_groupNames.size() << " groups read :" << endl;
+                        else 
+                            msg << "-> " << m_groupNames.size() << " group read :" << endl;
+                        for (size_t iGroup = 0; iGroup < m_groupNames.size(); ++iGroup)
+                        {
+                            msg << "    * " << m_groupNames[iGroup] << " containing " << m_groups[iGroup].size() << " elements" << endl;
+                        }
+                        writeInfo(msg.str());
+                        cout << msg.str(); 
+                        msg.str("");
 						break;
                 
                     default:
                         // cout << "Unknown block : " << line << endl ; 
-                        msg << "Unknown block : " << line ; 
+                        msg << "Unknown block : " << line << endl; 
                         writeInfo(msg.str());
+                        msg.str("");
                         while(!isBeginEnd(line))
                         {
                             getline(importFile, line);
@@ -303,6 +321,87 @@ int Mesh::import2412(string unvFileToRead, int position)
     return position;
 }
 
+
+
+
+int Mesh::import2467(string unvFileToRead, int position)
+{
+    string line ; 
+    string fileContent;
+    int groupIdTemp, nElemTemp, devNull, elemTemp1, elemTemp2, nLine, elemRead;
+    vector<size_t> elemIdsTemp;
+    string groupNameTemp; 
+    size_t nGroups(0);
+    stringstream line2;
+
+
+    groupIdTemp = 0;
+    nElemTemp = 0;
+
+    ifstream importFile(unvFileToRead.c_str());
+
+    if (!importFile) 
+    {
+        cout << "Error 2001 : l " << __LINE__ << endl;
+        cout << "could not open unv file " << unvFileToRead << endl;
+        return position;
+    }
+    importFile.seekg(position);
+    getline(importFile, line);// reading first group id and number of elements
+    while(!isBeginEnd(line))
+    {
+        // cout << "processing identification line " << line << endl;         
+        if (sscanf(line.c_str(), "%i%i%i%i%i%i%i%i", &groupIdTemp, &devNull, &devNull, &devNull, &devNull, &devNull, &devNull, &nElemTemp) == 1)
+        {
+            cout << line << " does not correspond to the expected format" << endl; 
+            return position; 
+        }
+        getline(importFile, line);// reading group name 
+        line2.clear(); // je sais pas pourquoi c'est pas .str(""), mais n'empêche que ça marche pas si je fais ça ! je laisse tomber pour l'instant
+        line2 << line; 
+        // cout << "processing group name line " << line2.str() << endl;         
+        line2 >> groupNameTemp;
+        // cout << "AAAAA Reading group " << groupNameTemp  << " containing " << nElemTemp << " elements"<< endl;
+        m_groupNames.push_back(groupNameTemp);
+        nLine = nElemTemp/2;
+        elemRead = 0;
+        if ((nElemTemp % 2 )== 1)
+            nLine++;
+        // cout << "Expecting " << nLine << " lines" << endl;
+        for (int i = 0; i< nLine ; i++)
+        {
+            getline(importFile, line);
+            if (nElemTemp-elemRead > 1)
+            {
+                // cout << "nElemTemp-elemRead = " << nElemTemp-elemRead << endl;
+                sscanf(line.c_str(), "%i%i%i%i%i%i%i%i", &devNull, &elemTemp1, &devNull, &devNull, &devNull, &elemTemp2, &devNull, &devNull);
+                elemIdsTemp.push_back(elemTemp1);
+                elemIdsTemp.push_back(elemTemp2);
+                elemRead+=2;
+                // cout << elemTemp1 << " " << elemTemp2 << " ";
+            }
+            else
+            {
+                sscanf(line.c_str(), "%i%i%i%i", &devNull, &elemTemp1, &devNull, &devNull);
+                elemIdsTemp.push_back(elemTemp1);
+                elemRead++;
+            }
+            // cout << elemRead << " elements read for now, out of " << nElemTemp << endl;
+        }
+        // WHEREAMI
+        m_groups.push_back(elemIdsTemp);
+        nGroups++;
+        getline(importFile, line);// trying to read another group id and number of elements
+    }
+    m_nGroups = nGroups;
+    // cout << nGroups << " groups have been read" << endl;
+    position = importFile.tellg();
+    return position;
+}
+
+
+
+
 bool Mesh::addNode(int index, float x, float y, float z)
 {
     //BETTER : CHECK IF THE INDEX DOESN'T ALREADY EXIST
@@ -406,7 +505,7 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
 				nodes = {n[0]-1,n[2]-1,n[4]-1,n[1]-1,n[3]-1,n[5]-1};
 				break;
 			default: 
-				cout << "Oui ben faut l'coder mon pote, on peut pas utiliser ça pour l'instant ! Allez allez au boulot !" << endl; 
+				cout << "Oui ben faut l'coder mon pote, on peut pas utiliser ça pour l'instant ! Allez hop hop hop au boulot !" << endl; 
 				cout << "Mesh::getConecAndNN, not supported element type " << m_elements[iE].getFeDescriptor();
 				break;
 		}
@@ -498,6 +597,7 @@ int Mesh::typeAssign(int nbOfNodes)
 
 bool Mesh::isBeginEnd(string line)
 {
+    // returns true if line corresponds to the unv marker of beginning or end of a block 
     int marker, devNull;
     if ((sscanf(line.c_str(), "%d%d", &marker, &devNull) == 1) && marker == -1)
     {
