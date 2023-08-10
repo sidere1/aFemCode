@@ -2,16 +2,9 @@
 #ifndef DEF_FEMCASE
 #define DEF_FEMCASE
 
-// #include <Eigen/Sparse>
-// #include <vector> 
-// #include <complex>
-
-// #include <fstream>
-// #include <iostream>
-// #include <cassert>
 #include <sys/stat.h>
+#include <unordered_set>
 
-// #include "Setup.h" // included from the daughter classes 
 #include "AcousticSetup.hpp"
 #include "AcousticRotatingSetup.hpp"
 #include "fLinSys.hpp"
@@ -98,6 +91,7 @@ public:
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> swapLines(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m, vector<int> perm) const;
 	T computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m) const;
 
+	void removeDoublons(std::vector<size_t>);
 protected:
 	bool m_loaded;
 	std::string m_info;
@@ -621,6 +615,7 @@ bool FemCase<T>::buildKM()
 		message = "Beginning assembly"; 
 		cout << message << endl; 
 		writeInfo(message);
+		WHEREAMI
 		// matrix initialisation, as well as gauss points and shape functions 
 		if (m_mesh[iC]->contains1D()){
 			Mseg = new std::vector<Eigen::Triplet<T>>;
@@ -643,6 +638,7 @@ bool FemCase<T>::buildKM()
 		if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) {
 			cout << "your mesh hasn't been prepared correctly" << endl;
 		}
+		WHEREAMI
 		for(int iE = 0; iE < nE; iE++)
 		{
 			elem = m_mesh[iC]->getElement(iE);
@@ -750,10 +746,12 @@ bool FemCase<T>::buildKM()
 			assert(Ke->cols() == Me->cols());
 			for (unsigned int i = 0 ; i < Ke->rows() ; i++)
 			{
-				globalI = (*nodes)[i]-1;
+				globalI = (*nodes)[i];
+				// globalI = (*nodes)[i]-1;
 				for (unsigned int j = 0; j < Ke->cols() ; j++ )
 				{
-					globalJ = (*nodes)[j]-1;
+					// globalJ = (*nodes)[j]-1; // now node indices begin at 0
+					globalJ = (*nodes)[j];
 					currentK->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Ke).coeff(i,j))); // version sparse
 					currentM->push_back(Eigen::Triplet<T>(globalI, globalJ, (*Me).coeff(i,j)));
 					// if(isnan((*Me)(i,j))) // en complexe il n'y a pas de isnan possible... 
@@ -950,9 +948,7 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMat
 		vtkfile << "POINT_DATA " << nNodes << endl;
 	}
 	vtkfile << "SCALARS " << dataName << " float 1" << endl;
-	// attention je fais peut-être des bêtises avec les types...
 	vtkfile << "LOOKUP_TABLE default" << endl; 
-	// vtkfile << data << endl;
 	Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic> dataFloat;
 	if (dataName.find("real")!=std::string::npos){
 		dataFloat = Eigen::Matrix<float, Eigen::Dynamic, Eigen::Dynamic>(data.real().template cast<float>());
@@ -966,7 +962,6 @@ bool FemCase<T>::writeVtkData(string filename, string dataName, Eigen::SparseMat
 	addToVtkFile(vtkfile, dataFloat);
 	return true;
 }
-
 
 template<typename T>
 bool FemCase<T>::addToVtkFile( ostream &out, Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> const& mat ) const
@@ -1455,8 +1450,21 @@ T FemCase<T>::computeFemDetJac(Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> 
 	}
 }
 
-
-
+// used to remove doublons from node lists, notamment in AcousticRotatingFemCase.hpp 
+void removeDoublons(std::vector<size_t> &v)
+{
+    std::vector<size_t>::iterator itr = v.begin();
+    std::unordered_set<size_t> s;
+ 
+    for (auto curr = v.begin(); curr != v.end(); ++curr)
+    {
+        if (s.insert(*curr).second) {
+            *itr++ = *curr;
+        }
+    }
+ 
+    v.erase(itr, v.end());
+}
 
 
 

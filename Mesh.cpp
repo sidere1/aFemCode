@@ -64,7 +64,6 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
         nN = elements2[iElem].getnN();
         for (int iNode = 0; iNode < nN; iNode++)
         {
-            // nodes.push_back(new Node(m_nodes[nodeIds[iNode]])); // MAUVAISE IDEEEEEEEEEEE
             nodes.push_back(&m_nodes[previousNodes[iNode]+nN1-1]);
         }
         feD = elements2[iElem].getFeDescriptor();
@@ -222,7 +221,7 @@ int Mesh::import2411(string unvFileToRead, int position)
                 {
                     cout << "ERROR 2002, Mesh.cpp l " << __LINE__ << endl;
                 }
-                addNode(indexTemp, xTemp, yTemp, zTemp);
+                addNode(indexTemp-1, xTemp, yTemp, zTemp); // unv nodes are numbered beginning at 1 and not 0 
             }
             else 
             {
@@ -281,9 +280,9 @@ int Mesh::import2412(string unvFileToRead, int position)
                     }
                     if(sscanf(line.c_str(), "%i", &nodeIndexTemp) != 0) //reading the node id 
                     {
-                        if (m_nodes[nodeIndexTemp-1].getIndex() != nodeIndexTemp) //DANGEROUS on regarde le rang dans le vecteur et non pas l'index réel. Alors on checke en cas de souci...
+                        if (m_nodes[nodeIndexTemp-1].getIndex() != nodeIndexTemp-1) //DANGEROUS on regarde le rang dans le vecteur et non pas l'index réel. Alors on checke en cas de souci...
                         {
-                            cout << "ERROR 2000, l " << __LINE__ << ", node " << nodeIndexTemp << "has index " << m_nodes[nodeIndexTemp].getIndex() << endl;
+                            cout << "ERROR 2000, l " << __LINE__ << ", node " << nodeIndexTemp-1 << "has index " << m_nodes[nodeIndexTemp].getIndex() << endl;
                         } 
                         nodesTemp.push_back(&m_nodes[nodeIndexTemp-1]);
                     }
@@ -500,9 +499,11 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
 		{
 			case 22: 
 				nodes = {n[0]-1,n[2]-1,n[1]-1};
+				// nodes = {n[0]-1,n[2]-1,n[1]-1}; // update : node indices begin at zero to match cpp notation
 				break;
 			case 42:
 				nodes = {n[0]-1,n[2]-1,n[4]-1,n[1]-1,n[3]-1,n[5]-1};
+				// nodes = {n[0]-1,n[2]-1,n[4]-1,n[1]-1,n[3]-1,n[5]-1};
 				break;
 			default: 
 				cout << "Oui ben faut l'coder mon pote, on peut pas utiliser ça pour l'instant ! Allez hop hop hop au boulot !" << endl; 
@@ -661,6 +662,11 @@ std::vector<Node> Mesh::getNodes() const
     return m_nodes;
 }
 
+Node Mesh::getNode(size_t iNode) const
+{
+    return m_nodes[iNode];
+}
+
 std::vector<Element> Mesh::getElements() const
 {
     return m_elements;
@@ -773,4 +779,21 @@ bool Mesh::displayInfo() const
     cout << "Mesh contains " << m_nN << " nodes, " << m_nE << " elements. " << endl;
     cout << "Total distance " << m_dist << ", total surface " << m_surf << ", total volume " << m_vol << endl;
     return true;
+}
+
+
+
+std::vector<std::string> Mesh::getGroupNames()
+{
+    return m_groupNames;
+}
+
+std::vector<std::vector<size_t>> Mesh::getGroups()
+{
+    return m_groups;
+}
+
+std::vector<size_t> Mesh::getGroup(size_t iG)
+{
+    return m_groups[iG];
 }

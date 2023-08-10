@@ -37,6 +37,7 @@ public:
     int getElementNumber() const;
     int getNodesNumber() const;
     std::vector<Node> getNodes() const;
+    Node getNode(size_t iNode) const;
 
     bool setInfo(std::string value);
     std::string getInfo() const;
@@ -52,6 +53,10 @@ public:
 	bool contains2D() const;
 	bool contains3D() const;
     bool displayInfo() const;
+
+    std::vector<std::string> getGroupNames();
+    std::vector<std::vector<size_t>> getGroups();
+    std::vector<size_t> getGroup(size_t iG);
 
 private:
     std::vector<Node> m_nodes;
