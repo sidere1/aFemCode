@@ -42,6 +42,19 @@ public:
 
 	virtual bool displayInfo() = 0;
 	bool isLoaded();
+
+    // FSBC 
+    size_t getAxis();
+    size_t getEta();
+    size_t getFsbcC();
+    size_t getN();
+    size_t getL();
+    float getRadius();
+    float getOmega();
+    bool getRotating();
+    std::string getInterfaceName();
+    size_t getInterfaceGroup();
+    bool setInterfaceGroup(size_t iG);
     
 
 protected:
@@ -75,6 +88,8 @@ protected:
     float m_radius;
     float m_Omega;
     bool m_rotating;
+    std::string m_interfaceName;
+    size_t m_interfaceGroup;
 
     //
 	

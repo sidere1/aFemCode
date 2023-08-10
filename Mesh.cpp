@@ -78,7 +78,7 @@ Mesh::Mesh(Mesh m1, Mesh m2) :m_info(m1.getInfo()), m_error(m2.getError()), m_1D
 	m_nE = m_elements.size();	
     calculateVolume();
     computeAspectRatio();
-    displayInfo();
+    displayInfo(); // ça donne un résultat chelou, chais pas pourquoi...    
 }
 
 Mesh::~Mesh()
@@ -295,7 +295,6 @@ int Mesh::import2412(string unvFileToRead, int position)
                         line = line.substr(1, line.length()-1) ;
                     }
                 }
-                cout << "adding index" << indexTemp << endl;
                 if (!addElement(indexTemp-1, nodesTemp, feDTemp, physPTemp, matPTemp, colorTemp, nbOfNodesTemp)) 
                 {
                     WHEREAMI
@@ -374,15 +373,15 @@ int Mesh::import2467(string unvFileToRead, int position)
             {
                 // cout << "nElemTemp-elemRead = " << nElemTemp-elemRead << endl;
                 sscanf(line.c_str(), "%i%i%i%i%i%i%i%i", &devNull, &elemTemp1, &devNull, &devNull, &devNull, &elemTemp2, &devNull, &devNull);
-                elemIdsTemp.push_back(elemTemp1);
-                elemIdsTemp.push_back(elemTemp2);
+                elemIdsTemp.push_back(elemTemp1-1); // -1 is there because contrary to unv notation, the aFemCode element indices begin at 0 and not 1
+                elemIdsTemp.push_back(elemTemp2-1); // -1, see above
                 elemRead+=2;
                 // cout << elemTemp1 << " " << elemTemp2 << " ";
             }
             else
             {
                 sscanf(line.c_str(), "%i%i%i%i", &devNull, &elemTemp1, &devNull, &devNull);
-                elemIdsTemp.push_back(elemTemp1);
+                elemIdsTemp.push_back(elemTemp1-1); // -1, see above
                 elemRead++;
                 // cout << elemTemp1 << " ";
 
@@ -620,7 +619,6 @@ bool Mesh::calculateVolume()
     float dist(0);
     for(size_t elem = 0; elem < m_elements.size() ; elem++)
     {
-		// il faudrait faire un tri entre éléments de surface / longueur / volume ! 
 		if (m_elements[elem].is1D())
 		{
 			dist = dist + m_elements[elem].getVolume();
@@ -636,13 +634,14 @@ bool Mesh::calculateVolume()
 			vol = vol + m_elements[elem].getVolume();
 			m_3D = true;
 		}
-        //volume = volume + m_elements[elem].getVolume();
+        else
+        {
+            return false;
+        }
     }
 	m_vol = vol; 
 	m_surf = surf; 
 	m_dist = dist;
-	// cout << "Distance : " << dist << endl << "Surface : " << surf << endl << "Volume : " << vol << endl;
-   	//cout << m_1D << m_2D << m_3D << endl;	
     return true;
 }
 

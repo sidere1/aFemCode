@@ -28,7 +28,7 @@ AcousticRotatingSetup::AcousticRotatingSetup(std::string setupFile, std::string 
             setup >> entry;
         }
         
-        for(int cursor = 1; cursor < 10 ; cursor++)
+        for(int cursor = 1; cursor < 11 ; cursor++)
         {// Reading parameters
 
             setup >> entry;
@@ -319,6 +319,21 @@ int AcousticRotatingSetup::addAtribute(int cursor, string entry, string value)
             }
             break;
         }
+        case 10 :
+        {
+            if (entry != "interface") 
+            {
+                msg << "Please check your setup file. Found" << entry <<" instead of interface.";
+                writeError(msg.str());
+				cout << msg.str() << endl;
+                break;
+            }
+            else
+            {
+                m_interfaceName = value;
+            }
+            break;
+        }
         // when adding an entry, dont forget to update the number of entries to be read in the for loop of the constructor 
         default:
             msg << "Entry " << entry << " was not expected here.";
@@ -348,6 +363,7 @@ bool AcousticRotatingSetup::displayInfo()
 	cout << "axis " << m_axis << endl; 
 	cout << "rotating " << m_rotating << endl; 
 	cout << "radius " << m_radius << endl; 
+	cout << "interfaceName " << m_interfaceName << endl; 
    	cout << endl;
 	return true; 
 }

@@ -13,7 +13,7 @@ rho 				1.225
 c 					340
 rotationParams		setup/rotParams.femRot
 rotating			true
-
+interface			gamma_r
 
 
 ####################################################

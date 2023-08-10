@@ -381,3 +381,61 @@ bool Setup::isLoaded()
 {
 	return m_loaded;
 }
+
+// FSBC 
+size_t Setup::getAxis()
+{
+    return m_axis;
+}
+
+size_t Setup::getEta()
+{
+    return m_eta;
+}
+
+size_t Setup::getFsbcC()
+{
+    return m_C;
+}
+
+size_t Setup::getN()
+{
+    return m_N;
+}
+
+size_t Setup::getL()
+{
+    return m_L;
+}
+
+float Setup::getRadius()
+{
+    return m_radius;
+}
+
+float Setup::getOmega()
+{
+    return m_Omega;
+}
+
+bool Setup::getRotating()
+{
+    return m_rotating;
+}
+
+std::string Setup::getInterfaceName()
+{
+    return m_interfaceName;
+}
+
+size_t Setup::getInterfaceGroup()
+{
+    return m_interfaceGroup;
+}
+
+
+bool Setup::setInterfaceGroup(size_t iG)
+{
+    m_interfaceGroup = iG;
+    return true;
+}

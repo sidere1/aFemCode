@@ -615,7 +615,6 @@ bool FemCase<T>::buildKM()
 		message = "Beginning assembly"; 
 		cout << message << endl; 
 		writeInfo(message);
-		WHEREAMI
 		// matrix initialisation, as well as gauss points and shape functions 
 		if (m_mesh[iC]->contains1D()){
 			Mseg = new std::vector<Eigen::Triplet<T>>;
@@ -638,7 +637,6 @@ bool FemCase<T>::buildKM()
 		if ( !(m_mesh[iC]->contains1D() || m_mesh[iC]->contains2D() || m_mesh[iC]->contains3D())) {
 			cout << "your mesh hasn't been prepared correctly" << endl;
 		}
-		WHEREAMI
 		for(int iE = 0; iE < nE; iE++)
 		{
 			elem = m_mesh[iC]->getElement(iE);

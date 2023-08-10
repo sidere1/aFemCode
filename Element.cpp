@@ -33,6 +33,7 @@ Element::Element(int index, std::vector<Node*> nodes, int feDescriptor, int phys
 	{
 		m_3D = true; 
 	}
+	calculateVolume();
 }
 
 

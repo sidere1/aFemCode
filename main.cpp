@@ -33,7 +33,6 @@ int main(int argc, char** argv)
 
 	// string setupFile (argv[1]);
 	// cout << "Reading setup file " << argv[1] << endl; 
-	
 	// AcousticFemCase<complex<double>> fc(setupFile.c_str());
 	// if (!fc.isLoaded())
 	// {
@@ -51,6 +50,7 @@ int main(int argc, char** argv)
 
 
 	// AcousticRotatingFemCase<complex<double>> fcr("/home/silouane/Documents/C++/aFemCode/example/rotatingSource/setup/main");
+	
 	AcousticRotatingFemCase<complex<double>> fcr("./example/rotatingSource/setup/main");
 	fcr.displayInfo();
 	fcr.prepareComputation();	
