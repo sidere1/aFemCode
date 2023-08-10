@@ -295,8 +295,8 @@ int Mesh::import2412(string unvFileToRead, int position)
                         line = line.substr(1, line.length()-1) ;
                     }
                 }
-                
-                if (!addElement(indexTemp, nodesTemp, feDTemp, physPTemp, matPTemp, colorTemp, nbOfNodesTemp)) 
+                cout << "adding index" << indexTemp << endl;
+                if (!addElement(indexTemp-1, nodesTemp, feDTemp, physPTemp, matPTemp, colorTemp, nbOfNodesTemp)) 
                 {
                     WHEREAMI
                 }
@@ -384,6 +384,8 @@ int Mesh::import2467(string unvFileToRead, int position)
                 sscanf(line.c_str(), "%i%i%i%i", &devNull, &elemTemp1, &devNull, &devNull);
                 elemIdsTemp.push_back(elemTemp1);
                 elemRead++;
+                // cout << elemTemp1 << " ";
+
             }
             // cout << elemRead << " elements read for now, out of " << nElemTemp << endl;
         }
@@ -498,11 +500,11 @@ Eigen::Matrix<int, Eigen::Dynamic, Eigen::Dynamic> Mesh::getConecAndNN() const
 		switch (m_elements[iE].getFeDescriptor())
 		{
 			case 22: 
-				nodes = {n[0]-1,n[2]-1,n[1]-1};
 				// nodes = {n[0]-1,n[2]-1,n[1]-1}; // update : node indices begin at zero to match cpp notation
+				nodes = {n[0],n[2],n[1]};
 				break;
 			case 42:
-				nodes = {n[0]-1,n[2]-1,n[4]-1,n[1]-1,n[3]-1,n[5]-1};
+				nodes = {n[0],n[2],n[4],n[1],n[3],n[5]};
 				// nodes = {n[0]-1,n[2]-1,n[4]-1,n[1]-1,n[3]-1,n[5]-1};
 				break;
 			default: 
