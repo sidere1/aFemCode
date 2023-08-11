@@ -30,7 +30,8 @@ ifeq ($(UNAME), Darwin)
 	time ./prog ~/Documents/femCases/stupidCircle/setup/main	
 endif
 ifeq ($(UNAME), Linux)
-	/usr/bin/time -v ./prog ~/Documents/femCases/stupidCircle/setup/main	
+	time ./prog ~/Documents/femCases/stupidCircle/setup/main	
+#	/usr/bin/time -v ./prog ~/Documents/femCases/stupidCircle/setup/main	
 endif
 
 test:prog_test

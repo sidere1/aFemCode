@@ -21,17 +21,20 @@ public:
 	bool performResolution();
 	bool writeVtk();
 	bool checkAndExport(); // temp data for basic checks, groups, nodes ids, interface locations, etc. 
+	bool buildPhiF();
+	bool buildPhiR();
+	bool checkInterfaceNameConsistency(size_t iC);
 
 
 protected:
-	int m_eta;
-	int m_N;
-	int m_L;
-	int C;
-	int m_Omega;
+	// size_t m_eta;
+	// size_t m_N;
+	// size_t m_L;
+	// size_t C;
+	// double m_Omega;
 	Eigen::SparseMatrix<T> m_coupledSystem; 
-	Eigen::SparseMatrix<T> m_PhiR; 
-	Eigen::SparseMatrix<T> m_PhiF; 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiR; 
+	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiF; 
 	vector<size_t> m_gammaR;
 	vector<size_t> m_gammaF;
 	vector<double> m_rR;
@@ -59,8 +62,14 @@ AcousticRotatingFemCase<T>::AcousticRotatingFemCase(std::string setupFile): FemC
 	}
 	assert(this->m_nCoupling == 2); // ou plus si on veut mettre plusieurs zones tournantes 
 
+
 	//////// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 	// A AJOUTER : GENERATION DES FREQUENCES 
+	// verification à faire : 
+	// * que les deux setups soient bien les mêmes 
+	// * taille de système acceptable ? nombre de fréquences cohérent par rapport à la bande demandée, etc. 
+	// * 
+
 }
 
 
@@ -81,12 +90,11 @@ bool AcousticRotatingFemCase<T>::performResolution()
 	//// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 
 	// Il manque la renumérotation de maillage !! Pour mettre les noeuds de l'interface au début 
 
-	const complex<double> i(0.0,1.0); // pas T ? chuis surpris ! 
+	// const complex<double> i(0.0,1.0); // pas T ? chuis surpris ! 
 	const double pi(3.1415926);	// idem ! 
 	size_t totalNodesNumber(0);
 	vector<double> frequencies(this->m_setup[0]->getFrequencies());
 	size_t nF = frequencies.size();
-	bool okay(false);
 	vector<size_t> nodeGroupTemp;
 	vector<size_t> elemGroupTemp;
 	vector<int> nodesTemp;
@@ -98,9 +106,11 @@ bool AcousticRotatingFemCase<T>::performResolution()
 	double theta;
 	ostringstream vtkfilename;
 
+	m_nNGammaR = 0;
+	m_nNGammaF = 0;
+
 	for(size_t iC = 0; iC < this->m_nCoupling ; iC ++)
 	{
-		// mettre tout ça dans des fonctions séparées ? bool checkGroupConsistency(iC), bool createRadiusAndCheckConsistency(iC),  bool buildInterfaceNodes(iC), bool buildProjMatrices(iC), etc.
 		radiusTemp.clear();
 		nodesTemp.clear();
 		nodeGroupTemp.clear();
@@ -115,17 +125,7 @@ bool AcousticRotatingFemCase<T>::performResolution()
 			return false; 
 		}
 		// vérification que les noms de groupe matchent 
-		for (size_t iGroup = 0; iGroup < this->m_mesh[iC]->getGroupNames().size(); ++iGroup)
-		{
-			// cout << "comparing " << this->m_setup[iC]->getInterfaceName() << " with " << this->m_mesh[iC]->getGroupNames()[iGroup] << endl;
-			if (this->m_setup[iC]->getInterfaceName() == this->m_mesh[iC]->getGroupNames()[iGroup])
-			{
-				okay = true;
-				this->m_setup[iC]->setInterfaceGroup(iGroup);
-				break;
-			}
-		}
-		if (!okay)
+		if (!checkInterfaceNameConsistency(iC))
 		{
 			cout << "Interface name " << this->m_setup[iC]->getInterfaceName() << " does not match any group name in the mesh " << endl;
 			return false; 
@@ -157,6 +157,7 @@ bool AcousticRotatingFemCase<T>::performResolution()
 
 		if (this->m_setup[iC]->getRotating())
 		{
+			cout << "group " << iC << " " << this->m_mesh[iC]->getGroupNames()[this->m_setup[iC]->getInterfaceGroup()] << " is rotating" << endl;
 			m_gammaR = nodeGroupTemp;
 			m_nNGammaR = nodeGroupTemp.size();
 			m_rR = radiusTemp;
@@ -164,14 +165,21 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		}
 		else 
 		{
+			cout << "group " << iC << " " << this->m_mesh[iC]->getGroupNames()[this->m_setup[iC]->getInterfaceGroup()] << " is fixed" << endl;
 			m_gammaF = nodeGroupTemp;
 			m_nNGammaF = nodeGroupTemp.size();
 			m_rF = radiusTemp;
 			m_thetaF = thetaTemp;
-		}
-		// construction des matrices de projection 
+		}		
 	}
+	// exporting various vtk stuff, and checking that the setup radius matches the mesh group radius  
 	checkAndExport();
+	assert(m_nNGammaR != 0 && "the number of nodes on the rotating interface is null");
+	assert(m_nNGammaF != 0 && "the number of nodes on the fixed interface is null");
+
+	// building projection matrices 
+	buildPhiF();
+	buildPhiR();	
 
 	
 	// on peut faire une matrice Magic qui touche tous les noeuds d'un coup, comme d'hab 
@@ -250,20 +258,31 @@ bool AcousticRotatingFemCase<T>::performResolution()
 }
 
 template <typename T>
+bool AcousticRotatingFemCase<T>::checkInterfaceNameConsistency(size_t iC)
+{
+	for (size_t iGroup = 0; iGroup < this->m_mesh[iC]->getGroupNames().size(); ++iGroup)
+	{
+		if (this->m_setup[iC]->getInterfaceName() == this->m_mesh[iC]->getGroupNames()[iGroup])
+		{
+			this->m_setup[iC]->setInterfaceGroup(iGroup);
+			return true;
+		}
+	}
+	return false;
+}
+
+template <typename T>
 bool AcousticRotatingFemCase<T>::checkAndExport()
 {
 	// check radius/theta : vérification par rapport à la tolérance
-	// export vtk : 
-	// * r 
-	// * theta 
-	// * group 
-	// * node index 
+	// export vtk : t, theta, interface group and node index
 	ostringstream vtkfilename;
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> dataExport; 
 	double tolerance(1e-5);
 	vector<int> nodesTemp;
 	bool rotating(false);
 	size_t interfaceGroup(0);
+
 
 	for (size_t iC = 0; iC < this->m_nCoupling; ++iC)
 	{
@@ -327,6 +346,31 @@ bool AcousticRotatingFemCase<T>::checkAndExport()
 		}
 		this->writeVtkData(vtkfilename.str(), "index", dataExport.sparseView(), false, this->m_mesh[iC]);
 	}
+	return true;
+}
+
+template <typename T>
+bool AcousticRotatingFemCase<T>::buildPhiF()
+{
+	const complex<double> i(0.0,1.0);
+	m_PhiF.resize(m_nNGammaF, this->m_setup[0]->getN());
+	for (size_t iNode = 0; iNode < m_nNGammaF ; ++iNode)
+		for(size_t n = 0; n < this->m_setup[0]->getN(); ++n)
+		{
+			m_PhiF(iNode, n) = std::exp(i*(T)n*(T)m_thetaF[iNode]);
+		}
+	return true;
+}
+
+template <typename T>
+bool AcousticRotatingFemCase<T>::buildPhiR()
+{
+	const complex<double> i(0.0,1.0); 
+	cout << "resizing of size " << m_nNGammaR << " * " << this->m_setup[0]->getN() << endl; 
+	m_PhiR.resize(m_nNGammaR, this->m_setup[0]->getN());
+	for (size_t iNode = 0; iNode < m_nNGammaR ; ++iNode)
+		for(size_t n = 0; n < this->m_setup[0]->getN(); ++n)
+			m_PhiR(iNode, n) = std::exp(i*(T)n*(T)m_thetaR[iNode]);
 	return true;
 }
 
