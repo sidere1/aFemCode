@@ -122,12 +122,14 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		if (this->m_setup[iC]->getFrequencies().size() != nF)
 		{
 			std::cout << "MAIS N IMPORTE QUOI TOI, D OU TU METS PAS LES MEMES FREQUENCES PARTOUT" << std::endl;
+			WHEREAMI
 			return false; 
 		}
 		// vérification que les noms de groupe matchent 
 		if (!checkInterfaceNameConsistency(iC))
 		{
 			cout << "Interface name " << this->m_setup[iC]->getInterfaceName() << " does not match any group name in the mesh " << endl;
+			WHEREAMI
 			return false; 
 		}
 		
@@ -155,6 +157,15 @@ bool AcousticRotatingFemCase<T>::performResolution()
 			thetaTemp[iNode] = theta;
 		}
 
+		// renumbering mesh in order to 
+		if (!this->mesh[iC]->renumberMesh(m_gammaR))
+		{
+			cout << "error while renumbering the mesh";
+			WHEREAMI
+			return false; 
+		}
+
+		// après ça, normalement gammaR et gammaF c'est 1:nNGammaAlpha
 		if (this->m_setup[iC]->getRotating())
 		{
 			cout << "group " << iC << " " << this->m_mesh[iC]->getGroupNames()[this->m_setup[iC]->getInterfaceGroup()] << " is rotating" << endl;

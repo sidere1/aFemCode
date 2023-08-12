@@ -798,3 +798,13 @@ std::vector<size_t> Mesh::getGroup(size_t iG)
 {
     return m_groups[iG];
 }
+
+bool Mesh::renumberMesh(std::vector<size_t> firstNodes)
+{
+    vector<size_t> previousNodeList;
+    vector<size_t> newNodeList;
+
+    // updating the nodes to put firstNodes first 
+
+    // update the elements ? non pas la peine, les éléments ils ont des pointeurs sur des noeuds... 
+}

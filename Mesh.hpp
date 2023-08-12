@@ -58,6 +58,8 @@ public:
     std::vector<std::vector<size_t>> getGroups();
     std::vector<size_t> getGroup(size_t iG);
 
+    bool renumberMesh(std::vector<size_t>);
+
 private:
     std::vector<Node> m_nodes;
     std::vector<Element> m_elements;
