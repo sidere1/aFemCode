@@ -34,7 +34,7 @@ public:
 	float getVolume() const;
 	int getnN() const;
 	std::vector<int> getNodesIds() const;
-	bool replaceNodes(std::vector<Node*> newNodes);
+	bool setNodes(std::vector<Node*> newNodes);
 	// fMatrix<float> getCoordinates() const;
 	Eigen::Matrix<float, Eigen::Dynamic, 3> getCoordinates() const;
 private:

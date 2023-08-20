@@ -87,11 +87,8 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		cout << "You should not be using " << this->m_nCoupling << " coupling in a coupled rotating FSBC case. Anything else than 2 is prohibited" << std::endl; 
 		return false; 
 	}
-	//// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA 
-	// Il manque la renumérotation de maillage !! Pour mettre les noeuds de l'interface au début 
 
-	// const complex<double> i(0.0,1.0); // pas T ? chuis surpris ! 
-	const double pi(3.1415926);	// idem ! 
+	const double pi(3.1415926);	
 	size_t totalNodesNumber(0);
 	vector<double> frequencies(this->m_setup[0]->getFrequencies());
 	size_t nF = frequencies.size();
@@ -115,7 +112,7 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		nodesTemp.clear();
 		nodeGroupTemp.clear();
 		elemGroupTemp.clear();
-		okay = false; 
+		// okay = false; 
 
 		// calcul du nombre total de noeuds
 		totalNodesNumber+=this->m_mesh[iC]->getNodesNumber();
@@ -158,11 +155,17 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		}
 
 		// renumbering mesh in order to 
-		if (!this->mesh[iC]->renumberMesh(m_gammaR))
+		if (!this->m_mesh[iC]->renumberMesh(nodeGroupTemp))
 		{
 			cout << "error while renumbering the mesh";
 			WHEREAMI
 			return false; 
+		}
+		// cout << "Mesh renumbered successfully !!!" << endl;
+
+		for (size_t iNode = 0; iNode < nodeGroupTemp.size(); ++iNode)
+		{
+			nodeGroupTemp[iNode] = iNode;
 		}
 
 		// après ça, normalement gammaR et gammaF c'est 1:nNGammaAlpha
@@ -298,10 +301,10 @@ bool AcousticRotatingFemCase<T>::checkAndExport()
 	for (size_t iC = 0; iC < this->m_nCoupling; ++iC)
 	{
 		rotating = this->m_setup[iC]->getRotating();
-		if (rotating)
-			cout << "group " << iC << " is rotating " << endl;
-		else
-			cout << "group " << iC << " is not rotating " << endl;
+		// if (rotating)
+		// 	cout << "group " << iC << " is rotating " << endl;
+		// else
+		// 	cout << "group " << iC << " is not rotating " << endl;
 		vtkfilename.str("");
 		vtkfilename << "interfaceChecks" << iC << ".vtk";
 		dataExport.resize(this->m_mesh[iC]->getNodesNumber(), 1);

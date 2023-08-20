@@ -389,7 +389,7 @@ Eigen::Matrix<float, Eigen::Dynamic, 3> Element::getCoordinates() const
 
 
 
-bool Element::replaceNodes(std::vector<Node*> newNodes)
+bool Element::setNodes(std::vector<Node*> newNodes)
 {
 	m_nodes.clear();
 	m_nodes = newNodes;

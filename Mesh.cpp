@@ -801,10 +801,91 @@ std::vector<size_t> Mesh::getGroup(size_t iG)
 
 bool Mesh::renumberMesh(std::vector<size_t> firstNodes)
 {
-    vector<size_t> previousNodeList;
-    vector<size_t> newNodeList;
+    // firstNodes may be incomplete, in this case the rest of the nodes are put afterwards 
 
-    // updating the nodes to put firstNodes first 
+    vector<size_t> rV1;
+    vector<size_t> rV2;
+    rV2.resize(m_nN);
+    bool okay(false);
+    vector<Node*> newElemNodes;
+    vector<int> nodes;
+    vector<Node> newNodeList;
 
-    // update the elements ? non pas la peine, les éléments ils ont des pointeurs sur des noeuds... 
+
+
+    rV1 = firstNodes;
+    if (firstNodes.size() != m_nN)
+    {
+        for (size_t iNode = 0; iNode < m_nN ; ++iNode)
+        {
+            okay = false; 
+            for (size_t iNode2 = 0; iNode2 < firstNodes.size() ; ++iNode2)
+            {
+                if (firstNodes[iNode2]==iNode)
+                {
+                    okay = true; 
+                    break;
+                }
+            }
+            if (!okay)
+                rV1.push_back(iNode);
+        }
+    }
+
+    assert(rV1.size() == m_nN && " hum, strange, rV1 should be the same size as the node list");
+
+    // construction du vecteur de permutation 
+    // 1 2 3 4 5 6 initial 
+    // 1 6 5 2 4 3 rV1 
+    // 1 4 6 5 3 2 rV2 
+    for (size_t iNode = 0; iNode < m_nN ; ++iNode)
+    {
+        okay = false; 
+        for (size_t iNode2 = 0 ; iNode2 < m_nN; ++iNode2)
+        {
+            if (iNode == rV1[iNode2])
+            {
+                okay = true;
+                // rV2[iNode2] = iNode;
+                rV2[iNode] = iNode2;
+                break; 
+            }
+        }
+        if (!okay)
+        {
+            cout << "Error while renumbering, node " << iNode << " not found" << endl; 
+            WHEREAMI 
+            return false; 
+        }
+    }
+
+    // updating the nodes 
+    newNodeList.resize(m_nN);
+    for (size_t iNode = 0; iNode < m_nN ; ++iNode)
+    {
+        newNodeList[iNode] = m_nodes[rV1[iNode]];
+        newNodeList[iNode].setIndex(iNode);
+    }
+    m_nodes = newNodeList;
+
+    // updating the elements
+    for (size_t iElem = 0; iElem < m_nE ; ++iElem)
+    {
+        nodes.clear();
+        newElemNodes.clear();
+        
+        nodes = m_elements[iElem].getNodesIds();
+        // cout << endl << "transforming " ;
+        newElemNodes.resize(nodes.size());
+        for (size_t iNode = 0 ; iNode < m_elements[iElem].getNodesIds().size() ; iNode++)
+        {
+            newElemNodes[iNode] = &m_nodes[rV2[nodes[iNode]]];
+        }
+        m_elements[iElem].setNodes(newElemNodes);
+    }
+
+    // updating the groups ? 
+    // nope, no node groups are used for now ! 
+
+    return true;
 }
