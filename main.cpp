@@ -48,45 +48,7 @@ int main(int argc, char** argv)
 	// cout << endl << "Done " << endl << endl;
 
 
-	Mesh m;
-	m.unvImport("./example/twoElements/meshes/twoElements.unv");
-	m.printCoordinates();
-	m.printConnectivities();
-	cout << endl << endl;
-	vector<size_t> rV1;
-	rV1.push_back(2);
-	rV1.push_back(7);
-	rV1.push_back(0);
-	rV1.push_back(6);
-	rV1.push_back(1);
-	m.renumberMesh(rV1);
-	m.printCoordinates();
-	m.printConnectivities();
-
-	// 		2	-	7	-	0				
-	// 		|	\			|	
-	// 		4		8		6													
-	// 		|			\	|	
-	// 		3	-	5	-	1													
-
-	// 2 4 3 5 1 8
-	// 1 6 0 7 2 8
-
-	//---->
-
-	// 		0	-	1	-	2				
-	// 		|	\			|	
-	// 		6		8		3													
-	// 		|			\	|	
-	// 		5	-	7	-	4
 	
-	// 0 6 5 7 4 8
-	// 4 2 3 1 0 8
-
-	// ben ça a l'air parfait ça mon gros, pourquoi le vtk marche pas ?? 
-	
-
-
 	// AcousticRotatingFemCase<complex<double>> fcr("/home/silouane/Documents/C++/aFemCode/example/rotatingSource/setup/main");
 	
 	AcousticRotatingFemCase<complex<double>> fcr("./example/rotatingSource/setup/main");

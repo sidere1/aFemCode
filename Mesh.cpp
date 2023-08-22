@@ -802,6 +802,7 @@ std::vector<size_t> Mesh::getGroup(size_t iG)
 bool Mesh::renumberMesh(std::vector<size_t> firstNodes)
 {
     // firstNodes may be incomplete, in this case the rest of the nodes are put afterwards 
+    // next step : add an optional argument, a vector<size_t &> to renumber additional nodes (sources, mics, etc.) 
 
     vector<size_t> rV1;
     vector<size_t> rV2;
@@ -886,6 +887,45 @@ bool Mesh::renumberMesh(std::vector<size_t> firstNodes)
 
     // updating the groups ? 
     // nope, no node groups are used for now ! 
+
+
+    // pour le tester : 
+
+    // Mesh m;
+	// m.unvImport("./example/twoElements/meshes/twoElements.unv");
+	// m.printCoordinates();
+	// m.printConnectivities();
+	// cout << endl << endl;
+	// vector<size_t> rV1;
+	// rV1.push_back(2);
+	// rV1.push_back(7);
+	// rV1.push_back(0);
+	// rV1.push_back(6);
+	// rV1.push_back(1);
+	// m.renumberMesh(rV1);
+	// m.printCoordinates();
+	// m.printConnectivities();
+
+
+	// 		2	-	7	-	0				
+	// 		|	\			|	
+	// 		4		8		6													
+	// 		|			\	|	
+	// 		3	-	5	-	1													
+
+	// 2 4 3 5 1 8
+	// 1 6 0 7 2 8
+
+	//---->
+
+	// 		0	-	1	-	2				
+	// 		|	\			|	
+	// 		6		8		3													
+	// 		|			\	|	
+	// 		5	-	7	-	4
+	
+	// 0 6 5 7 4 8
+	// 4 2 3 1 0 8
 
     return true;
 }

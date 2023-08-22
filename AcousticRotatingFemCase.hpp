@@ -24,6 +24,7 @@ public:
 	bool buildPhiF();
 	bool buildPhiR();
 	bool checkInterfaceNameConsistency(size_t iC);
+	vector<double> createRotatingFrequencies(vector<double> frequencies);
 
 
 protected:
@@ -87,11 +88,13 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		cout << "You should not be using " << this->m_nCoupling << " coupling in a coupled rotating FSBC case. Anything else than 2 is prohibited" << std::endl; 
 		return false; 
 	}
+	// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+	// a ajouter : un check que les deux setup matchent parfaitement sur tous les paramètres. Notamment les fréquences 
 
 	const double pi(3.1415926);	
 	size_t totalNodesNumber(0);
 	vector<double> frequencies(this->m_setup[0]->getFrequencies());
-	size_t nF = frequencies.size();
+	size_t nF(0);
 	vector<size_t> nodeGroupTemp;
 	vector<size_t> elemGroupTemp;
 	vector<int> nodesTemp;
@@ -106,22 +109,19 @@ bool AcousticRotatingFemCase<T>::performResolution()
 	m_nNGammaR = 0;
 	m_nNGammaF = 0;
 
+	frequencies = createRotatingFrequencies(frequencies);
+	nF = frequencies.size();
+
 	for(size_t iC = 0; iC < this->m_nCoupling ; iC ++)
 	{
 		radiusTemp.clear();
 		nodesTemp.clear();
 		nodeGroupTemp.clear();
 		elemGroupTemp.clear();
-		// okay = false; 
 
 		// calcul du nombre total de noeuds
 		totalNodesNumber+=this->m_mesh[iC]->getNodesNumber();
-		if (this->m_setup[iC]->getFrequencies().size() != nF)
-		{
-			std::cout << "MAIS N IMPORTE QUOI TOI, D OU TU METS PAS LES MEMES FREQUENCES PARTOUT" << std::endl;
-			WHEREAMI
-			return false; 
-		}
+
 		// vérification que les noms de groupe matchent 
 		if (!checkInterfaceNameConsistency(iC))
 		{
@@ -163,6 +163,7 @@ bool AcousticRotatingFemCase<T>::performResolution()
 		}
 		// cout << "Mesh renumbered successfully !!!" << endl;
 
+		// since the mesh is renumbered, the is no need to store nodeGroupTemp anymore...
 		for (size_t iNode = 0; iNode < nodeGroupTemp.size(); ++iNode)
 		{
 			nodeGroupTemp[iNode] = iNode;
@@ -193,17 +194,18 @@ bool AcousticRotatingFemCase<T>::performResolution()
 
 	// building projection matrices 
 	buildPhiF();
-	buildPhiR();	
+	buildPhiR();
 
 	
 	// on peut faire une matrice Magic qui touche tous les noeuds d'un coup, comme d'hab 
+	Eigen::SparseMatrix<T> Magic; les trois vecteurs, avec PhiF, ones, PhiR, ones;   
 	// enfin, on passe dans la boucle sur les fréquences pour construire les systèmes globaux, projeter, et concaténer les irn jcn values. On ajoute ensuite tous les termes extra diagonaux 
 	// construire le système global à partir des trois vecteurs 
 	// pour le post-traitement, refaire une boucle en fréquence 
 	//		faire la projection inverse, exporter tous les points micros confondus et stocker les résultats pour la suite
 	// 		exporter le maillage et les données fréquentielles 
 	// 		faire la transformée inverse et exporter une animation 
-	std::cout << "Building a system of environ " << totalNodesNumber << " ddl by " << nF << " frequencies" << std::endl;
+	std::cout << "Building a system of " << totalNodesNumber-m_nNGammaF-m_nNGammaF+2*this->m_setup[0]->getN() << " ddl by " << nF << " frequencies" << std::endl;
 
 	// this->m_mesh[0]->displayInfo();
 	// this->m_mesh[1]->displayInfo();
@@ -432,6 +434,51 @@ bool AcousticRotatingFemCase<T>::writeVtk()
 	return true; 
 }
 
+template <typename T>
+vector<double> AcousticRotatingFemCase<T>::createRotatingFrequencies(vector<double> frequencies)
+{
+	double Omega (this->m_setup[0]->getOmega()*2*3.1415926/60); 
+	double C (this->m_setup[0]->getFsbcC()); 
+	double eta (this->m_setup[0]->getEta());
+	size_t nF(0);
+	double fmin(*min_element(frequencies.begin(), frequencies.end())), fmax(*max_element(frequencies.begin(), frequencies.end()));
+	vector<double> rotFreq;
+	vector<int> indices;
+
+	int i(0);
+	if (fmin-Omega/C > 0)
+	{
+		while (fmin-eta*Omega/C > i*Omega/C)
+		{
+			i++;
+		}
+	}
+	else 
+	{
+		while (fmin-eta*Omega/C < i*Omega/C)
+		{
+			i--;
+		}
+		i--;
+	}
+	
+	while(i*Omega/C < fmax+Omega/C*eta)
+	{
+		indices.push_back(i++);
+	}
+	
+	nF = indices.size();
+	for (size_t iFreq = 0; iFreq < nF ; ++iFreq)
+	{
+		rotFreq.push_back(indices[iFreq]*Omega/C);
+	}
+	std::cout << "New frequencies, from " << fmin << " to " << fmax << " with C = " << C << " and Omega = " << Omega << std::endl;
+		for (size_t iFreq = 0; iFreq < indices.size() ; ++iFreq)
+		std::cout << rotFreq[iFreq] << " ";
+	std::cout << endl;
+
+	return rotFreq;
+}
 
 
 #endif
