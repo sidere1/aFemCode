@@ -799,6 +799,7 @@ std::vector<size_t> Mesh::getGroup(size_t iG)
     return m_groups[iG];
 }
 
+// nice possible feature : add a first #pragma parallel for dans la construction de rV2...
 bool Mesh::renumberMesh(std::vector<size_t> firstNodes)
 {
     vector<size_t> previousNodeList;
