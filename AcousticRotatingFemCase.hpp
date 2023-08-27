@@ -198,7 +198,7 @@ bool AcousticRotatingFemCase<T>::performResolution()
 
 	
 	// on peut faire une matrice Magic qui touche tous les noeuds d'un coup, comme d'hab 
-	// Eigen::SparseMatrix<T> Magic; les trois vecteurs, avec PhiF, ones, PhiR, ones;   
+	Eigen::SparseMatrix<T> Magic; les trois vecteurs, avec PhiF, ones, PhiR, ones;   
 	// enfin, on passe dans la boucle sur les fréquences pour construire les systèmes globaux, projeter, et concaténer les irn jcn values. On ajoute ensuite tous les termes extra diagonaux 
 	// construire le système global à partir des trois vecteurs 
 	// pour le post-traitement, refaire une boucle en fréquence 
