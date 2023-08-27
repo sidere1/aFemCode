@@ -843,6 +843,7 @@ bool Mesh::renumberMesh(std::vector<size_t> firstNodes)
     for (size_t iNode = 0; iNode < m_nN ; ++iNode)
     {
         okay = false; 
+        #pragma omp parallel for
         for (size_t iNode2 = 0 ; iNode2 < m_nN; ++iNode2)
         {
             if (iNode == rV1[iNode2])
@@ -850,7 +851,7 @@ bool Mesh::renumberMesh(std::vector<size_t> firstNodes)
                 okay = true;
                 // rV2[iNode2] = iNode;
                 rV2[iNode] = iNode2;
-                break; 
+                // break; 
             }
         }
         if (!okay)

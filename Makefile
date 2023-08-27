@@ -11,7 +11,7 @@ CXXFLAGS := -std=c++14 -g -O3
 LIBS = -I/opt/homebrew/Cellar/hdf5/1.14.1/include/ -I/opt/homebrew/Cellar/eigen/3.4.0_1/lib/ -I/opt/homebrew/Cellar/hdf5/1.14.1/include/hdf5/serial
 endif
 ifeq ($(UNAME), Linux)
-CXXFLAGS := -std=c++11 -g -O3 -fopenmp
+CXXFLAGS := -std=c++11 -g -O3 -fopenmp 
 endif
 
 # ADD MORE WARNINGS!
