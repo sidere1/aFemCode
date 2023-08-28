@@ -35,7 +35,7 @@ public:
     bool isBeginEnd(std::string line);
     bool calculateVolume() ;
     int getElementNumber() const;
-    int getNodesNumber() const;
+    size_t getNodesNumber() const;
     std::vector<Node> getNodes() const;
     Node getNode(size_t iNode) const;
 

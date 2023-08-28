@@ -653,7 +653,7 @@ int Mesh::getElementNumber() const
     return m_nE;
 }
 
-int Mesh::getNodesNumber() const
+size_t Mesh::getNodesNumber() const
 {
     //return m_nodes.size();
     return m_nN;

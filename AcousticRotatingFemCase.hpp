@@ -6,7 +6,7 @@
 
 /*! \brief 
 * AcousticRotatingFemCase is the base class for an acoustic run, and inherits from FemCase 
- * 
+ * magicTriplet
  * 
 */
 template <typename T>
@@ -21,8 +21,10 @@ public:
 	bool performResolution();
 	bool writeVtk();
 	bool checkAndExport(); // temp data for basic checks, groups, nodes ids, interface locations, etc. 
-	bool buildPhiF();
-	bool buildPhiR();
+	// std::vector<Eigen::Triplet<T>> buildPhiF();
+	// std::vector<Eigen::Triplet<T>> buildPhiR();
+	bool buildMagic();
+
 	bool checkInterfaceNameConsistency(size_t iC);
 	vector<double> createRotatingFrequencies(vector<double> frequencies);
 
@@ -36,6 +38,7 @@ protected:
 	Eigen::SparseMatrix<T> m_coupledSystem; 
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiR; 
 	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiF; 
+	Eigen::SparseMatrix<T> m_magic; 
 	vector<size_t> m_gammaR;
 	vector<size_t> m_gammaF;
 	vector<double> m_rR;
@@ -44,6 +47,7 @@ protected:
 	vector<double> m_thetaF;
 	size_t m_nNGammaR;
 	size_t m_nNGammaF;
+	bool m_fixedPartFirst;
 
 	Mesh * m_globalMesh; 
 };
@@ -64,12 +68,15 @@ AcousticRotatingFemCase<T>::AcousticRotatingFemCase(std::string setupFile): FemC
 	assert(this->m_nCoupling == 2); // ou plus si on veut mettre plusieurs zones tournantes 
 
 
+
 	//////// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 	// A AJOUTER : GENERATION DES FREQUENCES 
 	// verification à faire : 
 	// * que les deux setups soient bien les mêmes 
 	// * taille de système acceptable ? nombre de fréquences cohérent par rapport à la bande demandée, etc. 
 	// * 
+	m_fixedPartFirst = !(this->m_setup[0]->getRotating());
+	std::cout << "en l'occurence, fixedParFirst = " << m_fixedPartFirst << std::endl;
 
 }
 
@@ -193,12 +200,12 @@ bool AcousticRotatingFemCase<T>::performResolution()
 	assert(m_nNGammaF != 0 && "the number of nodes on the fixed interface is null");
 
 	// building projection matrices 
-	buildPhiF();
-	buildPhiR();
+	buildMagic();
+	// buildPhiF();
+	// buildPhiR();
 
 	
-	// on peut faire une matrice Magic qui touche tous les noeuds d'un coup, comme d'hab 
-	Eigen::SparseMatrix<T> Magic; les trois vecteurs, avec PhiF, ones, PhiR, ones;   
+
 	// enfin, on passe dans la boucle sur les fréquences pour construire les systèmes globaux, projeter, et concaténer les irn jcn values. On ajoute ensuite tous les termes extra diagonaux 
 	// construire le système global à partir des trois vecteurs 
 	// pour le post-traitement, refaire une boucle en fréquence 
@@ -356,7 +363,7 @@ bool AcousticRotatingFemCase<T>::checkAndExport()
 		this->writeVtkData(vtkfilename.str(), "interfaceGroup", dataExport.sparseView(), false, this->m_mesh[iC]);
 		// export indices 
 		dataExport.setZero();
-		for (int iNode = 0; iNode < this->m_mesh[iC]->getNodesNumber(); ++ iNode)
+		for (size_t iNode = 0; iNode < this->m_mesh[iC]->getNodesNumber(); ++ iNode)
 		{
 			dataExport(iNode, 0) = (T) iNode;
 		}
@@ -366,29 +373,106 @@ bool AcousticRotatingFemCase<T>::checkAndExport()
 }
 
 template <typename T>
-bool AcousticRotatingFemCase<T>::buildPhiF()
-{
+bool AcousticRotatingFemCase<T>::buildMagic()
+{// builds the projection matrix, called Magic because I wanted to. 
+	std::vector<Eigen::Triplet<T> > magicTriplet;
 	const complex<double> i(0.0,1.0);
-	m_PhiF.resize(m_nNGammaF, this->m_setup[0]->getN());
-	for (size_t iNode = 0; iNode < m_nNGammaF ; ++iNode)
-		for(size_t n = 0; n < this->m_setup[0]->getN(); ++n)
+	magicTriplet.reserve(m_nNGammaF*m_nNGammaF+m_nNGammaR*m_nNGammaR+this->m_mesh[0]->getNodesNumber()+this->m_mesh[1]->getNodesNumber()-m_nNGammaF-m_nNGammaR);
+	size_t currentX(0);
+	size_t currentY(0);
+	// first projection matrix 
+	if (m_fixedPartFirst)
+		for(size_t iNode = 0; iNode < m_nNGammaF ; ++iNode)
 		{
-			m_PhiF(iNode, n) = std::exp(i*(T)n*(T)m_thetaF[iNode]);
+			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			{
+				magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, std::exp(i*(T)n*(T)m_thetaF[iNode])));
+				currentY++;
+			}
+			currentX++;
 		}
+	else 
+		for(size_t iNode = 0; iNode < m_nNGammaR ; ++iNode)
+		{
+			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			{
+				magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, std::exp(i*(T)n*(T)m_thetaR[iNode])));
+				currentY++;
+			}
+			currentX++;
+		}
+	// rest of the first part 
+	for(size_t iNode = currentX; iNode < this->m_mesh[0]->getNodesNumber() ; ++iNode)
+	{
+		magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, 1));
+		currentX++;
+		currentY++;
+	}
+	// second projection matrix 
+	std::cout << currentX  << " should be equal to " << this->m_mesh[0]->getNodesNumber() << std::endl;
+	std::cout << currentY  << " should be equal to " << 1+2*this->m_setup[0]->getN()+this->m_mesh[0]->getNodesNumber()-m_nNGammaF << std::endl;
+	if (m_fixedPartFirst)
+		for(size_t iNode = currentX; iNode < this->m_mesh[0]->getNodesNumber()+m_nNGammaR ; ++iNode)
+		{
+			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			{
+				magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, std::exp(i*(T)n*(T)m_thetaR[iNode])));
+				currentY++;
+			}
+			currentX++;
+		}
+	else 
+		for(size_t iNode = currentX; iNode < this->m_mesh[0]->getNodesNumber()+m_nNGammaF ; ++iNode)
+		{
+			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			{
+				magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, std::exp(i*(T)n*(T)m_thetaF[iNode])));
+				currentY++;
+			}
+			currentX++;
+		}
+	// rest of the first part 
+	for(size_t iNode = currentX; iNode < this->m_mesh[1]->getNodesNumber() ; ++iNode)
+	{
+		magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, 1));
+		currentX++;
+		currentY++;
+	}
+	WHEREAMI ca marche pas j'essaie d'afficher magictriplet pour voir ou j'ai merdé 
+	for (size_t iNode = 0 ; iNode < magicTriplet.size() ; iNode++)
+	{
+		std::cout << magicTriplet[iNode] << std::endl;
+	}
+	m_magic.setFromTriplets(magicTriplet.begin(), magicTriplet.end());
+	// std::cout << m_magic << std::endl;
+	std::cout << "currentX : " << currentX << " and currentY : " << currentY << std::endl;
 	return true;
 }
 
-template <typename T>
-bool AcousticRotatingFemCase<T>::buildPhiR()
-{
-	const complex<double> i(0.0,1.0); 
-	cout << "resizing of size " << m_nNGammaR << " * " << this->m_setup[0]->getN() << endl; 
-	m_PhiR.resize(m_nNGammaR, this->m_setup[0]->getN());
-	for (size_t iNode = 0; iNode < m_nNGammaR ; ++iNode)
-		for(size_t n = 0; n < this->m_setup[0]->getN(); ++n)
-			m_PhiR(iNode, n) = std::exp(i*(T)n*(T)m_thetaR[iNode]);
-	return true;
-}
+// template <typename T>
+// std::vector<Eigen::Triplet<T>> AcousticRotatingFemCase<T>::buildPhiF()
+// {
+// 	const complex<double> i(0.0,1.0);
+// 	m_PhiF.resize(m_nNGammaF, this->m_setup[0]->getN());
+// 	for (size_t iNode = 0; iNode < m_nNGammaF ; ++iNode)
+// 		for(size_t n = 0; n < this->m_setup[0]->getN(); ++n)
+// 		{
+// 			m_PhiF(iNode, n) = std::exp(i*(T)n*(T)m_thetaF[iNode]);
+// 		}
+// 	return true;
+// }
+
+// template <typename T>
+// std::vector<Eigen::Triplet<T>> AcousticRotatingFemCase<T>::buildPhiR()
+// {
+// 	const complex<double> i(0.0,1.0); 
+// 	cout << "resizing of size " << m_nNGammaR << " * " << this->m_setup[0]->getN() << endl; 
+// 	m_PhiR.resize(m_nNGammaR, this->m_setup[0]->getN());
+// 	for (size_t iNode = 0; iNode < m_nNGammaR ; ++iNode)
+// 		for(size_t n = 0; n < this->m_setup[0]->getN(); ++n)
+// 			m_PhiR(iNode, n) = std::exp(i*(T)n*(T)m_thetaR[iNode]);
+// 	return true;
+// }
 
 template <typename T>
 bool AcousticRotatingFemCase<T>::buildF()
