@@ -36,9 +36,9 @@ protected:
 	// size_t C;
 	// double m_Omega;
 	Eigen::SparseMatrix<T> m_coupledSystem; 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiR; 
-	Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiF; 
-	Eigen::SparseMatrix<T> m_magic; 
+	// Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiR; 
+	// Eigen::Matrix<T, Eigen::Dynamic, Eigen::Dynamic> m_PhiF; 
+	Eigen::SparseMatrix<T> *m_magic; 
 	vector<size_t> m_gammaR;
 	vector<size_t> m_gammaF;
 	vector<double> m_rR;
@@ -380,13 +380,16 @@ bool AcousticRotatingFemCase<T>::buildMagic()
 	magicTriplet.reserve(m_nNGammaF*m_nNGammaF+m_nNGammaR*m_nNGammaR+this->m_mesh[0]->getNodesNumber()+this->m_mesh[1]->getNodesNumber()-m_nNGammaF-m_nNGammaR);
 	size_t currentX(0);
 	size_t currentY(0);
-	// first projection matrix 
+	size_t currentYSaved(0)
+;	// first projection matrix 
+	// std::cout << "first block, from 0 to " << m_nNGammaF << " by 0 to " << 2*this->m_setup[0]->getN()+1 << std::endl;
 	if (m_fixedPartFirst)
 		for(size_t iNode = 0; iNode < m_nNGammaF ; ++iNode)
 		{
-			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			currentY = 0;
+			for(int n = -this->m_setup[0]->getN(); n <= (int)this->m_setup[0]->getN(); ++n)
 			{
-				magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, std::exp(i*(T)n*(T)m_thetaF[iNode])));
+				magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, std::exp(i*(T)n*(T)m_thetaF[iNode])));
 				currentY++;
 			}
 			currentX++;
@@ -394,27 +397,33 @@ bool AcousticRotatingFemCase<T>::buildMagic()
 	else 
 		for(size_t iNode = 0; iNode < m_nNGammaR ; ++iNode)
 		{
-			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			currentY = 0;
+			for(int n = -this->m_setup[0]->getN(); n <= (int)this->m_setup[0]->getN(); ++n)
 			{
-				magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, std::exp(i*(T)n*(T)m_thetaR[iNode])));
+				magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, std::exp(i*(T)n*(T)m_thetaR[iNode])));
 				currentY++;
 			}
 			currentX++;
 		}
 	// rest of the first part 
+	currentY = 2*this->m_setup[0]->getN()+1;
+	// std::cout << "second block, from " << currentX << " to " << this->m_mesh[0]->getNodesNumber() << " by " << currentY << " to something " << std::endl;
 	for(size_t iNode = currentX; iNode < this->m_mesh[0]->getNodesNumber() ; ++iNode)
 	{
-		magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, 1));
+		magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, 1));
 		currentX++;
 		currentY++;
 	}
 	// second projection matrix 
-	std::cout << currentX  << " should be equal to " << this->m_mesh[0]->getNodesNumber() << std::endl;
-	std::cout << currentY  << " should be equal to " << 1+2*this->m_setup[0]->getN()+this->m_mesh[0]->getNodesNumber()-m_nNGammaF << std::endl;
+	currentYSaved = currentY;
+	// std::cout << "third block, from " << currentX << " to " << this->m_mesh[0]->getNodesNumber()+m_nNGammaR << " by " << currentY << " to something " << std::endl;
+	// std::cout << currentX  << " should be equal to " << this->m_mesh[0]->getNodesNumber() << std::endl;
+	// std::cout << currentY  << " should be equal to " << 1+2*this->m_setup[0]->getN()+this->m_mesh[0]->getNodesNumber()-m_nNGammaF << std::endl;
 	if (m_fixedPartFirst)
 		for(size_t iNode = currentX; iNode < this->m_mesh[0]->getNodesNumber()+m_nNGammaR ; ++iNode)
 		{
-			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			currentY = currentYSaved;
+			for(int n = -this->m_setup[0]->getN(); n <= (int)this->m_setup[0]->getN(); ++n)
 			{
 				magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, std::exp(i*(T)n*(T)m_thetaR[iNode])));
 				currentY++;
@@ -424,7 +433,8 @@ bool AcousticRotatingFemCase<T>::buildMagic()
 	else 
 		for(size_t iNode = currentX; iNode < this->m_mesh[0]->getNodesNumber()+m_nNGammaF ; ++iNode)
 		{
-			for(int n = -this->m_setup[0]->getN(); n < (int)this->m_setup[0]->getN(); ++n)
+			currentY = currentYSaved;
+			for(int n = -this->m_setup[0]->getN(); n <= (int)this->m_setup[0]->getN(); ++n)
 			{
 				magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, std::exp(i*(T)n*(T)m_thetaF[iNode])));
 				currentY++;
@@ -432,20 +442,53 @@ bool AcousticRotatingFemCase<T>::buildMagic()
 			currentX++;
 		}
 	// rest of the first part 
-	for(size_t iNode = currentX; iNode < this->m_mesh[1]->getNodesNumber() ; ++iNode)
+	currentYSaved = currentY;
+	// std::cout << "fourth block, from " << currentX << " to " << this->m_mesh[0]->getNodesNumber()+this->m_mesh[1]->getNodesNumber() << " by " << currentY << " to something " << std::endl;
+	for(size_t iNode = currentX; iNode < this->m_mesh[0]->getNodesNumber()+this->m_mesh[1]->getNodesNumber() ; ++iNode)
 	{
-		magicTriplet.push_back(Eigen::Triplet<T>(iNode, currentY, 1));
+		magicTriplet.push_back(Eigen::Triplet<T>(currentX, currentY, 1));
 		currentX++;
 		currentY++;
 	}
-	WHEREAMI ca marche pas j'essaie d'afficher magictriplet pour voir ou j'ai merdé 
+	m_magic = new Eigen::SparseMatrix<T> (this->m_mesh[0]->getNodesNumber()+this->m_mesh[1]->getNodesNumber(), this->m_mesh[0]->getNodesNumber()+this->m_mesh[1]->getNodesNumber()-m_nNGammaF-m_nNGammaR+4*this->m_setup[0]->getN()+2);
+	
+	
+	
+	// std::cout << "Omega F : " << m_nNGammaF << "/" << this->m_mesh[0]->getNodesNumber() << std::endl;
+	// std::cout << "Omega R : " << m_nNGammaR << "/" << this->m_mesh[1]->getNodesNumber() << std::endl;
+	// std::cout << "triplet size : " << magicTriplet.size() << std::endl;
+	// std::cout << "m_magic size : " << m_magic->rows() << " by " << m_magic->cols() << std::endl;
+	size_t maxCol(0);
+	size_t maxRow(0);
 	for (size_t iNode = 0 ; iNode < magicTriplet.size() ; iNode++)
 	{
-		std::cout << magicTriplet[iNode] << std::endl;
+		// std::cout << "(" << magicTriplet[iNode].row() << ", ";
+		// std::cout << magicTriplet[iNode].col() << ") =";
+		// std::cout << magicTriplet[iNode].value() << std::endl;
+
+		if (magicTriplet[iNode].col() < 0)
+			std::cout << "warning col < 0" << std::endl;
+		if (magicTriplet[iNode].row() < 0)
+			std::cout << "warning row < 0" << std::endl;
+		if (magicTriplet[iNode].row() > maxRow)
+			maxRow = magicTriplet[iNode].row();
+		if (magicTriplet[iNode].col() > maxCol)
+			maxCol = magicTriplet[iNode].col();
 	}
-	m_magic.setFromTriplets(magicTriplet.begin(), magicTriplet.end());
-	// std::cout << m_magic << std::endl;
-	std::cout << "currentX : " << currentX << " and currentY : " << currentY << std::endl;
+	// std::cout << " maxRow in triplet : " << maxRow << ", maxCol in triplet : " << maxCol << std::endl;
+	// std::cout << "currentX : " << currentX << " and currentY : " << currentY << std::endl;
+	m_magic->setFromTriplets(magicTriplet.begin(), magicTriplet.end());
+	std::cout << *m_magic << std::endl;
+	// for (size_t i = 0 ; i< m_magic->rows() ; ++i)
+	// {
+	// 	for (size_t j = 0 ; j < m_magic->cols() ; ++j)
+	// 		if (abs(m_magic->coeffRef(i, j))>1e-5 )
+	// 			std::cout << ".";
+	// 		else 
+	// 			std::cout << " ";
+	// 	std::cout << endl;
+	// }
+
 	return true;
 }
 
