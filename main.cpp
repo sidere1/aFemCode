@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	srand (time(NULL));
 	cout << endl << endl; 	
 	assert(argc == 2 && "please provide the name of the setup file as parameter in the command line");
-
+ 	encore des petits trucs blablabla
 	// string setupFile (argv[1]);
 	// cout << "Reading setup file " << argv[1] << endl; 
 	// AcousticFemCase<complex<double>> fc(setupFile.c_str());
