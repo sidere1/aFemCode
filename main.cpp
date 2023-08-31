@@ -25,6 +25,10 @@ using namespace std;
 // typedef Eigen::SparseMatrix<double> SpMatXd;
 // typedef Eigen::SparseMatrix<complex<double>> SpMatXcd;  
 
+bloblo rotatingFem 
+
+
+
 int main(int argc, char** argv)
 {
 	srand (time(NULL));
